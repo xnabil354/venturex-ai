@@ -1,0 +1,49 @@
+{
+  "name": "venturex-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs up",
+    "db:migrate:status": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs status",
+    "db:migrate:undo": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs down",
+    "db:seed:reference": "node --env-file-if-exists=.env --experimental-strip-types scripts/reference-seed.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "argon2": "^0.45.1",
+    "next": "16.3.6",
+    "next-auth": "5.0.0-beta.32",
+    "pg": "^8.23.0",
+    "pg-hstore": "^2.3.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sequelize": "6",
+    "server-only": "^0.0.1",
+    "tailwindcss": "^4.1.14",
+    "umzug": "^3.8.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.36.0",
+    "eslint-config-next": "16.3.6",
+    "jsdom": "30.1.2",
+    "typescript": "^5.9.2",
+    "vitest": "^5.0.2"
+  }
+}

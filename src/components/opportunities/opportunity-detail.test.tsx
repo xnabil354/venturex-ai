@@ -1,0 +1,153 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/opportunity/saved-actions", () => ({
+  setOpportunitySavedAction: vi.fn(),
+}));
+
+import OpportunityDetailError from "@/app/(app)/opportunities/[id]/error";
+import OpportunityDetailNotFound from "@/app/(app)/opportunities/[id]/not-found";
+import type { OpportunityDetailDto } from "@/opportunity/dto";
+import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
+import type { OpportunitySaveState } from "@/opportunity/saved-dto";
+import { OpportunityDetail } from "./opportunity-detail";
+
+const item: OpportunityDetailDto = {
+  id: "60000000-0000-4000-8000-000000000001",
+  name: "Menu minuman berbasis tanaman",
+  description: "Deskripsi tersimpan dari katalog peluang.",
+  categoryName: "Minuman",
+  opportunityType: "NEW_PRODUCT",
+  targetConsumerSummary: "Konsumen minuman nabati.",
+  competitionLevel: "MEDIUM",
+  competitionSummary: "Beberapa penawaran tercatat.",
+  relatedTrend: {
+    id: "70000000-0000-4000-8000-000000000001",
+    title: "Tren minuman terpublikasi",
+  },
+};
+const completeEvidenceItem = {
+  sourceName: "Laporan industri",
+  sourceType: "Government/Open Data",
+  sourceDateLabel: "Tanggal sumber (UTC): 2026-01-15",
+  retrievedAtLabel: "Data diambil: 2026-02-01 10:30 UTC",
+  sourceReference: "Dataset seri 4, tabel 2",
+  sourceUrl: "https://example.org/dataset",
+  limitations: [],
+};
+const completeEvidence: OpportunityEvidenceState = {
+  status: "AVAILABLE",
+  limited: false,
+  items: [completeEvidenceItem, { ...completeEvidenceItem, sourceName: "Sumber kedua" }],
+};
+
+function render(
+  value: OpportunityDetailDto,
+  evidence: OpportunityEvidenceState = completeEvidence,
+  saveState: OpportunitySaveState = { status: "AVAILABLE", saved: false },
+): string {
+  return renderToStaticMarkup(
+    <OpportunityDetail evidence={evidence} item={value} saveState={saveState} />,
+  ).replace(/\s+/gu, " ");
+}
+
+describe("OpportunityDetail", () => {
+  it("stacks score cards until the large desktop breakpoint", () => {
+    const markup = render(item);
+    const scoreSection = markup.match(/<section aria-labelledby="[^"]+-scores"[^>]*>(.*?)<\/section>/u)?.[1] ?? "";
+    const scoreGrid = scoreSection.match(/<dl class="grid gap-12 lg:grid-cols-3">(.*?)<\/dl>/u)?.[1] ?? "";
+
+    expect(scoreGrid).not.toBe("");
+    expect(scoreGrid.indexOf("Opportunity Score")).toBeLessThan(scoreGrid.indexOf("Fit Score"));
+    expect(scoreGrid.indexOf("Fit Score")).toBeLessThan(scoreGrid.indexOf("Risk"));
+  });
+
+  it("renders persisted detail fields and links only to the eligible related Trend", () => {
+    const markup = render(item);
+
+    expect(markup).toContain(item.name);
+    expect(markup).toContain(item.description);
+    expect(markup).toContain(item.categoryName);
+    expect(markup).toContain(item.opportunityType);
+    expect(markup).toContain(item.targetConsumerSummary);
+    expect(markup).toContain(item.competitionLevel);
+    expect(markup).toContain(item.competitionSummary);
+    expect(markup).toContain(`href="/trends/${item.relatedTrend.id}"`);
+    expect(markup).toContain(item.relatedTrend.title);
+    expect(markup).toContain('href="/opportunities"');
+    expect(markup).toContain("Simpan opportunity");
+    expect(markup).toContain("Laporan industri");
+    expect(markup).toContain("Government/Open Data");
+    expect(markup).toContain("Tanggal sumber (UTC): 2026-01-15");
+    expect(markup).toContain("Data diambil: 2026-02-01 10:30 UTC");
+    expect(markup).toContain('href="https://example.org/dataset"');
+    expect(markup).toContain("Jumlah evidence tidak menyatakan kualitas atau verifikasi sumber.");
+  });
+
+  it("shows saved status and an unsave action for an existing saved relation", () => {
+    const markup = render(item, completeEvidence, { status: "AVAILABLE", saved: true });
+
+    expect(markup).toContain("Hapus dari simpanan");
+    expect(markup).toContain('name="opportunityId"');
+    expect(markup).toContain(`value="${item.id}"`);
+  });
+
+  it("keeps detail visible and reports a safe status when saved-state loading fails", () => {
+    const markup = render(item, completeEvidence, { status: "ERROR" });
+
+    expect(markup).toContain(item.name);
+    expect(markup).toContain("Status simpanan belum dapat dimuat.");
+    expect(markup).toContain("Coba lagi");
+  });
+
+  it("states unavailable analysis honestly without scores, evidence claims, or actions", () => {
+    const markup = render(
+      {
+        ...item,
+        targetConsumerSummary: null,
+        competitionLevel: null,
+        competitionSummary: null,
+      },
+      {
+        status: "AVAILABLE",
+        limited: true,
+        items: [{ ...completeEvidenceItem, limitations: ["Cakupan hanya beberapa kota."] }],
+      },
+    );
+
+    expect(markup.match(/Data belum cukup/gu)).toHaveLength(2);
+    expect(markup).toContain("Memuat Fit Score…");
+    expect(markup).toContain("Bukti terbatas");
+    expect(markup).toContain("Keterbatasan sumber");
+    expect(markup).toContain("Cakupan hanya beberapa kota.");
+    expect(markup).toContain("AI Analysis belum tersedia.");
+    expect(markup).toContain("Roadmap belum tersedia.");
+    expect(markup.match(/Belum dicantumkan\./gu)).toHaveLength(3);
+    expect(markup).not.toContain("href=\"/opportunities/save");
+    expect(markup).not.toContain("Evidence tersedia");
+    expect(markup).not.toMatch(/(?:Opportunity Score|Fit Score|Risk)<\/dt>\s*<dd[^>]*>\d/);
+  });
+
+  it("shows distinct EMPTY and ERROR evidence states without hiding Opportunity detail", () => {
+    const empty = render(item, { status: "EMPTY", items: [], limited: true });
+    const error = render(item, { status: "ERROR" });
+
+    expect(empty).toContain("Bukti terbatas");
+    expect(empty).toContain("Belum ada evidence tersimpan untuk Opportunity ini.");
+    expect(error).toContain("Evidence belum dapat dimuat.");
+    expect(error).toContain(item.name);
+    expect(error).not.toContain("database");
+  });
+
+  it("shows generic not-found and error states without exposing persistence details", () => {
+    const notFound = renderToStaticMarkup(<OpportunityDetailNotFound />).replace(/\s+/gu, " ");
+    const error = renderToStaticMarkup(<OpportunityDetailError
+      error={new Error("database internals")}
+      reset={() => undefined}
+    />).replace(/\s+/gu, " ");
+
+    expect(notFound).toContain("Opportunity ini tidak tersedia atau tidak dapat diakses.");
+    expect(error).toContain("Detail Opportunity belum dapat dimuat.");
+    expect(error).not.toContain("database internals");
+  });
+});
