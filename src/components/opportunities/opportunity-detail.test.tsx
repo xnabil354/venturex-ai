@@ -12,6 +12,8 @@ import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
 import { OPPORTUNITY_SCORE_COMPONENTS } from "@/scoring/opportunity-score";
 import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import { RISK_FACTORS } from "@/scoring/risk-assessment";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 import { OpportunityDetail } from "./opportunity-detail";
 
 const item: OpportunityDetailDto = {
@@ -63,15 +65,32 @@ const insufficientScore: OpportunityScoreDisplayState = {
   }])) as Extract<OpportunityScoreDisplayState, { readonly status: "INSUFFICIENT_DATA" }> ["sources"],
   disclaimer: "Opportunity Score bukan jaminan keberhasilan bisnis.",
 };
+const insufficientRisk: RiskAssessmentDisplayState = {
+  status: "INSUFFICIENT_DATA",
+  modelType: "RISK",
+  modelVersion: null,
+  level: null,
+  reason: "CONFIGURATION_UNAVAILABLE",
+  missingFactors: RISK_FACTORS,
+  evidenceReferences: [],
+  limitations: [],
+};
 
 function render(
   value: OpportunityDetailDto,
   evidence: OpportunityEvidenceState = completeEvidence,
   saveState: OpportunitySaveState = { status: "AVAILABLE", saved: false },
   opportunityScore: OpportunityScoreDisplayState = insufficientScore,
+  riskAssessment: RiskAssessmentDisplayState = insufficientRisk,
 ): string {
   return renderToStaticMarkup(
-    <OpportunityDetail evidence={evidence} item={value} opportunityScore={opportunityScore} saveState={saveState} />,
+    <OpportunityDetail
+      evidence={evidence}
+      item={value}
+      opportunityScore={opportunityScore}
+      riskAssessment={riskAssessment}
+      saveState={saveState}
+    />,
   ).replace(/\s+/gu, " ");
 }
 
@@ -108,6 +127,34 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain("Jumlah evidence tidak menyatakan kualitas atau verifikasi sumber.");
   });
 
+  it("renders a real assessed Risk result without changing Opportunity Score or Fit Score", () => {
+    const risk: RiskAssessmentDisplayState = {
+      status: "ASSESSED",
+      modelType: "RISK",
+      modelVersion: "approved-risk-v2",
+      level: "MEDIUM",
+      reasons: ["Kompleksitas eksekusi dinilai Sedang menurut policy approved-risk-v2."],
+      factorsConsidered: [{
+        factor: "executionComplexity",
+        label: "Kompleksitas eksekusi",
+        value: "55 /100",
+        level: "MEDIUM",
+        source: "Kompleksitas operasional tersimpan",
+        sourceReference: "opportunity_fit_requirements.operational_complexity",
+      }],
+      factorsNotAssessed: ["competition", "capitalRequirement", "trendVolatility", "marketUncertainty"],
+      evidenceReferences: [],
+      limitations: ["Risk bukan prediksi hasil bisnis."],
+    };
+    const markup = render(item, completeEvidence, { status: "AVAILABLE", saved: false }, insufficientScore, risk);
+
+    expect(markup).toContain("Sedang (MEDIUM)");
+    expect(markup).toContain("Kompleksitas eksekusi dinilai Sedang");
+    expect(markup).toContain("Versi model: approved-risk-v2");
+    expect(markup).toContain("Data belum cukup untuk menghitung skor secara layak.");
+    expect(markup).toContain("Memuat Fit Score");
+  });
+
   it("shows saved status and an unsave action for an existing saved relation", () => {
     const markup = render(item, completeEvidence, { status: "AVAILABLE", saved: true });
 
@@ -139,7 +186,8 @@ describe("OpportunityDetail", () => {
       },
     );
 
-    expect(markup.match(/Data belum cukup/gu)).toHaveLength(2);
+    expect(markup.match(/Data belum cukup/gu)).toHaveLength(1);
+    expect(markup).toContain("Risiko belum dapat dinilai berdasarkan data dan kebijakan yang tersedia.");
     expect(markup).toContain("Memuat Fit Score…");
     expect(markup).toContain("Bukti terbatas");
     expect(markup).toContain("Keterbatasan sumber");

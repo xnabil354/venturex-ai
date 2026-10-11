@@ -5,6 +5,7 @@ import { ONBOARDING_STATUSES, isUserType } from "@/auth/user-types";
 import { OpportunityFinder } from "@/components/opportunities/opportunity-finder";
 import { OpportunityService, type OpportunityFinderResult } from "@/opportunity/service";
 import { OpportunityScoreService, type OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import { RiskAssessmentService, type RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 
 type OpportunitiesPageProps = {
   readonly searchParams: Promise<{
@@ -34,17 +35,29 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   }
 
   let scoreByOpportunityId: Readonly<Record<string, OpportunityScoreDisplayState>> = {};
+  let riskByOpportunityId: Readonly<Record<string, RiskAssessmentDisplayState>> = {};
   if (result.status === "AVAILABLE") {
-    try {
-      scoreByOpportunityId = await new OpportunityScoreService({
-        currentUserResolver: async () => user,
-      }).calculateForOpportunities(result.items.map(({ id }) => id));
-    } catch {
-      scoreByOpportunityId = Object.fromEntries(
-        result.items.map(({ id }) => [id, { status: "ERROR" as const }]),
-      );
-    }
+    const ids = result.items.map(({ id }) => id);
+    const loadScores = async (): Promise<Readonly<Record<string, OpportunityScoreDisplayState>>> => {
+      try {
+        return await new OpportunityScoreService({
+          currentUserResolver: async () => user,
+        }).calculateForOpportunities(ids);
+      } catch {
+        return Object.fromEntries(ids.map((id) => [id, { status: "ERROR" as const }]));
+      }
+    };
+    const loadRisks = async (): Promise<Readonly<Record<string, RiskAssessmentDisplayState>>> => {
+      try {
+        return await new RiskAssessmentService({
+          currentUserResolver: async () => user,
+        }).assessForOpportunities(ids);
+      } catch {
+        return Object.fromEntries(ids.map((id) => [id, { status: "ERROR" as const }]));
+      }
+    };
+    [scoreByOpportunityId, riskByOpportunityId] = await Promise.all([loadScores(), loadRisks()]);
   }
 
-  return <OpportunityFinder result={result} scoreByOpportunityId={scoreByOpportunityId} />;
+  return <OpportunityFinder result={result} riskByOpportunityId={riskByOpportunityId} scoreByOpportunityId={scoreByOpportunityId} />;
 }

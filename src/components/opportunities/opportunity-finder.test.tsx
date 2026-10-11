@@ -5,6 +5,8 @@ import type { OpportunityFinderResult } from "@/opportunity/service";
 import { OpportunityFinder } from "./opportunity-finder";
 import { OPPORTUNITY_SCORE_COMPONENTS } from "@/scoring/opportunity-score";
 import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import { RISK_FACTORS } from "@/scoring/risk-assessment";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 
 const available: OpportunityFinderResult = {
   status: "AVAILABLE",
@@ -51,10 +53,25 @@ const insufficientScore: OpportunityScoreDisplayState = {
   disclaimer: "Opportunity Score bukan jaminan keberhasilan bisnis.",
 };
 
-function render(result: OpportunityFinderResult): string {
+const insufficientRisk: RiskAssessmentDisplayState = {
+  status: "INSUFFICIENT_DATA",
+  modelType: "RISK",
+  modelVersion: null,
+  level: null,
+  reason: "CONFIGURATION_UNAVAILABLE",
+  missingFactors: RISK_FACTORS,
+  evidenceReferences: [],
+  limitations: [],
+};
+
+function render(result: OpportunityFinderResult, risk: RiskAssessmentDisplayState = insufficientRisk): string {
   const scoreByOpportunityId = { "60000000-0000-4000-8000-000000000001": insufficientScore };
   return renderToStaticMarkup(
-    <OpportunityFinder result={result} scoreByOpportunityId={scoreByOpportunityId} />,
+    <OpportunityFinder
+      result={result}
+      riskByOpportunityId={{ "60000000-0000-4000-8000-000000000001": risk }}
+      scoreByOpportunityId={scoreByOpportunityId}
+    />,
   ).replace(/\s+/gu, " ");
 }
 
@@ -69,7 +86,8 @@ describe("OpportunityFinder", () => {
     expect(markup).toContain("Lihat detail Menu minuman berbasis tanaman");
     expect(markup).toContain('href="/trends/70000000-0000-4000-8000-000000000001"');
     expect(markup).toContain("Tren minuman terpublikasi");
-    expect(markup.match(/Data belum cukup/gu)).toHaveLength(3);
+    expect(markup).toContain("Risiko belum dapat dinilai berdasarkan data dan kebijakan yang tersedia.");
+    expect(markup.match(/Data belum cukup/gu)).toHaveLength(2);
     expect(markup).toContain("Halaman 1 dari 2 · 12 peluang");
     expect(markup).toContain('href="/opportunities?page=2"');
     expect(markup).toContain('action="/opportunities" method="get"');
@@ -77,6 +95,31 @@ describe("OpportunityFinder", () => {
     expect(markup).toContain('<option value="SNACKS">Camilan</option>');
     expect(markup).not.toContain('name="page"');
     expect(markup).not.toContain("rekomendasi personal");
+  });
+
+  it("shows the assessed risk level, reason, and policy version in each Finder card", () => {
+    const markup = render(available, {
+      status: "ASSESSED",
+      modelType: "RISK",
+      modelVersion: "approved-risk-v1",
+      level: "HIGH",
+      reasons: ["Kebutuhan modal dinilai Tinggi menurut policy approved-risk-v1."],
+      factorsConsidered: [{
+        factor: "capitalRequirement",
+        label: "Kebutuhan modal",
+        value: "5000000 IDR",
+        level: "HIGH",
+        source: "Batas maksimum modal pada kebutuhan Opportunity",
+        sourceReference: "opportunity_fit_requirements.capital_max",
+      }],
+      factorsNotAssessed: ["competition", "trendVolatility", "executionComplexity", "marketUncertainty"],
+      evidenceReferences: [],
+      limitations: ["Risk bukan prediksi hasil bisnis."],
+    });
+
+    expect(markup).toContain("Tinggi (HIGH)");
+    expect(markup).toContain("Kebutuhan modal dinilai Tinggi");
+    expect(markup).toContain("Versi policy: approved-risk-v1");
   });
 
   it("preserves an encoded active category while navigating pages", () => {

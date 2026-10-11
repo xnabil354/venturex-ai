@@ -7,8 +7,10 @@ const mocks = vi.hoisted(() => ({
   getDetail: vi.fn(),
   getSaveState: vi.fn(),
   calculateScore: vi.fn(),
+  calculateRisk: vi.fn(),
   resolver: null as null | (() => Promise<unknown>),
   scoreResolver: null as null | (() => Promise<unknown>),
+  riskResolver: null as null | (() => Promise<unknown>),
   saveResolver: null as null | (() => Promise<unknown>),
   listEvidence: vi.fn(),
   evidenceResolver: null as null | (() => Promise<unknown>),
@@ -20,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   saveUsers: [] as unknown[],
   scoreIds: [] as string[],
   scoreUsers: [] as unknown[],
+  riskIds: [] as string[],
+  riskUsers: [] as unknown[],
 }));
 
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
@@ -84,6 +88,21 @@ vi.mock("@/scoring/opportunity-score-service", () => ({
     }
   },
 }));
+vi.mock("@/scoring/risk-assessment-service", () => ({
+  RiskAssessmentService: class MockRiskAssessmentService {
+    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
+      mocks.riskResolver = dependencies.currentUserResolver;
+    }
+
+    async assessForOpportunity(id: string) {
+      mocks.riskIds.push(id);
+      const resolver = mocks.riskResolver;
+      if (!resolver) throw new Error("The Risk current-user resolver was not supplied.");
+      mocks.riskUsers.push(await resolver());
+      return mocks.calculateRisk(id);
+    }
+  },
+}));
 
 import {
   ONBOARDING_STATUSES,
@@ -121,6 +140,7 @@ describe("/opportunities/[id] page", () => {
     mocks.saveResolver = null;
     mocks.evidenceResolver = null;
     mocks.scoreResolver = null;
+    mocks.riskResolver = null;
     mocks.ids.length = 0;
     mocks.resolvedUsers.length = 0;
     mocks.evidenceIds.length = 0;
@@ -129,7 +149,10 @@ describe("/opportunities/[id] page", () => {
     mocks.saveUsers.length = 0;
     mocks.scoreIds.length = 0;
     mocks.scoreUsers.length = 0;
+    mocks.riskIds.length = 0;
+    mocks.riskUsers.length = 0;
     mocks.calculateScore.mockResolvedValue({ status: "ERROR" });
+    mocks.calculateRisk.mockResolvedValue({ status: "ERROR" });
     mocks.notFound.mockImplementation(() => { throw new Error("NOT_FOUND"); });
   });
 
@@ -157,6 +180,8 @@ describe("/opportunities/[id] page", () => {
       expect(mocks.saveIds).toEqual([detail.id]);
       expect(mocks.scoreUsers).toEqual([persistedUser]);
       expect(mocks.scoreIds).toEqual([detail.id]);
+      expect(mocks.riskUsers).toEqual([persistedUser]);
+      expect(mocks.riskIds).toEqual([detail.id]);
     },
   );
 
@@ -173,6 +198,7 @@ describe("/opportunities/[id] page", () => {
     expect(mocks.getDetail).not.toHaveBeenCalled();
     expect(mocks.listEvidence).not.toHaveBeenCalled();
     expect(mocks.calculateScore).not.toHaveBeenCalled();
+    expect(mocks.calculateRisk).not.toHaveBeenCalled();
   });
 
   it.each(["invalid", detail.id])("uses not-found for inaccessible id %s", async (id) => {
