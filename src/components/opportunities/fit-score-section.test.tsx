@@ -181,7 +181,7 @@ describe("FitScoreSection", () => {
 
     render(<FitScoreSection opportunityId={opportunity.id} />);
 
-    expect((await screen.findByRole("alert")).textContent).toContain("Detail Opportunity tetap tersedia.");
+    expect(await screen.findByText("Fit Score belum dapat dimuat. Detail Opportunity tetap tersedia.")).toBeTruthy();
     expect(screen.queryByText("private database exception")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
     expect(await screen.findByText("MVP Heuristic Fit Score")).toBeTruthy();
@@ -244,7 +244,7 @@ describe("OpportunityDetail Fit Score integration", () => {
 
     render(<OpportunityDetail evidence={emptyEvidence} item={opportunity} opportunityScore={{ status: "ERROR" }} riskAssessment={{ status: "ERROR" }} saveState={unsaved} />);
 
-    expect((await screen.findByRole("alert")).textContent).toContain("Detail Opportunity tetap tersedia.");
+    expect(await screen.findByText("Fit Score belum dapat dimuat. Detail Opportunity tetap tersedia.")).toBeTruthy();
     expect(screen.getByRole("heading", { name: opportunity.name })).toBeTruthy();
     expect(screen.getByText(opportunity.description)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Evidence" })).toBeTruthy();

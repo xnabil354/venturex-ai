@@ -12,6 +12,7 @@ import { FitScoreSection } from "./fit-score-section";
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { RiskIndicatorDisplay } from "./risk-indicator-display";
 import { SavedOpportunityControl } from "./saved-opportunity-control";
+import { AIAnalysisSection } from "./ai-analysis-section";
 
 function DetailSection({
   id,
@@ -141,7 +142,7 @@ export function OpportunityDetail({
             <EvidenceSection evidence={evidence} titleId={titleId} />
 
             <DetailSection id={`${titleId}-analysis`} title="AI Analysis">
-              <NotAvailable>AI Analysis belum tersedia.</NotAvailable>
+              <AIAnalysisSection opportunityId={item.id} />
             </DetailSection>
 
             <DetailSection id={`${titleId}-roadmap`} title="Roadmap">

@@ -213,7 +213,8 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain("Bukti terbatas");
     expect(markup).toContain("Keterbatasan sumber");
     expect(markup).toContain("Cakupan hanya beberapa kota.");
-    expect(markup).toContain("AI Analysis belum tersedia.");
+    expect(markup).toContain("Memuat AI Analysis");
+    expect(markup).toContain("Generate AI Analysis");
     expect(markup).toContain("Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.");
     expect(markup.match(/Belum dicantumkan\./gu)).toHaveLength(3);
     expect(markup).not.toContain("href=\"/opportunities/save");
