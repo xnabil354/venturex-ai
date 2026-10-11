@@ -25,6 +25,8 @@ describe("SavedOpportunitiesList", () => {
     expect(markup).toContain("Menu minuman");
     expect(markup).toContain("Trend eligible");
     expect(markup).toContain('href="/opportunities/60000000-0000-4000-8000-000000000001"');
+    expect(markup).toContain("Pilih untuk perbandingan");
+    expect(markup).toContain("Bandingkan (0/3)");
   });
 
   it("shows an honest empty state with a Finder link", () => {

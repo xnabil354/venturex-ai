@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import { Button, Card, EmptyState, PageContainer } from "@/components/ui";
@@ -7,6 +9,7 @@ import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-s
 import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { RiskIndicatorDisplay } from "./risk-indicator-display";
+import { OpportunityComparisonPanel, useOpportunityCompare } from "./opportunity-comparison";
 
 function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" }) {
   const copy = status === "ERROR"
@@ -67,6 +70,7 @@ export function OpportunityFinder({
   readonly scoreByOpportunityId: Readonly<Record<string, OpportunityScoreDisplayState>>;
   readonly riskByOpportunityId: Readonly<Record<string, RiskAssessmentDisplayState>>;
 }) {
+  const compareState = useOpportunityCompare();
   const catalog = result.status === "AVAILABLE" ||
     result.status === "EMPTY" ||
     result.status === "INVALID_CATEGORY"
@@ -118,6 +122,18 @@ export function OpportunityFinder({
                         </p>
                       </header>
 
+                      <label className="flex min-h-button w-fit items-center gap-8 text-body-sm text-ink-charcoal">
+                        <input
+                          aria-label={`Pilih ${item.name} untuk perbandingan`}
+                          checked={compareState.selected.some(({ id }) => id === item.id)}
+                          className="size-16 accent-royal-violet"
+                          disabled={compareState.loading}
+                          onChange={() => compareState.toggle({ id: item.id, name: item.name })}
+                          type="checkbox"
+                        />
+                        Pilih untuk perbandingan
+                      </label>
+
                       <section aria-label={`Indikator untuk ${item.name}`} className="grid gap-8 border-t border-soft-mist pt-12 sm:grid-cols-3">
                         <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Opportunity Score</span>
@@ -147,6 +163,8 @@ export function OpportunityFinder({
                 </li>
               ))}
             </ul>
+
+            <OpportunityComparisonPanel compareState={compareState} />
 
             <nav aria-label="Navigasi halaman katalog peluang" className="flex flex-wrap items-center justify-between gap-12 border-t border-soft-mist pt-16">
               {result.page > 1 ? (

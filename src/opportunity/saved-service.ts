@@ -11,7 +11,8 @@ import {
 import type { OpportunityListItemDto } from "./dto";
 import { opportunityIdSchema, type OpportunityRecord } from "./domain";
 import { toOpportunityListItem } from "./dto";
-import type { OpportunitySaveState, SavedOpportunityListResult } from "./saved-dto";
+import type { OpportunitySaveState, SavedOpportunityListResult, SavedOpportunityPageQuery, SavedOpportunityPageResult, SavedOpportunityWriteResult } from "./saved-dto";
+import { savedOpportunityPageQuerySchema } from "./saved-dto";
 import { SavedOpportunityRepository, type SavedOpportunityRepositoryPort } from "./saved-repository";
 
 export class SavedOpportunityUnauthenticatedError extends Error {
@@ -36,6 +37,11 @@ export class SavedOpportunityEligibilityError extends Error {
   constructor() {
     super("The saved Opportunity repository returned an ineligible record.");
   }
+}
+
+export class SavedOpportunityInvalidQueryError extends Error {
+  override readonly name = "SavedOpportunityInvalidQueryError";
+  constructor() { super("Saved Opportunity pagination or sorting is invalid."); }
 }
 
 export type SavedOpportunityServiceDependencies = {
@@ -69,6 +75,37 @@ export class SavedOpportunityService {
       : { status: "EMPTY", items: [] };
   }
 
+  async listPageForCurrentUser(queryInput: unknown): Promise<SavedOpportunityPageResult> {
+    const actor = await this.getActor();
+    const parsed = savedOpportunityPageQuerySchema.safeParse(queryInput);
+    if (!parsed.success) throw new SavedOpportunityInvalidQueryError();
+
+    const query: SavedOpportunityPageQuery = parsed.data;
+    const totalCount = await this.repository.countVisibleForUser(actor.userId, actor.userType);
+    const totalPages = Math.max(1, Math.ceil(totalCount / query.pageSize));
+    const page = Math.min(query.page, totalPages);
+    const records = totalCount === 0
+      ? []
+      : await this.repository.listVisiblePageForUser(actor.userId, actor.userType, {
+          limit: query.pageSize,
+          offset: (page - 1) * query.pageSize,
+          sort: query.sort,
+          order: query.order.toUpperCase() as "ASC" | "DESC",
+        });
+    this.assertEligible(records, actor.userType);
+    const items: readonly OpportunityListItemDto[] = records.map(toOpportunityListItem);
+    return {
+      status: items.length > 0 ? "AVAILABLE" : "EMPTY",
+      items,
+      page,
+      pageSize: query.pageSize,
+      totalCount,
+      totalPages,
+      sort: query.sort,
+      order: query.order,
+    };
+  }
+
   async getSaveState(idInput: unknown): Promise<OpportunitySaveState | null> {
     const actor = await this.getActor();
     const parsedId = opportunityIdSchema.safeParse(idInput);
@@ -90,6 +127,13 @@ export class SavedOpportunityService {
     return shouldSave
       ? this.repository.saveVisibleForUser(actor.userId, actor.userType, parsedId.data)
       : this.repository.removeVisibleForUser(actor.userId, actor.userType, parsedId.data);
+  }
+
+  async saveForCurrentUser(idInput: unknown): Promise<SavedOpportunityWriteResult | null> {
+    const actor = await this.getActor();
+    const parsedId = opportunityIdSchema.safeParse(idInput);
+    if (!parsedId.success) return null;
+    return this.repository.saveVisibleForUserWithOutcome(actor.userId, actor.userType, parsedId.data);
   }
 
   private async getActor(): Promise<SavedOpportunityActor> {

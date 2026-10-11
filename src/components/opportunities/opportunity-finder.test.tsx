@@ -91,6 +91,9 @@ describe("OpportunityFinder", () => {
     expect(markup).toContain("Halaman 1 dari 2 · 12 peluang");
     expect(markup).toContain('href="/opportunities?page=2"');
     expect(markup).toContain('action="/opportunities" method="get"');
+    expect(markup).toContain("Pilih untuk perbandingan");
+    expect(markup).toContain("Bandingkan (0/3)");
+    expect(markup).toContain("Pilih setidaknya dua peluang dari daftar.");
     expect(markup).toContain('name="category"');
     expect(markup).toContain('<option value="SNACKS">Camilan</option>');
     expect(markup).not.toContain('name="page"');

@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
 
 import { Card, EmptyState, PageContainer } from "@/components/ui";
 import type { SavedOpportunityListResult } from "@/opportunity/saved-dto";
+import { OpportunityComparisonPanel, useOpportunityCompare } from "./opportunity-comparison";
 
 export function SavedOpportunitiesList({
   result,
 }: {
   readonly result: SavedOpportunityListResult;
 }) {
+  const compareState = useOpportunityCompare();
   return (
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
@@ -68,6 +72,17 @@ export function SavedOpportunitiesList({
                     <p className="wrap-anywhere text-body-sm text-stone-gray">
                       Tren terkait: {item.relatedTrend.title}
                     </p>
+                    <label className="flex min-h-button w-fit items-center gap-8 text-body-sm text-ink-charcoal">
+                      <input
+                        aria-label={`Pilih ${item.name} untuk perbandingan`}
+                        checked={compareState.selected.some(({ id }) => id === item.id)}
+                        className="size-16 accent-royal-violet"
+                        disabled={compareState.loading}
+                        onChange={() => compareState.toggle({ id: item.id, name: item.name })}
+                        type="checkbox"
+                      />
+                      Pilih untuk perbandingan
+                    </label>
                     <Link
                       aria-label={`Lihat detail ${item.name}`}
                       className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet hover:underline"
@@ -81,6 +96,7 @@ export function SavedOpportunitiesList({
             ))}
           </ul>
         )}
+        {result.status === "AVAILABLE" ? <OpportunityComparisonPanel compareState={compareState} /> : null}
       </div>
     </PageContainer>
   );
