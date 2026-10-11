@@ -8,6 +8,10 @@ import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import { OpportunityService } from "@/opportunity/service";
 import { SavedOpportunityService } from "@/opportunity/saved-service";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
+import {
+  OpportunityScoreService,
+  type OpportunityScoreDisplayState,
+} from "@/scoring/opportunity-score-service";
 
 export default async function OpportunityDetailPage({
   params,
@@ -27,6 +31,20 @@ export default async function OpportunityDetailPage({
     currentUserResolver: async () => user,
   }).getDetail(id);
   if (!item) notFound();
+
+  let scoreResult: Awaited<ReturnType<OpportunityScoreService["calculateForOpportunity"]>> = null;
+  let scoreFailed = false;
+  try {
+    scoreResult = await new OpportunityScoreService({
+      currentUserResolver: async () => user,
+    }).calculateForOpportunity(id);
+  } catch {
+    scoreFailed = true;
+  }
+  if (!scoreFailed && scoreResult === null) return notFound();
+  const opportunityScore: OpportunityScoreDisplayState = scoreFailed || !scoreResult
+    ? { status: "ERROR" }
+    : scoreResult;
 
   let evidence: OpportunityEvidenceState | null;
   try {
@@ -48,5 +66,5 @@ export default async function OpportunityDetailPage({
   }
   if (!saveState) notFound();
 
-  return <OpportunityDetail evidence={evidence} item={item} saveState={saveState} />;
+  return <OpportunityDetail evidence={evidence} item={item} opportunityScore={opportunityScore} saveState={saveState} />;
 }

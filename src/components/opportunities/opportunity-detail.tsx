@@ -5,7 +5,9 @@ import { Card, PageContainer } from "@/components/ui";
 import type { OpportunityDetailDto } from "@/opportunity/dto";
 import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
 import { FitScoreSection } from "./fit-score-section";
+import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { SavedOpportunityControl } from "./saved-opportunity-control";
 
 function DetailSection({
@@ -34,10 +36,12 @@ function NotAvailable({ children }: { readonly children: ReactNode }) {
 export function OpportunityDetail({
   evidence,
   item,
+  opportunityScore,
   saveState,
 }: {
   readonly evidence: OpportunityEvidenceState;
   readonly item: OpportunityDetailDto;
+  readonly opportunityScore: OpportunityScoreDisplayState;
   readonly saveState: OpportunitySaveState;
 }) {
   const titleId = `opportunity-detail-${item.id}`;
@@ -112,7 +116,7 @@ export function OpportunityDetail({
               <dl className="grid gap-12 lg:grid-cols-3">
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Opportunity Score</dt>
-                  <dd className="text-body-sm text-stone-gray">Data belum cukup</dd>
+                  <dd className="min-w-0"><OpportunityScoreDisplay result={opportunityScore} /></dd>
                 </div>
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Fit Score</dt>

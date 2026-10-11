@@ -10,6 +10,8 @@ import OpportunityDetailNotFound from "@/app/(app)/opportunities/[id]/not-found"
 import type { OpportunityDetailDto } from "@/opportunity/dto";
 import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
+import { OPPORTUNITY_SCORE_COMPONENTS } from "@/scoring/opportunity-score";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
 import { OpportunityDetail } from "./opportunity-detail";
 
 const item: OpportunityDetailDto = {
@@ -40,14 +42,36 @@ const completeEvidence: OpportunityEvidenceState = {
   limited: false,
   items: [completeEvidenceItem, { ...completeEvidenceItem, sourceName: "Sumber kedua" }],
 };
+const insufficientScore: OpportunityScoreDisplayState = {
+  status: "INSUFFICIENT_DATA",
+  modelType: "OPPORTUNITY_SCORE",
+  modelVersion: null,
+  score: null,
+  breakdown: OPPORTUNITY_SCORE_COMPONENTS.map((component) => ({
+    component,
+    normalizedValue: null,
+    weight: null,
+    weightedContribution: null,
+  })),
+  missingComponents: OPPORTUNITY_SCORE_COMPONENTS,
+  invalidComponents: [],
+  reason: "CONFIGURATION_UNAVAILABLE",
+  sources: Object.fromEntries(OPPORTUNITY_SCORE_COMPONENTS.map((component) => [component, {
+    status: "UNAVAILABLE",
+    source: `Sumber ${component}`,
+    explanation: `Belum tersedia: ${component}`,
+  }])) as Extract<OpportunityScoreDisplayState, { readonly status: "INSUFFICIENT_DATA" }> ["sources"],
+  disclaimer: "Opportunity Score bukan jaminan keberhasilan bisnis.",
+};
 
 function render(
   value: OpportunityDetailDto,
   evidence: OpportunityEvidenceState = completeEvidence,
   saveState: OpportunitySaveState = { status: "AVAILABLE", saved: false },
+  opportunityScore: OpportunityScoreDisplayState = insufficientScore,
 ): string {
   return renderToStaticMarkup(
-    <OpportunityDetail evidence={evidence} item={value} saveState={saveState} />,
+    <OpportunityDetail evidence={evidence} item={value} opportunityScore={opportunityScore} saveState={saveState} />,
   ).replace(/\s+/gu, " ");
 }
 
