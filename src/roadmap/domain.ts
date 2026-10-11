@@ -3,6 +3,9 @@ import { z } from "zod";
 export const ROADMAP_TYPE = "STARTUP" as const;
 export const ROADMAP_GENERATION_VERSION = "startup-validation-v1" as const;
 export const ROADMAP_GENERATION_METHOD = "MVP_STRUCTURED_VALIDATION" as const;
+export const GROWTH_ROADMAP_GENERATION_VERSION = "growth-roadmap-v1" as const;
+export const GROWTH_ROADMAP_GENERATION_METHOD = "MVP_STRUCTURED_GROWTH_PLANNING" as const;
+export const GROWTH_ROADMAP_TYPE = "GROWTH" as const;
 
 export const ROADMAP_STAGES = [
   "Market Validation",
@@ -12,6 +15,16 @@ export const ROADMAP_STAGES = [
   "Evaluation",
   "Go / Revise / Stop",
 ] as const;
+
+export const GROWTH_ROADMAP_STAGES = [
+  "Customer Validation",
+  "Product Prototype",
+  "Limited Test Selling",
+  "Margin / Feedback Review",
+  "Rollout / Revise / Stop",
+] as const;
+
+export const ALL_ROADMAP_STAGES = [...ROADMAP_STAGES, ...GROWTH_ROADMAP_STAGES] as const;
 
 export const roadmapIdSchema = z.string().uuid();
 export const roadmapInputSchema = z.object({
@@ -30,7 +43,7 @@ export const roadmapQuerySchema = z.object({
 
 export const roadmapStepSchema = z.object({
   sequence: z.number().int().min(1).max(6),
-  stage: z.enum(ROADMAP_STAGES),
+  stage: z.enum(ALL_ROADMAP_STAGES),
   action: z.string().trim().min(12).max(700),
   objective: z.string().trim().min(12).max(700),
   timeline: z.string().trim().min(1).max(120),
@@ -41,7 +54,19 @@ export type RoadmapStepRecord = z.infer<typeof roadmapStepSchema> & { readonly i
 
 export type RoadmapContextMode = "FULL_CONTEXT" | "LIMITED_CONTEXT";
 
-export type RoadmapGenerationContext = {
+export type RoadmapEvidenceContext = readonly {
+  readonly id: string;
+  readonly sourceName: string;
+  readonly sourceReference: string | null;
+}[];
+
+export type RoadmapAvailableSignals = {
+  readonly opportunityScore: number | null;
+  readonly fitScore: number | null;
+  readonly riskLevel: "LOW" | "MEDIUM" | "HIGH" | null;
+};
+
+export type StartupRoadmapGenerationContext = {
   readonly version: typeof ROADMAP_GENERATION_VERSION;
   readonly method: typeof ROADMAP_GENERATION_METHOD;
   readonly contextMode: RoadmapContextMode;
@@ -65,20 +90,41 @@ export type RoadmapGenerationContext = {
     readonly trendTitle: string;
     readonly trendSummary: string;
   };
-  readonly evidence: readonly {
-    readonly id: string;
-    readonly sourceName: string;
-    readonly sourceReference: string | null;
-  }[];
-  readonly availableSignals: {
-    readonly opportunityScore: number | null;
-    readonly fitScore: number | null;
-    readonly riskLevel: "LOW" | "MEDIUM" | "HIGH" | null;
-  };
+  readonly evidence: RoadmapEvidenceContext;
+  readonly availableSignals: RoadmapAvailableSignals;
   readonly unavailableInputs: readonly string[];
   readonly assumptions: readonly string[];
   readonly limitations: readonly string[];
 };
+
+export type GrowthRoadmapGenerationContext = {
+  readonly version: typeof GROWTH_ROADMAP_GENERATION_VERSION;
+  readonly method: typeof GROWTH_ROADMAP_GENERATION_METHOD;
+  readonly contextMode: RoadmapContextMode;
+  readonly profileVersion: number;
+  readonly profileInputs: {
+    readonly businessName: string;
+    readonly businessCategory: string;
+    readonly location: string;
+    readonly averagePriceRange: { readonly min: number; readonly max: number; readonly currency: "IDR" };
+    readonly products: readonly {
+      readonly name: string;
+      readonly category: string | null;
+      readonly listedPrice: number | null;
+    }[];
+    readonly customerSegments: readonly string[];
+    readonly salesChannels: readonly string[];
+    readonly businessDescription: string | null;
+  };
+  readonly opportunity: StartupRoadmapGenerationContext["opportunity"];
+  readonly evidence: RoadmapEvidenceContext;
+  readonly availableSignals: RoadmapAvailableSignals;
+  readonly unavailableInputs: readonly string[];
+  readonly assumptions: readonly string[];
+  readonly limitations: readonly string[];
+};
+
+export type RoadmapGenerationContext = StartupRoadmapGenerationContext | GrowthRoadmapGenerationContext;
 
 export type RoadmapListItem = {
   readonly id: string;
@@ -87,10 +133,15 @@ export type RoadmapListItem = {
   readonly opportunity: { readonly id: string; readonly name: string };
 };
 
-export type RoadmapDetail = RoadmapListItem & {
-  readonly generationContext: RoadmapGenerationContext;
+export type RoadmapDetail = (RoadmapListItem & {
+  readonly roadmapType: "STARTUP";
+  readonly generationContext: StartupRoadmapGenerationContext;
   readonly steps: readonly RoadmapStepRecord[];
-};
+}) | (RoadmapListItem & {
+  readonly roadmapType: "GROWTH";
+  readonly generationContext: GrowthRoadmapGenerationContext;
+  readonly steps: readonly RoadmapStepRecord[];
+});
 
 export type RoadmapPage = {
   readonly items: readonly RoadmapListItem[];
@@ -111,6 +162,24 @@ export type RoadmapProfileContext = {
   readonly preferredProductType: string | null;
   readonly businessObjective: string | null;
   readonly interests: readonly string[];
+  readonly customerSegments: readonly string[];
+  readonly salesChannels: readonly string[];
+};
+
+export type GrowthRoadmapProfileContext = {
+  readonly profileVersion: number;
+  readonly businessName: string;
+  readonly businessCategory: string;
+  readonly locationText: string;
+  readonly countryCode: string;
+  readonly averagePriceMin: number;
+  readonly averagePriceMax: number;
+  readonly businessDescription: string | null;
+  readonly products: readonly {
+    readonly name: string;
+    readonly category: string | null;
+    readonly price: number | null;
+  }[];
   readonly customerSegments: readonly string[];
   readonly salesChannels: readonly string[];
 };

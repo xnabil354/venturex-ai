@@ -6,9 +6,9 @@ import {
   ROADMAP_STAGES,
   roadmapStepSchema,
   type RoadmapAnalysisContext,
-  type RoadmapGenerationContext,
   type RoadmapOpportunityContext,
   type RoadmapProfileContext,
+  type StartupRoadmapGenerationContext,
 } from "./domain";
 
 const profileSchema = z.object({
@@ -54,7 +54,7 @@ export function generateStartupRoadmap(input: {
   readonly profile: RoadmapProfileContext;
   readonly opportunity: RoadmapOpportunityContext;
   readonly analysis: RoadmapAnalysisContext | null;
-}): { readonly generationContext: RoadmapGenerationContext; readonly steps: ReturnType<typeof roadmapStepSchema.parse>[] } {
+}): { readonly generationContext: StartupRoadmapGenerationContext; readonly steps: ReturnType<typeof roadmapStepSchema.parse>[] } {
   const profile = profileSchema.safeParse(input.profile);
   const opportunity = input.opportunity;
   if (
@@ -145,7 +145,7 @@ export function generateStartupRoadmap(input: {
     },
   ].map((step) => roadmapStepSchema.parse(step));
 
-  const generationContext: RoadmapGenerationContext = {
+  const generationContext: StartupRoadmapGenerationContext = {
     version: ROADMAP_GENERATION_VERSION,
     method: ROADMAP_GENERATION_METHOD,
     contextMode,

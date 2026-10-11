@@ -391,9 +391,7 @@ export class DashboardQueryService {
       this.loadTrendState(currentUser, userType),
       this.loadSavedOpportunityState(currentUser),
       this.loadOpportunityState(currentUser),
-      userType === USER_TYPES.ENTREPRENEUR
-        ? this.loadRoadmapState(currentUser)
-        : Promise.resolve(null),
+      this.loadRoadmapState(currentUser),
     ]);
 
     return {
@@ -403,17 +401,18 @@ export class DashboardQueryService {
         trends: trendState,
         savedOpportunities: savedOpportunityState,
         opportunities: opportunityState,
-        ...(roadmapState ? { roadmap: roadmapState } : {}),
+        roadmap: roadmapState,
       },
     };
   }
 
   private async loadRoadmapState(currentUser: SafeUser): Promise<{ readonly status: "AVAILABLE" | "EMPTY" | "ERROR" }> {
+    const type = currentUser.userType === USER_TYPES.ENTREPRENEUR ? "STARTUP" : "GROWTH";
     try {
       const result = await this.roadmapServiceFactory(currentUser).listForCurrentUser({
         page: 1,
         pageSize: 1,
-        type: "STARTUP",
+        type,
       });
       return { status: result.totalCount > 0 ? DASHBOARD_MODULE_STATUSES.AVAILABLE : DASHBOARD_MODULE_STATUSES.EMPTY };
     } catch {

@@ -133,7 +133,7 @@ describe("DashboardPage", () => {
     expect(markup).not.toContain("profileId");
   });
 
-  it("renders the UMKM summary with a product count and no product collection", () => {
+  it("renders the UMKM summary with a product count and Growth Roadmap access", () => {
     const markup = renderDashboard(businessDashboard);
 
     expect(markup).toContain("Ringkasan bisnis Kedai Pagi");
@@ -144,16 +144,22 @@ describe("DashboardPage", () => {
     expect(markup).toContain("Jelajahi Peluang");
     expect(markup).not.toContain("productId");
     expect(markup).not.toContain("passwordHash");
-    expect(markup).not.toContain("Buka Roadmap");
+    expect(markup).toContain("Buka Roadmap");
   });
 
-  it("links the Entrepreneur roadmap module to saved Startup Roadmaps", () => {
+  it("links both account types to their saved Roadmaps", () => {
     const markup = renderDashboard({
       ...entrepreneurDashboard,
       modules: { ...entrepreneurDashboard.modules, roadmap: { status: "AVAILABLE" } },
     });
     expect(markup).toContain('href="/roadmaps"');
     expect(markup).toContain("Buka Roadmap");
+    const businessMarkup = renderDashboard({
+      ...businessDashboard,
+      modules: { ...businessDashboard.modules, roadmap: { status: "AVAILABLE" } },
+    });
+    expect(businessMarkup).toContain('href="/roadmaps"');
+    expect(businessMarkup).toContain("Buka Roadmap");
   });
 
   it("confirms a saved profile update alongside the current profile summary", () => {

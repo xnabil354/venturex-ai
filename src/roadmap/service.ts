@@ -4,8 +4,9 @@ import type { SafeUser, UserId } from "../auth/user-types";
 import { ONBOARDING_STATUSES, USER_TYPES } from "../auth/user-types";
 import { getCurrentUser } from "../auth/current-user";
 import { getSequelize } from "../db/sequelize";
+import { generateGrowthRoadmap } from "./growth-generator";
 import { generateStartupRoadmap, RoadmapInsufficientDataError } from "./generator";
-import type { RoadmapDetail, RoadmapPage, RoadmapProfileContext } from "./domain";
+import type { GrowthRoadmapProfileContext, RoadmapDetail, RoadmapPage, RoadmapProfileContext } from "./domain";
 import { RoadmapRepository, type RoadmapListFilter, type RoadmapRepositoryPort } from "./repository";
 import type { Transaction } from "sequelize";
 
@@ -38,6 +39,28 @@ function validProfile(profile: RoadmapProfileContext | null): profile is Roadmap
   );
 }
 
+function validGrowthProfile(profile: GrowthRoadmapProfileContext | null): profile is GrowthRoadmapProfileContext {
+  return Boolean(
+    profile && profile.countryCode === "ID" && profile.businessName.trim() &&
+    profile.businessCategory.trim() && profile.locationText.trim() &&
+    Number.isSafeInteger(profile.averagePriceMin) && profile.averagePriceMin >= 0 &&
+    Number.isSafeInteger(profile.averagePriceMax) && profile.averagePriceMax >= profile.averagePriceMin &&
+    profile.products.length >= 1 && profile.products.length <= 20 && profile.products.every((product) =>
+      product.name.trim() && (product.price === null || (Number.isSafeInteger(product.price) && product.price >= 0))
+    ) && profile.customerSegments.length > 0 && profile.salesChannels.length > 0
+  );
+}
+
+function requireStartupProfile(profile: RoadmapProfileContext | null): RoadmapProfileContext {
+  if (!validProfile(profile)) throw new RoadmapProfileIncompleteError();
+  return profile;
+}
+
+function requireGrowthProfile(profile: GrowthRoadmapProfileContext | null): GrowthRoadmapProfileContext {
+  if (!validGrowthProfile(profile)) throw new RoadmapProfileIncompleteError();
+  return profile;
+}
+
 export class StartupRoadmapService {
   private readonly currentUserResolver: () => Promise<SafeUser | null>;
   private readonly repository: RoadmapRepositoryPort;
@@ -54,27 +77,41 @@ export class StartupRoadmapService {
     if (user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || user.userType === null) {
       throw new RoadmapUserIncompleteError();
     }
-    if (user.userType !== USER_TYPES.ENTREPRENEUR) throw new RoadmapForbiddenError();
+    if (user.userType !== USER_TYPES.ENTREPRENEUR && user.userType !== USER_TYPES.UMKM_EXISTING) {
+      throw new RoadmapForbiddenError();
+    }
 
     return this.transactionRunner(async (transaction) => {
-      const [profile, opportunity] = await Promise.all([
-        this.repository.loadProfileContext(user.id as UserId, transaction),
+      const [profile, growthProfile, opportunity] = await Promise.all([
+        user.userType === USER_TYPES.ENTREPRENEUR
+          ? this.repository.loadProfileContext(user.id as UserId, transaction)
+          : Promise.resolve(null),
+        user.userType === USER_TYPES.UMKM_EXISTING
+          ? this.repository.loadGrowthProfileContext(user.id as UserId, transaction)
+          : Promise.resolve(null),
         this.repository.loadOpportunityContext(input.opportunityId, user.userType!, transaction),
       ]);
-      if (!validProfile(profile)) throw new RoadmapProfileIncompleteError();
+      const generationProfile = user.userType === USER_TYPES.ENTREPRENEUR
+        ? { userType: USER_TYPES.ENTREPRENEUR, profile: requireStartupProfile(profile) }
+        : { userType: USER_TYPES.UMKM_EXISTING, profile: requireGrowthProfile(growthProfile) };
       if (!opportunity) throw new RoadmapOpportunityNotFoundError();
 
       const analysis = await this.repository.findAnalysis(user.id as UserId, opportunity.id, input.analysisId, transaction);
       if (input.analysisId && !analysis) throw new RoadmapAnalysisNotFoundError();
-      let generated: ReturnType<typeof generateStartupRoadmap>;
+      let generated: ReturnType<typeof generateStartupRoadmap> | ReturnType<typeof generateGrowthRoadmap>;
       try {
-        generated = generateStartupRoadmap({ profile, opportunity, analysis });
+        if (generationProfile.userType === USER_TYPES.ENTREPRENEUR) {
+          generated = generateStartupRoadmap({ profile: generationProfile.profile, opportunity, analysis });
+        } else {
+          generated = generateGrowthRoadmap({ profile: generationProfile.profile, opportunity, analysis });
+        }
       } catch (error) {
         if (error instanceof RoadmapInsufficientDataError) throw new RoadmapInsufficientContextError();
         throw error;
       }
       return this.repository.createWithSteps({
         userId: user.id as UserId,
+        roadmapType: user.userType === USER_TYPES.ENTREPRENEUR ? "STARTUP" : "GROWTH",
         opportunityId: opportunity.id,
         analysisId: analysis?.id ?? null,
         generationContext: generated.generationContext,

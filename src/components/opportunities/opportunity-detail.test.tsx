@@ -6,8 +6,8 @@ vi.mock("@/opportunity/saved-actions", () => ({
 }));
 
 vi.mock("@/components/roadmaps/startup-roadmap-generate-button", () => ({
-  StartupRoadmapGenerateButton: ({ opportunityId }: { readonly opportunityId: string }) => (
-    <button type="button">Buat Startup Roadmap {opportunityId}</button>
+  StartupRoadmapGenerateButton: ({ opportunityId, roadmapType }: { readonly opportunityId: string; readonly roadmapType: "STARTUP" | "GROWTH" }) => (
+    <button type="button">Buat {roadmapType === "GROWTH" ? "Growth" : "Startup"} Roadmap {opportunityId}</button>
   ),
 }));
 
@@ -89,6 +89,7 @@ function render(
   opportunityScore: OpportunityScoreDisplayState = insufficientScore,
   riskAssessment: RiskAssessmentDisplayState = insufficientRisk,
   isEntrepreneur = false,
+  isUmkmExisting = false,
 ): string {
   return renderToStaticMarkup(
     <OpportunityDetail
@@ -98,6 +99,7 @@ function render(
       riskAssessment={riskAssessment}
       saveState={saveState}
       isEntrepreneur={isEntrepreneur}
+      isUmkmExisting={isUmkmExisting}
     />,
   ).replace(/\s+/gu, " ");
 }
@@ -171,13 +173,15 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain(`value="${item.id}"`);
   });
 
-  it("offers generation only to the eligible Entrepreneur interface", () => {
+  it("offers the role-specific generator only to completed account types", () => {
     const entrepreneur = render(item, completeEvidence, { status: "AVAILABLE", saved: false }, insufficientScore, insufficientRisk, true);
-    const umkm = render(item);
+    const umkm = render(item, completeEvidence, { status: "AVAILABLE", saved: false }, insufficientScore, insufficientRisk, false, true);
+    const unavailable = render(item);
 
     expect(entrepreneur).toContain(`Buat Startup Roadmap ${item.id}`);
-    expect(umkm).toContain("Startup Roadmap tersedia untuk Calon Pengusaha.");
-    expect(umkm).not.toContain("Buat Startup Roadmap");
+    expect(umkm).toContain(`Buat Growth Roadmap ${item.id}`);
+    expect(unavailable).toContain("Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.");
+    expect(unavailable).not.toContain("Buat Startup Roadmap");
   });
 
   it("keeps detail visible and reports a safe status when saved-state loading fails", () => {
@@ -210,7 +214,7 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain("Keterbatasan sumber");
     expect(markup).toContain("Cakupan hanya beberapa kota.");
     expect(markup).toContain("AI Analysis belum tersedia.");
-    expect(markup).toContain("Startup Roadmap tersedia untuk Calon Pengusaha.");
+    expect(markup).toContain("Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.");
     expect(markup.match(/Belum dicantumkan\./gu)).toHaveLength(3);
     expect(markup).not.toContain("href=\"/opportunities/save");
     expect(markup).not.toContain("Evidence tersedia");

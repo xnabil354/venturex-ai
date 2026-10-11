@@ -3,15 +3,19 @@ import Link from "next/link";
 import type { RoadmapDetail } from "@/roadmap/domain";
 import { Card, PageContainer } from "@/components/ui";
 
+const rupiah = new Intl.NumberFormat("id-ID");
+
 export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail }) {
   const context = roadmap.generationContext;
+  const label = roadmap.roadmapType === "GROWTH" ? "Growth Roadmap" : "Startup Roadmap";
+
   return (
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
         <Link className="w-fit text-body-sm font-w540 text-royal-violet underline underline-offset-4" href="/roadmaps">Kembali ke Roadmap</Link>
         <header className="grid gap-8">
           <p className="text-label-bold text-royal-violet">{context.method.replaceAll("_", " ")}</p>
-          <h1 className="text-heading-lg font-w460 text-ink-charcoal sm:text-display">Startup Roadmap</h1>
+          <h1 className="text-heading-lg font-w460 text-ink-charcoal sm:text-display">{label}</h1>
           <p className="text-body text-ink-charcoal">Opportunity: <Link className="text-royal-violet underline underline-offset-4" href={`/opportunities/${roadmap.opportunity.id}`}>{roadmap.opportunity.name}</Link></p>
           <p className="max-w-[76ch] text-body-sm leading-body-sm text-stone-gray">Rencana ini dibuat dengan template deterministik {context.version}; hasilnya bukan prediksi atau rekomendasi otomatis.</p>
         </header>
@@ -32,8 +36,7 @@ export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail
         </ol>
         <Card className="grid gap-16 p-16 sm:p-24">
           <h2 className="text-label-bold text-ink-charcoal">Konteks dan keterbatasan</h2>
-          <p className="text-body-sm text-stone-gray">Profil yang digunakan: {context.profileInputs.location}; {context.profileInputs.experienceLevel}; {context.profileInputs.timeCommitment}; anggaran profil Rp {new Intl.NumberFormat("id-ID").format(context.profileInputs.budgetRange.min)}–Rp {new Intl.NumberFormat("id-ID").format(context.profileInputs.budgetRange.max)}.</p>
-          <p className="text-body-sm text-stone-gray">Segmen: {context.profileInputs.customerSegments.join(", ")}; channel: {context.profileInputs.salesChannels.join(", ")}; minat: {context.profileInputs.interests.join(", ")}.</p>
+          <RoadmapProfileSnapshot roadmap={roadmap} />
           <p className="text-body-sm text-stone-gray">Mode konteks: {context.contextMode === "LIMITED_CONTEXT" ? "Terbatas" : "Lengkap"}</p>
           {context.unavailableInputs.length > 0 ? <p className="text-body-sm text-stone-gray">Belum tersedia: {context.unavailableInputs.join(", ")}.</p> : <p className="text-body-sm text-stone-gray">Score dan Risk tercatat tersedia sebagai konteks tambahan, bukan prediksi.</p>}
           <p className="text-body-sm text-stone-gray">Sinyal tersimpan — Opportunity Score: {context.availableSignals.opportunityScore ?? "Tidak tersedia"}; Fit Score: {context.availableSignals.fitScore ?? "Tidak tersedia"}; Risk: {context.availableSignals.riskLevel ?? "Tidak tersedia"}.</p>
@@ -43,5 +46,28 @@ export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail
         </Card>
       </div>
     </PageContainer>
+  );
+}
+
+function RoadmapProfileSnapshot({ roadmap }: { readonly roadmap: RoadmapDetail }) {
+  if (roadmap.roadmapType === "GROWTH") {
+    const profile = roadmap.generationContext.profileInputs;
+    return (
+      <>
+        <p className="text-body-sm text-stone-gray">Profil bisnis yang digunakan: {profile.businessName}; {profile.businessCategory}; {profile.location}.</p>
+        <p className="text-body-sm text-stone-gray">Rentang harga rata-rata pada profil: Rp {rupiah.format(profile.averagePriceRange.min)}–Rp {rupiah.format(profile.averagePriceRange.max)}. Rentang ini bukan biaya atau hasil margin.</p>
+        <p className="text-body-sm text-stone-gray">Produk aktif: {profile.products.map((product) => `${product.name}${product.listedPrice === null ? " (harga tidak dicantumkan)" : ` (harga tercatat Rp ${rupiah.format(product.listedPrice)})`}`).join(", ")}.</p>
+        <p className="text-body-sm text-stone-gray">Segmen pelanggan: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}.</p>
+        {profile.businessDescription ? <p className="text-body-sm text-stone-gray">Deskripsi bisnis: {profile.businessDescription}</p> : null}
+      </>
+    );
+  }
+
+  const profile = roadmap.generationContext.profileInputs;
+  return (
+    <>
+      <p className="text-body-sm text-stone-gray">Profil yang digunakan: {profile.location}; {profile.experienceLevel}; {profile.timeCommitment}; anggaran profil Rp {rupiah.format(profile.budgetRange.min)}–Rp {rupiah.format(profile.budgetRange.max)}.</p>
+      <p className="text-body-sm text-stone-gray">Segmen: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}; minat: {profile.interests.join(", ")}.</p>
+    </>
   );
 }

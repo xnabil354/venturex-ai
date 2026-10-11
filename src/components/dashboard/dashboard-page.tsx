@@ -60,7 +60,7 @@ const businessModules = [
     title: "Peluang tersimpan",
   },
   {
-    description: "Growth Roadmap belum tersedia di aplikasi.",
+    description: "Lihat Growth Roadmap tersimpan atau mulai dari Opportunity yang memenuhi syarat.",
     key: "roadmap",
     title: "Growth Roadmap",
   },
@@ -139,7 +139,7 @@ function DashboardLayout({
                 key={module.key}
                 state={dashboard.modules[module.key]}
                 title={module.title}
-                {...(module.key === "roadmap" && dashboard.userType === USER_TYPES.ENTREPRENEUR
+                {...(module.key === "roadmap"
                   ? { href: "/roadmaps" }
                   : {})}
               />

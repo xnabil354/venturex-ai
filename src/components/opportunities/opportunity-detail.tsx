@@ -43,6 +43,7 @@ export function OpportunityDetail({
   riskAssessment,
   saveState,
   isEntrepreneur,
+  isUmkmExisting,
 }: {
   readonly evidence: OpportunityEvidenceState;
   readonly item: OpportunityDetailDto;
@@ -50,6 +51,7 @@ export function OpportunityDetail({
   readonly riskAssessment: RiskAssessmentDisplayState;
   readonly saveState: OpportunitySaveState;
   readonly isEntrepreneur?: boolean;
+  readonly isUmkmExisting?: boolean;
 }) {
   const titleId = `opportunity-detail-${item.id}`;
 
@@ -144,9 +146,11 @@ export function OpportunityDetail({
 
             <DetailSection id={`${titleId}-roadmap`} title="Roadmap">
               {isEntrepreneur ? (
-                <StartupRoadmapGenerateButton opportunityId={item.id} />
+                <StartupRoadmapGenerateButton opportunityId={item.id} roadmapType="STARTUP" />
+              ) : isUmkmExisting ? (
+                <StartupRoadmapGenerateButton opportunityId={item.id} roadmapType="GROWTH" />
               ) : (
-                <NotAvailable>Startup Roadmap tersedia untuk Calon Pengusaha. Growth Roadmap untuk UMKM akan tersedia pada tahap berikutnya.</NotAvailable>
+                <NotAvailable>Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.</NotAvailable>
               )}
             </DetailSection>
           </article>

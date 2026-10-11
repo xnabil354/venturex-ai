@@ -3,20 +3,23 @@ import Link from "next/link";
 import type { RoadmapPage } from "@/roadmap/domain";
 import { Card, PageContainer } from "@/components/ui";
 
-export function RoadmapList({ page }: { readonly page: RoadmapPage }) {
+export function RoadmapList({ page, roadmapType }: { readonly page: RoadmapPage; readonly roadmapType: "STARTUP" | "GROWTH" }) {
+  const roadmapLabel = roadmapType === "GROWTH" ? "Growth Roadmap" : "Startup Roadmap";
   return (
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
         <header className="grid gap-8">
-          <p className="text-label-bold text-royal-violet">Startup Roadmap</p>
+          <p className="text-label-bold text-royal-violet">{roadmapLabel}</p>
           <h1 className="text-heading-lg font-w460 text-ink-charcoal sm:text-display">Roadmap tersimpan</h1>
           <p className="max-w-[76ch] text-body-sm leading-body-sm text-stone-gray">
-            Roadmap membantu menyusun langkah validasi. Isi langkah bukan jaminan pasar atau keberhasilan usaha.
+            {roadmapType === "GROWTH"
+              ? "Roadmap membantu menyusun uji pertumbuhan untuk bisnis yang berjalan. Isinya bukan prediksi atau jaminan hasil usaha."
+              : "Roadmap membantu menyusun langkah validasi. Isi langkah bukan jaminan pasar atau keberhasilan usaha."}
           </p>
         </header>
         {page.items.length === 0 ? (
           <Card className="grid gap-8 p-20 sm:p-24">
-            <h2 className="text-label-bold text-ink-charcoal">Belum ada Startup Roadmap</h2>
+            <h2 className="text-label-bold text-ink-charcoal">Belum ada {roadmapLabel}</h2>
             <p className="text-body-sm leading-body-sm text-stone-gray">Buka Opportunity yang memenuhi syarat untuk membuat rencana validasi pertama.</p>
             <Link className="w-fit text-body-sm font-w540 text-royal-violet underline underline-offset-4" href="/opportunities">Jelajahi Opportunity</Link>
           </Card>

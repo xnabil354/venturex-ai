@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("../auth/current-user", () => ({ getCurrentUser: vi.fn() }));
 
 import { ONBOARDING_STATUSES, USER_TYPES, parseUserId, type SafeUser } from "../auth/user-types";
-import type { RoadmapAnalysisContext, RoadmapDetail, RoadmapOpportunityContext, RoadmapProfileContext } from "./domain";
+import type { GrowthRoadmapProfileContext, RoadmapAnalysisContext, RoadmapDetail, RoadmapOpportunityContext, RoadmapProfileContext } from "./domain";
 import {
   RoadmapAnalysisNotFoundError,
   RoadmapForbiddenError,
@@ -16,6 +16,7 @@ import {
   type RoadmapTransactionRunner,
 } from "./service";
 import type { RoadmapRepositoryPort } from "./repository";
+import { generateGrowthRoadmap } from "./growth-generator";
 import type { Transaction } from "sequelize";
 
 const userId = parseUserId("10000000-0000-4000-8000-000000000001");
@@ -47,6 +48,23 @@ const opportunity: RoadmapOpportunityContext = {
   trend: { id: "70000000-0000-4000-8000-000000000001", title: "Trend", signalSummary: "Ringkasan", signalDescription: "Deskripsi", lifecycleState: "PUBLISHED", affectedUserTypes: ["ENTREPRENEUR"] },
   evidence: [],
 };
+const growthProfile: GrowthRoadmapProfileContext = {
+  profileVersion: 2,
+  businessName: "Kedai Pagi",
+  businessCategory: "Minuman",
+  locationText: "Bandung",
+  countryCode: "ID",
+  averagePriceMin: 15_000,
+  averagePriceMax: 35_000,
+  businessDescription: null,
+  products: [{ name: "Kopi susu", category: "Minuman", price: 25_000 }],
+  customerSegments: ["Pekerja kantor"],
+  salesChannels: ["Gerai"],
+};
+const growthOpportunity: RoadmapOpportunityContext = {
+  ...opportunity,
+  trend: { ...opportunity.trend, affectedUserTypes: [USER_TYPES.UMKM_EXISTING] },
+};
 const detail: RoadmapDetail = {
   id: "50000000-0000-4000-8000-000000000001",
   roadmapType: "STARTUP",
@@ -67,12 +85,22 @@ const detail: RoadmapDetail = {
   },
   steps: [],
 };
+const growthGenerated = generateGrowthRoadmap({ profile: growthProfile, opportunity: growthOpportunity, analysis: null });
+const growthDetail: RoadmapDetail = {
+  id: "50000000-0000-4000-8000-000000000002",
+  roadmapType: "GROWTH",
+  createdAt: "2026-10-11T00:00:00.000Z",
+  opportunity: { id: opportunityId, name: growthOpportunity.name },
+  generationContext: growthGenerated.generationContext,
+  steps: growthGenerated.steps.map((step, index) => ({ ...step, id: `90000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}` })),
+};
 
 const entrepreneur: SafeUser = { id: userId, email: "owner@example.test", userType: USER_TYPES.ENTREPRENEUR, onboardingStatus: ONBOARDING_STATUSES.COMPLETED };
 
 function makeRepository(overrides: Partial<RoadmapRepositoryPort> = {}) {
   return {
     loadProfileContext: vi.fn(async () => profile),
+    loadGrowthProfileContext: vi.fn(async () => growthProfile),
     loadOpportunityContext: vi.fn(async () => opportunity),
     findAnalysis: vi.fn(async (_userId: typeof userId, _opportunityId: string, _analysisId: string | undefined): Promise<RoadmapAnalysisContext | null> => null),
     createWithSteps: vi.fn(async () => detail),
@@ -103,18 +131,54 @@ describe("StartupRoadmapService", () => {
     expect(createCall?.[0].steps).toHaveLength(6);
   });
 
-  it("blocks UMKM and unauthenticated callers before repository or transaction work", async () => {
+  it("blocks unauthenticated callers before repository or transaction work", async () => {
     const repository = makeRepository();
     let transactionRunCount = 0;
     const runner: RoadmapTransactionRunner = async <T>(callback: (tx: Transaction) => Promise<T>) => {
       transactionRunCount += 1;
       return callback(transaction);
     };
-    const umkm = { ...entrepreneur, userType: USER_TYPES.UMKM_EXISTING };
-    await expect(new StartupRoadmapService({ currentUserResolver: async () => umkm, repository, transactionRunner: runner }).generate({ opportunityId })).rejects.toBeInstanceOf(RoadmapForbiddenError);
     await expect(new StartupRoadmapService({ currentUserResolver: async () => null, repository, transactionRunner: runner }).generate({ opportunityId })).rejects.toBeInstanceOf(RoadmapUnauthenticatedError);
     expect(transactionRunCount).toBe(0);
     expect(repository.loadProfileContext).not.toHaveBeenCalled();
+  });
+
+  it("generates and transactionally persists five Growth stages for a completed UMKM profile", async () => {
+    const repository = makeRepository({
+      loadGrowthProfileContext: vi.fn(async () => growthProfile),
+      loadOpportunityContext: vi.fn(async () => growthOpportunity),
+      createWithSteps: vi.fn(async () => growthDetail),
+    });
+    const businessUser = { ...entrepreneur, userType: USER_TYPES.UMKM_EXISTING };
+    const service = new StartupRoadmapService({
+      currentUserResolver: async () => businessUser,
+      repository,
+      transactionRunner: async <T>(callback: (tx: Transaction) => Promise<T>) => callback(transaction),
+    });
+
+    await expect(service.generate({ opportunityId })).resolves.toEqual(growthDetail);
+    expect(repository.loadGrowthProfileContext).toHaveBeenCalledWith(userId, transaction);
+    expect(repository.loadProfileContext).not.toHaveBeenCalled();
+    expect(repository.loadOpportunityContext).toHaveBeenCalledWith(opportunityId, USER_TYPES.UMKM_EXISTING, transaction);
+    expect(repository.createWithSteps).toHaveBeenCalledWith(expect.objectContaining({
+      userId,
+      opportunityId,
+      roadmapType: "GROWTH",
+      steps: expect.arrayContaining([expect.objectContaining({ sequence: 5, stage: "Rollout / Revise / Stop" })]),
+    }), transaction);
+    expect(vi.mocked(repository.createWithSteps).mock.calls[0]?.[0].steps).toHaveLength(5);
+  });
+
+  it("rejects incomplete Growth business context before any persistence", async () => {
+    const repository = makeRepository({ loadGrowthProfileContext: vi.fn(async () => null) });
+    const businessUser = { ...entrepreneur, userType: USER_TYPES.UMKM_EXISTING };
+    const service = new StartupRoadmapService({
+      currentUserResolver: async () => businessUser,
+      repository,
+      transactionRunner: async <T>(callback: (tx: Transaction) => Promise<T>) => callback(transaction),
+    });
+    await expect(service.generate({ opportunityId })).rejects.toBeInstanceOf(RoadmapProfileIncompleteError);
+    expect(repository.createWithSteps).not.toHaveBeenCalled();
   });
 
   it("rejects an authenticated account before onboarding completion", async () => {

@@ -26,15 +26,15 @@ function errorBody(requestId: string, code: string, message: string, status: num
 
 function mapError(error: unknown, requestId: string): Response {
   if (error instanceof RoadmapUnauthenticatedError) return errorBody(requestId, "UNAUTHORIZED", "Authentication required.", 401);
-  if (error instanceof RoadmapForbiddenError) return errorBody(requestId, "ROADMAP_NOT_ALLOWED", "Startup Roadmap hanya tersedia untuk Calon Pengusaha.", 403);
+  if (error instanceof RoadmapForbiddenError) return errorBody(requestId, "ROADMAP_NOT_ALLOWED", "Roadmap tidak tersedia untuk tipe akun ini.", 403);
   if (error instanceof RoadmapUserIncompleteError || error instanceof RoadmapProfileIncompleteError) {
-    return errorBody(requestId, "PROFILE_INCOMPLETE", "Lengkapi profil calon pengusaha sebelum membuat roadmap.", 422);
+    return errorBody(requestId, "PROFILE_INCOMPLETE", "Lengkapi profil sesuai tipe akun sebelum membuat roadmap.", 422);
   }
   if (error instanceof RoadmapInsufficientContextError) return errorBody(requestId, "INSUFFICIENT_DATA", "Data tepercaya belum cukup untuk membuat roadmap.", 422);
   if (error instanceof RoadmapOpportunityNotFoundError || error instanceof RoadmapAnalysisNotFoundError) {
     return errorBody(requestId, "RESOURCE_NOT_FOUND", "Opportunity atau analisis tidak ditemukan.", 404);
   }
-  console.error("Startup Roadmap API request failed", { errorName: error instanceof Error ? error.name : "UnknownError" });
+  console.error("Roadmap API request failed", { errorName: error instanceof Error ? error.name : "UnknownError" });
   return errorBody(requestId, "ROADMAP_GENERATION_FAILED", "Roadmap belum dapat diproses.", 500);
 }
 

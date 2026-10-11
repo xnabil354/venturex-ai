@@ -13,13 +13,19 @@ type RoadmapCreateResponse = {
 
 const errorCopy: Record<string, string> = {
   UNAUTHORIZED: "Sesi Anda tidak tersedia. Masuk kembali untuk membuat roadmap.",
-  ROADMAP_NOT_ALLOWED: "Fitur Startup Roadmap hanya tersedia untuk Calon Pengusaha.",
-  PROFILE_INCOMPLETE: "Lengkapi profil calon pengusaha sebelum membuat roadmap.",
+  ROADMAP_NOT_ALLOWED: "Roadmap tidak tersedia untuk tipe akun ini.",
+  PROFILE_INCOMPLETE: "Lengkapi profil sesuai tipe akun sebelum membuat roadmap.",
   RESOURCE_NOT_FOUND: "Opportunity atau konteks yang diperlukan tidak tersedia.",
   ROADMAP_GENERATION_FAILED: "Roadmap belum dapat dibuat. Coba lagi nanti.",
 };
 
-export function StartupRoadmapGenerateButton({ opportunityId }: { readonly opportunityId: string }) {
+export function StartupRoadmapGenerateButton({
+  opportunityId,
+  roadmapType = "STARTUP",
+}: {
+  readonly opportunityId: string;
+  readonly roadmapType?: "STARTUP" | "GROWTH";
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -51,10 +57,12 @@ export function StartupRoadmapGenerateButton({ opportunityId }: { readonly oppor
   return (
     <div className="grid justify-items-start gap-8">
       <Button loading={pending} onClick={generate} type="button">
-        Buat Startup Roadmap
+        Buat {roadmapType === "GROWTH" ? "Growth" : "Startup"} Roadmap
       </Button>
       <p className="max-w-[76ch] text-caption leading-body-sm text-stone-gray">
-        Enam langkah validasi terstruktur dari profil dan Opportunity tersimpan. Roadmap bukan prediksi, dan tidak menjamin hasil bisnis.
+        {roadmapType === "GROWTH"
+          ? "Lima tahap uji untuk bisnis yang sudah berjalan, berdasarkan profil bisnis dan Opportunity tersimpan. Roadmap bukan prediksi dan tidak menjamin hasil bisnis."
+          : "Enam langkah validasi terstruktur dari profil dan Opportunity tersimpan. Roadmap bukan prediksi, dan tidak menjamin hasil bisnis."}
       </p>
       {message ? <p aria-live="polite" className="max-w-[76ch] text-body-sm text-ink-charcoal" role="status">{message}</p> : null}
     </div>

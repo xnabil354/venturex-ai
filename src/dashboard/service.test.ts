@@ -177,6 +177,7 @@ function createService(
   trendServiceFactory?: DashboardQueryServiceDependencies["trendServiceFactory"],
   savedOpportunityServiceFactory?: DashboardQueryServiceDependencies["savedOpportunityServiceFactory"],
   opportunityServiceFactory?: DashboardQueryServiceDependencies["opportunityServiceFactory"],
+  roadmapServiceFactory?: DashboardQueryServiceDependencies["roadmapServiceFactory"],
 ): DashboardQueryService {
   const dependencies: DashboardQueryServiceDependencies = {
     currentUserResolver: async () => currentUser,
@@ -201,9 +202,9 @@ function createService(
           totalPages: 1,
         }),
       })),
-    roadmapServiceFactory: () => ({
+    roadmapServiceFactory: roadmapServiceFactory ?? (() => ({
       listForCurrentUser: async () => ({ items: [], page: 1, pageSize: 1, totalCount: 0, totalPages: 1 }),
-    }),
+    })),
   };
 
   return new DashboardQueryService(dependencies);
@@ -246,6 +247,23 @@ describe("DashboardQueryService", () => {
       },
     });
     expect(entrepreneurRepository.requestedUserId).toBe(ENTREPRENEUR_USER_ID);
+  });
+
+  it("loads a role-specific saved Roadmap state for an existing UMKM owner", async () => {
+    const roadmapList = vi.fn(async () => ({ items: [], page: 1, pageSize: 1, totalCount: 1, totalPages: 1 }));
+    const roadmapServiceFactory = vi.fn(() => ({ listForCurrentUser: roadmapList }));
+    const result = await createService(
+      user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING),
+      new MemoryEntrepreneurRepository(),
+      new MemoryBusinessRepository(),
+      undefined,
+      undefined,
+      undefined,
+      roadmapServiceFactory,
+    ).get();
+
+    expect(roadmapList).toHaveBeenCalledWith({ page: 1, pageSize: 1, type: "GROWTH" });
+    expect(result.modules.roadmap).toEqual({ status: "AVAILABLE" });
   });
 
   it("returns ordered published Trend previews for the persisted entrepreneur type", async () => {

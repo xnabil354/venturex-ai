@@ -2,6 +2,8 @@ import { Op, type Transaction } from "sequelize";
 
 import type { UserId, UserType } from "../auth/user-types";
 import { initializeProfileAssociations } from "../profile/associations";
+import { getBusinessProductModel, type BusinessProduct } from "../profile/business-product.model";
+import { getBusinessProfileModel, type BusinessProfile } from "../profile/business-profile.model";
 import { getEntrepreneurProfileModel, type EntrepreneurProfile } from "../profile/entrepreneur-profile.model";
 import { getFnbCategoryModel, type FnbCategory } from "../reference/fnb-category.model";
 import { getCustomerSegmentModel, type CustomerSegment } from "../reference/customer-segment.model";
@@ -14,13 +16,16 @@ import { getTrendModel, type Trend } from "../db/models/trend.model";
 import { getUserOpportunityAnalysisModel, type UserOpportunityAnalysis } from "../db/models/user-opportunity-analysis.model";
 import { initializeRoadmapAssociations } from "./associations";
 import type {
+  GrowthRoadmapGenerationContext,
   RoadmapAnalysisContext,
   RoadmapDetail,
   RoadmapGenerationContext,
+  GrowthRoadmapProfileContext,
   RoadmapOpportunityContext,
   RoadmapPage,
   RoadmapProfileContext,
   RoadmapStepRecord,
+  StartupRoadmapGenerationContext,
 } from "./domain";
 
 export type RoadmapListFilter = {
@@ -34,6 +39,7 @@ export type RoadmapListFilter = {
 
 export type RoadmapCreateValues = {
   readonly userId: UserId;
+  readonly roadmapType: "STARTUP" | "GROWTH";
   readonly opportunityId: string;
   readonly analysisId: string | null;
   readonly generationContext: RoadmapGenerationContext;
@@ -42,6 +48,7 @@ export type RoadmapCreateValues = {
 
 export interface RoadmapRepositoryPort {
   loadProfileContext(userId: UserId, transaction: Transaction): Promise<RoadmapProfileContext | null>;
+  loadGrowthProfileContext(userId: UserId, transaction: Transaction): Promise<GrowthRoadmapProfileContext | null>;
   loadOpportunityContext(opportunityId: string, userType: UserType, transaction: Transaction): Promise<RoadmapOpportunityContext | null>;
   findAnalysis(userId: UserId, opportunityId: string, analysisId: string | undefined, transaction: Transaction): Promise<RoadmapAnalysisContext | null>;
   createWithSteps(values: RoadmapCreateValues, transaction: Transaction): Promise<RoadmapDetail>;
@@ -51,9 +58,13 @@ export interface RoadmapRepositoryPort {
 
 export type RoadmapRepositoryModels = {
   readonly profileModel: typeof EntrepreneurProfile;
+  readonly businessProfileModel?: typeof BusinessProfile;
+  readonly businessProductModel?: typeof BusinessProduct;
   readonly opportunityModel: typeof Opportunity;
   readonly trendModel: typeof Trend;
   readonly categoryModel: typeof FnbCategory;
+  readonly customerSegmentModel?: typeof CustomerSegment;
+  readonly salesChannelModel?: typeof SalesChannel;
   readonly evidenceModel: typeof OpportunityEvidence;
   readonly analysisModel: typeof UserOpportunityAnalysis;
   readonly roadmapModel: typeof Roadmap;
@@ -62,6 +73,13 @@ export type RoadmapRepositoryModels = {
 
 type ProfileWithSelections = EntrepreneurProfile & {
   readonly interests?: readonly FnbCategory[];
+  readonly customerSegments?: readonly CustomerSegment[];
+  readonly salesChannels?: readonly SalesChannel[];
+};
+
+type BusinessProductWithCategory = BusinessProduct & { readonly category?: FnbCategory | null };
+type BusinessProfileWithSelections = BusinessProfile & {
+  readonly products?: readonly BusinessProductWithCategory[];
   readonly customerSegments?: readonly CustomerSegment[];
   readonly salesChannels?: readonly SalesChannel[];
 };
@@ -151,7 +169,7 @@ function toStepRecord(step: RoadmapStep): RoadmapStepRecord {
   };
 }
 
-type RoadmapWithRelations = Roadmap & {
+type RoadmapWithRelations = Pick<Roadmap, "id" | "roadmapType" | "createdAt" | "generationContext"> & {
   readonly opportunity?: Opportunity;
   readonly steps?: readonly RoadmapStep[];
 };
@@ -167,20 +185,29 @@ function toListItem(roadmap: RoadmapWithRelations) {
 }
 
 function toDetail(roadmap: RoadmapWithRelations): RoadmapDetail {
-  return {
-    ...toListItem(roadmap),
-    generationContext: roadmap.generationContext,
-    steps: [...(roadmap.steps ?? [])]
-      .sort((left, right) => left.sequence - right.sequence)
-      .map(toStepRecord),
-  };
+  const listItem = toListItem(roadmap);
+  const steps = [...(roadmap.steps ?? [])]
+    .sort((left, right) => left.sequence - right.sequence)
+    .map(toStepRecord);
+  if (roadmap.roadmapType === "GROWTH") {
+    return { ...listItem, roadmapType: "GROWTH", generationContext: roadmap.generationContext as GrowthRoadmapGenerationContext, steps };
+  }
+  return { ...listItem, roadmapType: "STARTUP", generationContext: roadmap.generationContext as StartupRoadmapGenerationContext, steps };
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 export class RoadmapRepository implements RoadmapRepositoryPort {
   private readonly profileModel: typeof EntrepreneurProfile;
+  private readonly businessProfileModel: typeof BusinessProfile;
+  private readonly businessProductModel: typeof BusinessProduct;
   private readonly opportunityModel: typeof Opportunity;
   private readonly trendModel: typeof Trend;
   private readonly categoryModel: typeof FnbCategory;
+  private readonly customerSegmentModel: typeof CustomerSegment | undefined;
+  private readonly salesChannelModel: typeof SalesChannel | undefined;
   private readonly evidenceModel: typeof OpportunityEvidence;
   private readonly analysisModel: typeof UserOpportunityAnalysis;
   private readonly roadmapModel: typeof Roadmap;
@@ -188,9 +215,13 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
 
   constructor(models?: RoadmapRepositoryModels) {
     this.profileModel = models?.profileModel ?? getEntrepreneurProfileModel();
+    this.businessProfileModel = models?.businessProfileModel ?? getBusinessProfileModel();
+    this.businessProductModel = models?.businessProductModel ?? getBusinessProductModel();
     this.opportunityModel = models?.opportunityModel ?? getOpportunityModel();
     this.trendModel = models?.trendModel ?? getTrendModel();
     this.categoryModel = models?.categoryModel ?? getFnbCategoryModel();
+    this.customerSegmentModel = models?.customerSegmentModel ?? (models ? undefined : getCustomerSegmentModel());
+    this.salesChannelModel = models?.salesChannelModel ?? (models ? undefined : getSalesChannelModel());
     this.evidenceModel = models?.evidenceModel ?? getOpportunityEvidenceModel();
     this.analysisModel = models?.analysisModel ?? getUserOpportunityAnalysisModel();
     this.roadmapModel = models?.roadmapModel ?? getRoadmapModel();
@@ -212,6 +243,54 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
       transaction,
     });
     return profile ? toProfileContext(profile as ProfileWithSelections) : null;
+  }
+
+  async loadGrowthProfileContext(userId: UserId, transaction: Transaction): Promise<GrowthRoadmapProfileContext | null> {
+    if (!this.customerSegmentModel || !this.salesChannelModel) {
+      throw new Error("Growth profile reference models are not initialized.");
+    }
+    const profile = await this.businessProfileModel.findOne({
+      where: { userId },
+      include: [
+        {
+          model: this.businessProductModel,
+          as: "products",
+          where: { isActive: true },
+          required: false,
+          separate: true,
+          order: [["name", "ASC"], ["id", "ASC"]],
+          include: [{ model: this.categoryModel, as: "category", attributes: ["name"], required: false }],
+        },
+        { model: this.customerSegmentModel, as: "customerSegments", attributes: ["id", "name"], through: { attributes: [] }, required: false },
+        { model: this.salesChannelModel, as: "salesChannels", attributes: ["id", "name"], through: { attributes: [] }, required: false },
+      ],
+      transaction,
+    });
+    if (!profile) return null;
+    const category = await this.categoryModel.findByPk(profile.businessCategoryId, {
+      attributes: ["name"],
+      transaction,
+    });
+    if (!category) return null;
+
+    const selected = profile as BusinessProfileWithSelections;
+    return {
+      profileVersion: profile.profileVersion,
+      businessName: profile.businessName,
+      businessCategory: category.name,
+      locationText: profile.locationText,
+      countryCode: profile.countryCode,
+      averagePriceMin: Number(profile.averagePriceMin),
+      averagePriceMax: Number(profile.averagePriceMax),
+      businessDescription: profile.businessDescription,
+      products: (selected.products ?? []).map((product) => ({
+        name: product.name,
+        category: product.category?.name ?? null,
+        price: product.price === null ? null : Number(product.price),
+      })),
+      customerSegments: (selected.customerSegments ?? []).map((item) => item.name).sort(compareText),
+      salesChannels: (selected.salesChannels ?? []).map((item) => item.name).sort(compareText),
+    };
   }
 
   async loadOpportunityContext(opportunityId: string, userType: UserType, transaction: Transaction): Promise<RoadmapOpportunityContext | null> {
@@ -241,7 +320,7 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
       userId: values.userId,
       opportunityId: values.opportunityId,
       userOpportunityAnalysisId: values.analysisId,
-      roadmapType: "STARTUP",
+      roadmapType: values.roadmapType,
       generationContext: values.generationContext,
     }, { transaction });
     const createdAt = new Date();
@@ -258,11 +337,15 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
       transaction,
     });
     if (!loaded) throw new Error("Roadmap could not be reloaded after creation.");
-    return {
-      ...toListItem(loaded as RoadmapWithRelations),
+    if (!loaded.opportunity) throw new Error("Roadmap opportunity association is missing after creation.");
+    return toDetail({
+      id: loaded.id,
+      roadmapType: loaded.roadmapType,
+      createdAt: loaded.createdAt,
       generationContext: loaded.generationContext,
-      steps: steps.sort((a, b) => a.sequence - b.sequence).map(toStepRecord),
-    };
+      opportunity: loaded.opportunity,
+      steps,
+    });
   }
 
   async listForUser(userId: UserId, filter: RoadmapListFilter): Promise<RoadmapPage> {

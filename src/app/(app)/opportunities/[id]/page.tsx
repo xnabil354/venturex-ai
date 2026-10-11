@@ -78,5 +78,5 @@ export default async function OpportunityDetailPage({
   }
   if (!saveState) notFound();
 
-  return <OpportunityDetail evidence={evidence} isEntrepreneur={user.userType === "ENTREPRENEUR"} item={item} opportunityScore={opportunityScore} riskAssessment={riskAssessment} saveState={saveState} />;
+  return <OpportunityDetail evidence={evidence} isEntrepreneur={user.userType === "ENTREPRENEUR"} isUmkmExisting={user.userType === "UMKM_EXISTING"} item={item} opportunityScore={opportunityScore} riskAssessment={riskAssessment} saveState={saveState} />;
 }
