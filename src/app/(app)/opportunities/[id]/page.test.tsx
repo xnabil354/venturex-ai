@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   notFound: vi.fn(),
   getDetail: vi.fn(),
   getSaveState: vi.fn(),
+  calculateScore: vi.fn(),
   resolver: null as null | (() => Promise<unknown>),
+  scoreResolver: null as null | (() => Promise<unknown>),
   saveResolver: null as null | (() => Promise<unknown>),
   listEvidence: vi.fn(),
   evidenceResolver: null as null | (() => Promise<unknown>),
@@ -16,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   evidenceUsers: [] as unknown[],
   saveIds: [] as string[],
   saveUsers: [] as unknown[],
+  scoreIds: [] as string[],
+  scoreUsers: [] as unknown[],
 }));
 
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
@@ -65,6 +69,21 @@ vi.mock("@/opportunity/saved-service", () => ({
     }
   },
 }));
+vi.mock("@/scoring/opportunity-score-service", () => ({
+  OpportunityScoreService: class MockOpportunityScoreService {
+    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
+      mocks.scoreResolver = dependencies.currentUserResolver;
+    }
+
+    async calculateForOpportunity(id: string) {
+      mocks.scoreIds.push(id);
+      const resolver = mocks.scoreResolver;
+      if (!resolver) throw new Error("The score current-user resolver was not supplied.");
+      mocks.scoreUsers.push(await resolver());
+      return mocks.calculateScore(id);
+    }
+  },
+}));
 
 import {
   ONBOARDING_STATUSES,
@@ -101,12 +120,16 @@ describe("/opportunities/[id] page", () => {
     mocks.resolver = null;
     mocks.saveResolver = null;
     mocks.evidenceResolver = null;
+    mocks.scoreResolver = null;
     mocks.ids.length = 0;
     mocks.resolvedUsers.length = 0;
     mocks.evidenceIds.length = 0;
     mocks.evidenceUsers.length = 0;
     mocks.saveIds.length = 0;
     mocks.saveUsers.length = 0;
+    mocks.scoreIds.length = 0;
+    mocks.scoreUsers.length = 0;
+    mocks.calculateScore.mockResolvedValue({ status: "ERROR" });
     mocks.notFound.mockImplementation(() => { throw new Error("NOT_FOUND"); });
   });
 
@@ -116,6 +139,7 @@ describe("/opportunities/[id] page", () => {
       const persistedUser: SafeUser = { ...user, userType };
       mocks.currentUser.mockResolvedValue(persistedUser);
       mocks.getDetail.mockResolvedValue(detail);
+      mocks.calculateScore.mockResolvedValue({ status: "ERROR" });
       mocks.listEvidence.mockResolvedValue({ status: "EMPTY", items: [], limited: true });
       mocks.getSaveState.mockResolvedValue({ status: "AVAILABLE", saved: false });
 
@@ -131,6 +155,8 @@ describe("/opportunities/[id] page", () => {
       expect(mocks.evidenceIds).toEqual([detail.id]);
       expect(mocks.saveUsers).toEqual([persistedUser]);
       expect(mocks.saveIds).toEqual([detail.id]);
+      expect(mocks.scoreUsers).toEqual([persistedUser]);
+      expect(mocks.scoreIds).toEqual([detail.id]);
     },
   );
 
@@ -146,6 +172,7 @@ describe("/opportunities/[id] page", () => {
       .rejects.toThrow("NOT_FOUND");
     expect(mocks.getDetail).not.toHaveBeenCalled();
     expect(mocks.listEvidence).not.toHaveBeenCalled();
+    expect(mocks.calculateScore).not.toHaveBeenCalled();
   });
 
   it.each(["invalid", detail.id])("uses not-found for inaccessible id %s", async (id) => {

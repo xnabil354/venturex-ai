@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import type { OpportunityFinderResult } from "@/opportunity/service";
 import { OpportunityFinder } from "./opportunity-finder";
+import { OPPORTUNITY_SCORE_COMPONENTS } from "@/scoring/opportunity-score";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
 
 const available: OpportunityFinderResult = {
   status: "AVAILABLE",
@@ -27,8 +29,33 @@ const available: OpportunityFinderResult = {
   totalPages: 2,
 };
 
+const insufficientScore: OpportunityScoreDisplayState = {
+  status: "INSUFFICIENT_DATA",
+  modelType: "OPPORTUNITY_SCORE",
+  modelVersion: null,
+  score: null,
+  breakdown: OPPORTUNITY_SCORE_COMPONENTS.map((component) => ({
+    component,
+    normalizedValue: null,
+    weight: null,
+    weightedContribution: null,
+  })),
+  missingComponents: OPPORTUNITY_SCORE_COMPONENTS,
+  invalidComponents: [],
+  reason: "CONFIGURATION_UNAVAILABLE",
+  sources: Object.fromEntries(OPPORTUNITY_SCORE_COMPONENTS.map((component) => [component, {
+    status: "UNAVAILABLE",
+    source: `Sumber ${component}`,
+    explanation: `Belum tersedia: ${component}`,
+  }])) as Extract<OpportunityScoreDisplayState, { readonly status: "INSUFFICIENT_DATA" }> ["sources"],
+  disclaimer: "Opportunity Score bukan jaminan keberhasilan bisnis.",
+};
+
 function render(result: OpportunityFinderResult): string {
-  return renderToStaticMarkup(<OpportunityFinder result={result} />).replace(/\s+/gu, " ");
+  const scoreByOpportunityId = { "60000000-0000-4000-8000-000000000001": insufficientScore };
+  return renderToStaticMarkup(
+    <OpportunityFinder result={result} scoreByOpportunityId={scoreByOpportunityId} />,
+  ).replace(/\s+/gu, " ");
 }
 
 describe("OpportunityFinder", () => {
