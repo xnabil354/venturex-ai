@@ -79,9 +79,25 @@ describe("RoadmapRepository ownership filters", () => {
         }),
       ]),
     }));
-    const queryOptions = findOne.mock.calls[0]?.[0] as { readonly include: readonly { readonly as: string; readonly where?: { readonly affectedUserTypes?: unknown } }[] };
+    const queryOptions = findOne.mock.calls[0]?.[0] as {
+      readonly include: readonly {
+        readonly as: string;
+        readonly where?: { readonly affectedUserTypes?: unknown };
+        readonly separate?: boolean;
+        readonly limit?: number;
+        readonly order?: readonly (readonly [string, string])[];
+      }[];
+      readonly order?: readonly unknown[];
+    };
     const trendInclude = queryOptions.include.find((item) => item.as === "relatedTrend");
+    const evidenceInclude = queryOptions.include.find((item) => item.as === "evidences");
     expect(trendInclude?.where?.affectedUserTypes).toEqual({ [Op.contains]: [USER_TYPES.ENTREPRENEUR] });
+    expect(queryOptions.order).toBeUndefined();
+    expect(evidenceInclude).toEqual(expect.objectContaining({
+      separate: true,
+      limit: 10,
+      order: [["id", "ASC"]],
+    }));
   });
 
   it("creates the header and all steps with the same transaction", async () => {

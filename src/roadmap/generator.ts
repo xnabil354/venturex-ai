@@ -15,7 +15,7 @@ const profileSchema = z.object({
   locationText: z.string().trim().min(1),
   countryCode: z.literal("ID"),
   budgetMin: z.number().int().safe().nonnegative(),
-  budgetMax: z.number().int().safe().positive(),
+  budgetMax: z.number().int().safe().nonnegative(),
   experienceLevel: z.enum(["BEGINNER", "SOME_EXPERIENCE", "EXPERIENCED"]),
   timeCommitment: z.enum(["LIMITED", "PART_TIME", "FULL_TIME"]),
   preferredProductType: z.string().nullable(),

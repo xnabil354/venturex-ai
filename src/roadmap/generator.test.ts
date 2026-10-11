@@ -48,6 +48,37 @@ const availableAnalysis: RoadmapAnalysisContext = {
 };
 
 describe("generateStartupRoadmap", () => {
+  it("accepts the valid zero-to-zero budget boundary", () => {
+    const result = generateStartupRoadmap({
+      profile: { ...profile, budgetMin: 0, budgetMax: 0 },
+      opportunity,
+      analysis: null,
+    });
+
+    expect(result.generationContext.profileInputs.budgetRange).toEqual({ min: 0, max: 0, currency: "IDR" });
+    expect(result.steps.map(({ stage }) => stage)).toEqual(ROADMAP_STAGES);
+    expect(result.steps).toHaveLength(6);
+  });
+
+  it("continues rejecting invalid budget numbers and ranges", () => {
+    const invalidRanges = [
+      { budgetMin: -1, budgetMax: 0 },
+      { budgetMin: 0, budgetMax: -1 },
+      { budgetMin: 1, budgetMax: 0 },
+      { budgetMin: 0.5, budgetMax: 1 },
+      { budgetMin: Number.NaN, budgetMax: 0 },
+      { budgetMin: 0, budgetMax: Number.MAX_SAFE_INTEGER + 1 },
+    ];
+
+    for (const budgetRange of invalidRanges) {
+      expect(() => generateStartupRoadmap({
+        profile: { ...profile, ...budgetRange },
+        opportunity,
+        analysis: null,
+      })).toThrow(RoadmapInsufficientDataError);
+    }
+  });
+
   it("creates the six ordered actionable stages using profile and Opportunity context", () => {
     const result = generateStartupRoadmap({ profile, opportunity, analysis: null });
 

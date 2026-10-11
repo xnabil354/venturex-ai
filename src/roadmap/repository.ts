@@ -222,7 +222,6 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
         { model: this.categoryModel, as: "category", attributes: ["name"], required: true },
         { model: this.evidenceModel, as: "evidences", attributes: ["id", "sourceName", "sourceReference", "sourceUrl"], separate: true, limit: 10, order: [["id", "ASC"]], required: false },
       ],
-      order: [[{ model: this.evidenceModel, as: "evidences" }, "id", "ASC"]],
       transaction,
     });
     return opportunity ? toOpportunityContext(opportunity) : null;
