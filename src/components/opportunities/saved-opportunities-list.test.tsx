@@ -31,7 +31,15 @@ describe("SavedOpportunitiesList", () => {
     const empty: SavedOpportunityListResult = { status: "EMPTY", items: [] };
     const markup = renderToStaticMarkup(<SavedOpportunitiesList result={empty} />);
 
-    expect(markup).toContain("Belum ada simpanan");
+    expect(markup).toContain("Belum ada opportunity yang disimpan.");
     expect(markup).toContain('href="/opportunities"');
+  });
+
+  it("keeps persistence errors safe and offers a retry", () => {
+    const markup = renderToStaticMarkup(<SavedOpportunitiesList result={{ status: "ERROR" }} />);
+
+    expect(markup).toContain("Peluang tersimpan belum dapat dimuat");
+    expect(markup).toContain('href="/saved"');
+    expect(markup).not.toContain("database internals");
   });
 });

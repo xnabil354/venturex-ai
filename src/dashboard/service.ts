@@ -415,6 +415,7 @@ export class DashboardQueryService {
       const result = await this.savedOpportunityServiceFactory(currentUser).listForCurrentUser(
         DASHBOARD_SAVED_OPPORTUNITY_PREVIEW_LIMIT,
       );
+      if (result.status === "ERROR") return buildSavedOpportunityErrorState();
       return buildDashboardSavedOpportunityState(result.items);
     } catch {
       return buildSavedOpportunityErrorState();

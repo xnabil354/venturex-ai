@@ -45,6 +45,7 @@ describe("setOpportunitySavedAction", () => {
       });
     expect(mocks.setSaved).toHaveBeenCalledWith(opportunityId, true);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/opportunities/${opportunityId}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/saved");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/saved-opportunities");
   });
 

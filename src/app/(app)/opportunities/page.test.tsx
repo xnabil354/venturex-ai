@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   currentUserResolver: null as null | (() => Promise<unknown>),
   pages: [] as unknown[],
+  categories: [] as unknown[],
   resolvedUsers: [] as unknown[],
 }));
 
@@ -18,12 +19,13 @@ vi.mock("@/opportunity/service", () => ({
       mocks.currentUserResolver = dependencies.currentUserResolver;
     }
 
-    async list(page: unknown) {
+    async list(page: unknown, category: unknown) {
       mocks.pages.push(page);
+      mocks.categories.push(category);
       const resolver = mocks.currentUserResolver;
       if (!resolver) throw new Error("The current-user resolver was not supplied.");
       mocks.resolvedUsers.push(await resolver());
-      return mocks.list(page);
+      return mocks.list(page, category);
     }
   },
 }));
@@ -48,6 +50,7 @@ describe("/opportunities page", () => {
     vi.clearAllMocks();
     mocks.currentUserResolver = null;
     mocks.pages.length = 0;
+    mocks.categories.length = 0;
     mocks.resolvedUsers.length = 0;
     mocks.notFound.mockImplementation(() => {
       throw new Error("NOT_FOUND");
@@ -62,6 +65,8 @@ describe("/opportunities page", () => {
       mocks.list.mockResolvedValue({
         status: "EMPTY",
         items: [],
+        categories: [],
+        selectedCategory: null,
         page: 1,
         pageSize: 10,
         totalCount: 0,
@@ -76,9 +81,43 @@ describe("/opportunities page", () => {
       expect(mocks.currentUser).toHaveBeenCalledOnce();
       expect(mocks.resolvedUsers).toEqual([user]);
       expect(mocks.pages).toEqual(["2"]);
-      expect(mocks.list).toHaveBeenCalledWith("2");
+      expect(mocks.categories).toEqual([undefined]);
+      expect(mocks.list).toHaveBeenCalledWith("2", undefined);
     },
   );
+
+  it("passes the category query to the server-side service without trusting client identity", async () => {
+    mocks.currentUser.mockResolvedValue(persistedUser);
+    mocks.list.mockResolvedValue({
+      status: "INVALID_CATEGORY",
+      items: [],
+      categories: [{ code: "BEVERAGES", name: "Minuman" }],
+      selectedCategory: null,
+    });
+
+    await OpportunitiesPage({
+      searchParams: Promise.resolve({ page: "4", category: "BEVERAGES" }),
+    });
+
+    expect(mocks.list).toHaveBeenCalledWith("4", "BEVERAGES");
+    expect(mocks.resolvedUsers).toEqual([persistedUser]);
+  });
+
+  it("passes duplicate category parameters through for safe service validation", async () => {
+    mocks.currentUser.mockResolvedValue(persistedUser);
+    mocks.list.mockResolvedValue({
+      status: "INVALID_CATEGORY",
+      items: [],
+      categories: [],
+      selectedCategory: null,
+    });
+
+    await OpportunitiesPage({
+      searchParams: Promise.resolve({ category: ["BEVERAGES", "SNACKS"] }),
+    });
+
+    expect(mocks.list).toHaveBeenCalledWith(1, ["BEVERAGES", "SNACKS"]);
+  });
 
   it.each([
     ["missing user", null],

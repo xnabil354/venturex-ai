@@ -6,7 +6,10 @@ import { OpportunityFinder } from "@/components/opportunities/opportunity-finder
 import { OpportunityService, type OpportunityFinderResult } from "@/opportunity/service";
 
 type OpportunitiesPageProps = {
-  readonly searchParams: Promise<{ readonly page?: string | readonly string[] }>;
+  readonly searchParams: Promise<{
+    readonly page?: string | readonly string[];
+    readonly category?: string | readonly string[];
+  }>;
 };
 
 export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
@@ -24,7 +27,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   try {
     result = await new OpportunityService({
       currentUserResolver: async () => user,
-    }).list(page);
+    }).list(page, query.category);
   } catch {
     result = { status: "ERROR" };
   }

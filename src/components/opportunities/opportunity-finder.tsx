@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { Card, EmptyState, PageContainer } from "@/components/ui";
+import { Button, Card, EmptyState, PageContainer } from "@/components/ui";
 import type { OpportunityFinderResult } from "@/opportunity/service";
+import type { OpportunityCategoryOption } from "@/opportunity/domain";
 
 function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" }) {
   const copy = status === "ERROR"
@@ -17,7 +18,49 @@ function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" })
   return <EmptyState description={copy.description} title={copy.title} />;
 }
 
+function CategoryFilter({
+  categories,
+  selectedCategory,
+}: {
+  readonly categories: readonly OpportunityCategoryOption[];
+  readonly selectedCategory: OpportunityCategoryOption | null;
+}) {
+  return (
+    <form action="/opportunities" className="grid max-w-[520px] gap-8 border-b border-soft-mist pb-20" method="get">
+      <label className="text-body-sm font-w540 text-ink-charcoal" htmlFor="opportunity-category">
+        Filter kategori F&amp;B
+      </label>
+      <div className="flex flex-col gap-8 sm:flex-row sm:items-end">
+        <select
+          className="min-h-button min-w-0 flex-1 rounded-small-buttons border border-soft-mist bg-paper-white px-12 text-body-sm text-ink-charcoal"
+          defaultValue={selectedCategory?.code ?? ""}
+          id="opportunity-category"
+          name="category"
+        >
+          <option value="">Semua kategori</option>
+          {categories.map((category) => (
+            <option key={category.code} value={category.code}>{category.name}</option>
+          ))}
+        </select>
+        <Button type="submit" variant="secondary">Terapkan filter</Button>
+      </div>
+    </form>
+  );
+}
+
+function pageHref(page: number, categoryCode: string | null): string {
+  const query = new URLSearchParams({ page: String(page) });
+  if (categoryCode) query.set("category", categoryCode);
+  return `/opportunities?${query.toString()}`;
+}
+
 export function OpportunityFinder({ result }: { readonly result: OpportunityFinderResult }) {
+  const catalog = result.status === "AVAILABLE" ||
+    result.status === "EMPTY" ||
+    result.status === "INVALID_CATEGORY"
+    ? result
+    : null;
+
   return (
     <PageContainer>
       <div className="grid gap-32 py-32 sm:py-48 lg:py-64">
@@ -30,6 +73,10 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
             Katalog peluang usaha F&amp;B yang ditautkan ke tren terpublikasi untuk jenis akun ini.
           </p>
         </header>
+
+        {catalog ? (
+          <CategoryFilter categories={catalog.categories} selectedCategory={catalog.selectedCategory} />
+        ) : null}
 
         {result.status === "AVAILABLE" ? (
           <>
@@ -93,7 +140,7 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
               {result.page > 1 ? (
                 <Link
                   className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                  href={`/opportunities?page=${result.page - 1}`}
+                  href={pageHref(result.page - 1, result.selectedCategory?.code ?? null)}
                 >
                   Sebelumnya
                 </Link>
@@ -104,7 +151,7 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
               {result.page < result.totalPages ? (
                 <Link
                   className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                  href={`/opportunities?page=${result.page + 1}`}
+                  href={pageHref(result.page + 1, result.selectedCategory?.code ?? null)}
                 >
                   Berikutnya
                 </Link>
@@ -116,13 +163,28 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
             action={(
               <Link
                 className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                href="/trends"
+                href={result.selectedCategory ? "/opportunities" : "/trends"}
               >
-                Lihat Trend Radar
+                {result.selectedCategory ? "Hapus filter kategori" : "Lihat Trend Radar"}
               </Link>
             )}
-            description="Belum ada peluang tersimpan dengan tren terpublikasi untuk jenis akun ini."
-            title="Belum ada peluang"
+            description={result.selectedCategory
+              ? `Belum ada peluang yang tersedia pada kategori ${result.selectedCategory.name} untuk jenis akun ini.`
+              : "Belum ada peluang tersimpan dengan tren terpublikasi untuk jenis akun ini."}
+            title={result.selectedCategory ? "Belum ada peluang pada kategori ini" : "Belum ada peluang"}
+          />
+        ) : result.status === "INVALID_CATEGORY" ? (
+          <EmptyState
+            action={(
+              <Link
+                className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
+                href="/opportunities"
+              >
+                Hapus filter
+              </Link>
+            )}
+            description="Pilih kategori F&B aktif dari daftar yang tersedia."
+            title="Kategori tidak tersedia"
           />
         ) : (
           <StatusMessage status={result.status} />

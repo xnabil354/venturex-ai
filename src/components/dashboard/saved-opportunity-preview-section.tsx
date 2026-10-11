@@ -60,7 +60,7 @@ export function SavedOpportunityPreviewSection({
       ) : null}
       <Link
         className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet underline-offset-4 transition-colors hover:text-midnight-wine hover:underline"
-        href="/saved-opportunities"
+        href="/saved"
       >
         Lihat semua peluang tersimpan
       </Link>

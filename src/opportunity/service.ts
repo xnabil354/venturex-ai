@@ -15,8 +15,10 @@ import {
 } from "./dto";
 import {
   opportunityIdSchema,
+  opportunityCategoryCodeSchema,
   opportunityPageSchema,
   OPPORTUNITY_PAGE_SIZE,
+  type OpportunityCategoryOption,
   type OpportunityRecord,
 } from "./domain";
 import { OpportunityRepository, type OpportunityRepositoryPort } from "./repository";
@@ -31,10 +33,18 @@ export type OpportunityFinderResult =
   | {
       readonly status: "AVAILABLE" | "EMPTY";
       readonly items: readonly OpportunityListItemDto[];
+      readonly categories: readonly OpportunityCategoryOption[];
+      readonly selectedCategory: OpportunityCategoryOption | null;
       readonly page: number;
       readonly pageSize: number;
       readonly totalCount: number;
       readonly totalPages: number;
+    }
+  | {
+      readonly status: "INVALID_CATEGORY";
+      readonly items: readonly [];
+      readonly categories: readonly OpportunityCategoryOption[];
+      readonly selectedCategory: null;
     }
   | { readonly status: "ERROR" | "UNAVAILABLE" };
 
@@ -104,7 +114,10 @@ export class OpportunityService {
     this.currentUserResolver = dependencies.currentUserResolver ?? defaultCurrentUserResolver;
   }
 
-  async list(pageInput: unknown = 1): Promise<OpportunityFinderResult> {
+  async list(
+    pageInput: unknown = 1,
+    categoryCodeInput?: unknown,
+  ): Promise<OpportunityFinderResult> {
     const user = await this.currentUserResolver();
     if (!user) throw new OpportunityUnauthenticatedError();
     if (
@@ -115,15 +128,35 @@ export class OpportunityService {
     }
 
     const requestedPage = opportunityPageSchema.parse(pageInput);
-    const totalCount = await this.repository.countVisible(user.userType);
+    const categories = await this.repository.listActiveCategories();
+    let selectedCategory: OpportunityCategoryOption | null = null;
+    if (categoryCodeInput !== undefined && categoryCodeInput !== "") {
+      const parsedCategoryCode = opportunityCategoryCodeSchema.safeParse(categoryCodeInput);
+      if (!parsedCategoryCode.success) {
+        return { status: "INVALID_CATEGORY", items: [], categories, selectedCategory: null };
+      }
+      selectedCategory = categories.find(({ code }) => code === parsedCategoryCode.data) ?? null;
+      if (!selectedCategory) {
+        return { status: "INVALID_CATEGORY", items: [], categories, selectedCategory: null };
+      }
+    }
+
+    const totalCount = selectedCategory
+      ? await this.repository.countVisible(user.userType, selectedCategory.code)
+      : await this.repository.countVisible(user.userType);
     const totalPages = Math.max(1, Math.ceil(totalCount / OPPORTUNITY_PAGE_SIZE));
     const page = Math.min(requestedPage, totalPages);
     const records = totalCount === 0
       ? []
-      : await this.repository.listVisible(user.userType, {
-          limit: OPPORTUNITY_PAGE_SIZE,
-          offset: (page - 1) * OPPORTUNITY_PAGE_SIZE,
-        });
+      : selectedCategory
+        ? await this.repository.listVisible(user.userType, {
+            limit: OPPORTUNITY_PAGE_SIZE,
+            offset: (page - 1) * OPPORTUNITY_PAGE_SIZE,
+          }, selectedCategory.code)
+        : await this.repository.listVisible(user.userType, {
+            limit: OPPORTUNITY_PAGE_SIZE,
+            offset: (page - 1) * OPPORTUNITY_PAGE_SIZE,
+          });
 
     if (totalCount > 0 && records.length === 0) {
       throw new OpportunityCatalogConsistencyError();
@@ -134,6 +167,8 @@ export class OpportunityService {
     return {
       status: items.length > 0 ? "AVAILABLE" : "EMPTY",
       items,
+      categories,
+      selectedCategory,
       page,
       pageSize: OPPORTUNITY_PAGE_SIZE,
       totalCount,
