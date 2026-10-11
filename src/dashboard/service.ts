@@ -28,6 +28,7 @@ import { OpportunityService, type OpportunityFinderResult } from "../opportunity
 import { TrendService } from "../trend/service";
 import type { TrendDto } from "../trend/dto";
 import { SavedOpportunityService } from "../opportunity/saved-service";
+import { StartupRoadmapService } from "../roadmap/service";
 import {
   DASHBOARD_MODULE_STATUSES,
   createUnavailableDashboardModules,
@@ -84,6 +85,8 @@ type DashboardSavedOpportunityService = Pick<SavedOpportunityService, "listForCu
 type DashboardSavedOpportunityServiceFactory = (user: SafeUser) => DashboardSavedOpportunityService;
 type DashboardOpportunityService = Pick<OpportunityService, "list">;
 type DashboardOpportunityServiceFactory = (user: SafeUser) => DashboardOpportunityService;
+type DashboardRoadmapService = Pick<StartupRoadmapService, "listForCurrentUser">;
+type DashboardRoadmapServiceFactory = (user: SafeUser) => DashboardRoadmapService;
 
 const DASHBOARD_TREND_PREVIEW_LIMIT = 3;
 const DASHBOARD_SAVED_OPPORTUNITY_PREVIEW_LIMIT = 3;
@@ -98,6 +101,7 @@ export type DashboardQueryServiceDependencies = {
   readonly trendServiceFactory?: DashboardTrendServiceFactory;
   readonly savedOpportunityServiceFactory?: DashboardSavedOpportunityServiceFactory;
   readonly opportunityServiceFactory?: DashboardOpportunityServiceFactory;
+  readonly roadmapServiceFactory?: DashboardRoadmapServiceFactory;
 };
 
 type DashboardReferenceRecord = {
@@ -305,6 +309,7 @@ export class DashboardQueryService {
   private readonly trendServiceFactory: DashboardTrendServiceFactory;
   private readonly savedOpportunityServiceFactory: DashboardSavedOpportunityServiceFactory;
   private readonly opportunityServiceFactory: DashboardOpportunityServiceFactory;
+  private readonly roadmapServiceFactory: DashboardRoadmapServiceFactory;
 
   constructor(dependencies: DashboardQueryServiceDependencies = {}) {
     this.currentUserResolver = dependencies.currentUserResolver ?? defaultCurrentUserResolver;
@@ -322,6 +327,9 @@ export class DashboardQueryService {
     this.opportunityServiceFactory =
       dependencies.opportunityServiceFactory ??
       ((user) => new OpportunityService({ currentUserResolver: async () => user }));
+    this.roadmapServiceFactory =
+      dependencies.roadmapServiceFactory ??
+      ((user) => new StartupRoadmapService({ currentUserResolver: async () => user }));
   }
 
   async get(): Promise<DashboardDto> {
@@ -379,10 +387,13 @@ export class DashboardQueryService {
       return buildBusinessDto(profile, state, { categories, segments, channels });
     });
 
-    const [trendState, savedOpportunityState, opportunityState] = await Promise.all([
+    const [trendState, savedOpportunityState, opportunityState, roadmapState] = await Promise.all([
       this.loadTrendState(currentUser, userType),
       this.loadSavedOpportunityState(currentUser),
       this.loadOpportunityState(currentUser),
+      userType === USER_TYPES.ENTREPRENEUR
+        ? this.loadRoadmapState(currentUser)
+        : Promise.resolve(null),
     ]);
 
     return {
@@ -392,8 +403,22 @@ export class DashboardQueryService {
         trends: trendState,
         savedOpportunities: savedOpportunityState,
         opportunities: opportunityState,
+        ...(roadmapState ? { roadmap: roadmapState } : {}),
       },
     };
+  }
+
+  private async loadRoadmapState(currentUser: SafeUser): Promise<{ readonly status: "AVAILABLE" | "EMPTY" | "ERROR" }> {
+    try {
+      const result = await this.roadmapServiceFactory(currentUser).listForCurrentUser({
+        page: 1,
+        pageSize: 1,
+        type: "STARTUP",
+      });
+      return { status: result.totalCount > 0 ? DASHBOARD_MODULE_STATUSES.AVAILABLE : DASHBOARD_MODULE_STATUSES.EMPTY };
+    } catch {
+      return { status: DASHBOARD_MODULE_STATUSES.ERROR };
+    }
   }
 
   private async loadTrendState(

@@ -7,6 +7,7 @@ import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
 import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
 import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
+import { StartupRoadmapGenerateButton } from "@/components/roadmaps/startup-roadmap-generate-button";
 import { FitScoreSection } from "./fit-score-section";
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { RiskIndicatorDisplay } from "./risk-indicator-display";
@@ -41,12 +42,14 @@ export function OpportunityDetail({
   opportunityScore,
   riskAssessment,
   saveState,
+  isEntrepreneur,
 }: {
   readonly evidence: OpportunityEvidenceState;
   readonly item: OpportunityDetailDto;
   readonly opportunityScore: OpportunityScoreDisplayState;
   readonly riskAssessment: RiskAssessmentDisplayState;
   readonly saveState: OpportunitySaveState;
+  readonly isEntrepreneur?: boolean;
 }) {
   const titleId = `opportunity-detail-${item.id}`;
 
@@ -140,7 +143,11 @@ export function OpportunityDetail({
             </DetailSection>
 
             <DetailSection id={`${titleId}-roadmap`} title="Roadmap">
-              <NotAvailable>Roadmap belum tersedia.</NotAvailable>
+              {isEntrepreneur ? (
+                <StartupRoadmapGenerateButton opportunityId={item.id} />
+              ) : (
+                <NotAvailable>Startup Roadmap tersedia untuk Calon Pengusaha. Growth Roadmap untuk UMKM akan tersedia pada tahap berikutnya.</NotAvailable>
+              )}
             </DetailSection>
           </article>
         </Card>

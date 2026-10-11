@@ -144,6 +144,16 @@ describe("DashboardPage", () => {
     expect(markup).toContain("Jelajahi Peluang");
     expect(markup).not.toContain("productId");
     expect(markup).not.toContain("passwordHash");
+    expect(markup).not.toContain("Buka Roadmap");
+  });
+
+  it("links the Entrepreneur roadmap module to saved Startup Roadmaps", () => {
+    const markup = renderDashboard({
+      ...entrepreneurDashboard,
+      modules: { ...entrepreneurDashboard.modules, roadmap: { status: "AVAILABLE" } },
+    });
+    expect(markup).toContain('href="/roadmaps"');
+    expect(markup).toContain("Buka Roadmap");
   });
 
   it("confirms a saved profile update alongside the current profile summary", () => {

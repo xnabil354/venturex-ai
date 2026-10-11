@@ -201,6 +201,9 @@ function createService(
           totalPages: 1,
         }),
       })),
+    roadmapServiceFactory: () => ({
+      listForCurrentUser: async () => ({ items: [], page: 1, pageSize: 1, totalCount: 0, totalPages: 1 }),
+    }),
   };
 
   return new DashboardQueryService(dependencies);
@@ -239,7 +242,7 @@ describe("DashboardQueryService", () => {
         trends: { status: "EMPTY", preview: [] },
         opportunities: { status: "EMPTY", preview: [] },
         savedOpportunities: { status: "EMPTY", preview: [] },
-        roadmap: { status: "UNAVAILABLE" },
+        roadmap: { status: "EMPTY" },
       },
     });
     expect(entrepreneurRepository.requestedUserId).toBe(ENTREPRENEUR_USER_ID);
