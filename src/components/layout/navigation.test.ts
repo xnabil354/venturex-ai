@@ -26,4 +26,10 @@ describe("Trend List navigation", () => {
     expect(isNavigationActive("/saved", "/saved")).toBe(true);
     expect(getNavigationLabel("/saved")).toBe("Saved Opportunities");
   });
+
+  it("exposes the saved Roadmap route and marks detail pages active", () => {
+    expect(appNavigation).toContainEqual({ href: "/roadmaps", label: "Startup Roadmap" });
+    expect(isNavigationActive("/roadmaps/60000000-0000-4000-8000-000000000001", "/roadmaps")).toBe(true);
+    expect(getNavigationLabel("/roadmaps/60000000-0000-4000-8000-000000000001")).toBe("Startup Roadmap");
+  });
 });

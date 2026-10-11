@@ -5,6 +5,12 @@ vi.mock("@/opportunity/saved-actions", () => ({
   setOpportunitySavedAction: vi.fn(),
 }));
 
+vi.mock("@/components/roadmaps/startup-roadmap-generate-button", () => ({
+  StartupRoadmapGenerateButton: ({ opportunityId }: { readonly opportunityId: string }) => (
+    <button type="button">Buat Startup Roadmap {opportunityId}</button>
+  ),
+}));
+
 import OpportunityDetailError from "@/app/(app)/opportunities/[id]/error";
 import OpportunityDetailNotFound from "@/app/(app)/opportunities/[id]/not-found";
 import type { OpportunityDetailDto } from "@/opportunity/dto";
@@ -82,6 +88,7 @@ function render(
   saveState: OpportunitySaveState = { status: "AVAILABLE", saved: false },
   opportunityScore: OpportunityScoreDisplayState = insufficientScore,
   riskAssessment: RiskAssessmentDisplayState = insufficientRisk,
+  isEntrepreneur = false,
 ): string {
   return renderToStaticMarkup(
     <OpportunityDetail
@@ -90,6 +97,7 @@ function render(
       opportunityScore={opportunityScore}
       riskAssessment={riskAssessment}
       saveState={saveState}
+      isEntrepreneur={isEntrepreneur}
     />,
   ).replace(/\s+/gu, " ");
 }
@@ -163,6 +171,15 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain(`value="${item.id}"`);
   });
 
+  it("offers generation only to the eligible Entrepreneur interface", () => {
+    const entrepreneur = render(item, completeEvidence, { status: "AVAILABLE", saved: false }, insufficientScore, insufficientRisk, true);
+    const umkm = render(item);
+
+    expect(entrepreneur).toContain(`Buat Startup Roadmap ${item.id}`);
+    expect(umkm).toContain("Startup Roadmap tersedia untuk Calon Pengusaha.");
+    expect(umkm).not.toContain("Buat Startup Roadmap");
+  });
+
   it("keeps detail visible and reports a safe status when saved-state loading fails", () => {
     const markup = render(item, completeEvidence, { status: "ERROR" });
 
@@ -193,7 +210,7 @@ describe("OpportunityDetail", () => {
     expect(markup).toContain("Keterbatasan sumber");
     expect(markup).toContain("Cakupan hanya beberapa kota.");
     expect(markup).toContain("AI Analysis belum tersedia.");
-    expect(markup).toContain("Roadmap belum tersedia.");
+    expect(markup).toContain("Startup Roadmap tersedia untuk Calon Pengusaha.");
     expect(markup.match(/Belum dicantumkan\./gu)).toHaveLength(3);
     expect(markup).not.toContain("href=\"/opportunities/save");
     expect(markup).not.toContain("Evidence tersedia");

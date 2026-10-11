@@ -28,6 +28,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
+vi.mock("@/components/roadmaps/startup-roadmap-generate-button", () => ({
+  StartupRoadmapGenerateButton: () => <button type="button">Buat Startup Roadmap</button>,
+}));
 vi.mock("@/opportunity/service", () => ({
   OpportunityService: class MockOpportunityService {
     constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {

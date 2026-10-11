@@ -1,4 +1,5 @@
 import { useId } from "react";
+import Link from "next/link";
 
 import type { DashboardModuleState, DashboardModuleStatus } from "../../dashboard/dto";
 
@@ -13,9 +14,10 @@ export type ModuleStatusCardProps = {
   readonly description: string;
   readonly state: DashboardModuleState;
   readonly title: string;
+  readonly href?: string;
 };
 
-export function ModuleStatusCard({ description, state, title }: ModuleStatusCardProps) {
+export function ModuleStatusCard({ description, state, title, href }: ModuleStatusCardProps) {
   const headingId = useId();
 
   return (
@@ -30,6 +32,11 @@ export function ModuleStatusCard({ description, state, title }: ModuleStatusCard
         <p className="text-caption font-w540 text-stone-gray">{statusCopy[state.status]}</p>
       </div>
       <p className="text-body-sm leading-body-sm text-stone-gray">{description}</p>
+      {href ? (
+        <Link className="w-fit text-body-sm font-w540 text-royal-violet underline underline-offset-4" href={href}>
+          Buka Roadmap
+        </Link>
+      ) : null}
     </section>
   );
 }
