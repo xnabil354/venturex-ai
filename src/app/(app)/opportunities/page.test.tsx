@@ -6,13 +6,17 @@ const mocks = vi.hoisted(() => ({
   notFound: vi.fn(),
   list: vi.fn(),
   calculateScores: vi.fn(),
+  calculateRisks: vi.fn(),
   currentUserResolver: null as null | (() => Promise<unknown>),
   scoreResolver: null as null | (() => Promise<unknown>),
+  riskResolver: null as null | (() => Promise<unknown>),
   pages: [] as unknown[],
   categories: [] as unknown[],
   resolvedUsers: [] as unknown[],
   scoreIds: [] as string[][],
   scoreUsers: [] as unknown[],
+  riskIds: [] as string[][],
+  riskUsers: [] as unknown[],
 }));
 
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
@@ -48,6 +52,21 @@ vi.mock("@/scoring/opportunity-score-service", () => ({
     }
   },
 }));
+vi.mock("@/scoring/risk-assessment-service", () => ({
+  RiskAssessmentService: class MockRiskAssessmentService {
+    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
+      mocks.riskResolver = dependencies.currentUserResolver;
+    }
+
+    async assessForOpportunities(ids: string[]) {
+      mocks.riskIds.push(ids);
+      const resolver = mocks.riskResolver;
+      if (!resolver) throw new Error("The Risk current-user resolver was not supplied.");
+      mocks.riskUsers.push(await resolver());
+      return mocks.calculateRisks(ids);
+    }
+  },
+}));
 
 import {
   ONBOARDING_STATUSES,
@@ -69,12 +88,16 @@ describe("/opportunities page", () => {
     vi.clearAllMocks();
     mocks.currentUserResolver = null;
     mocks.scoreResolver = null;
+    mocks.riskResolver = null;
     mocks.pages.length = 0;
     mocks.categories.length = 0;
     mocks.resolvedUsers.length = 0;
     mocks.scoreIds.length = 0;
     mocks.scoreUsers.length = 0;
+    mocks.riskIds.length = 0;
+    mocks.riskUsers.length = 0;
     mocks.calculateScores.mockResolvedValue({});
+    mocks.calculateRisks.mockResolvedValue({});
     mocks.notFound.mockImplementation(() => {
       throw new Error("NOT_FOUND");
     });
@@ -107,6 +130,7 @@ describe("/opportunities page", () => {
       expect(mocks.categories).toEqual([undefined]);
       expect(mocks.list).toHaveBeenCalledWith("2", undefined);
       expect(mocks.calculateScores).not.toHaveBeenCalled();
+      expect(mocks.calculateRisks).not.toHaveBeenCalled();
     },
   );
 
@@ -192,13 +216,17 @@ describe("/opportunities page", () => {
       totalPages: 1,
     });
     mocks.calculateScores.mockResolvedValue({ [item.id]: { status: "ERROR" } });
+    mocks.calculateRisks.mockResolvedValue({ [item.id]: { status: "ERROR" } });
 
     const markup = renderToStaticMarkup(await OpportunitiesPage({
       searchParams: Promise.resolve({}),
     })).replace(/\s+/gu, " ");
 
     expect(markup).toContain("Opportunity Score sementara tidak dapat dimuat.");
+    expect(markup).toContain("Indikator Risiko sementara tidak dapat dimuat.");
     expect(mocks.scoreIds).toEqual([[item.id]]);
     expect(mocks.scoreUsers).toEqual([persistedUser]);
+    expect(mocks.riskIds).toEqual([[item.id]]);
+    expect(mocks.riskUsers).toEqual([persistedUser]);
   });
 });

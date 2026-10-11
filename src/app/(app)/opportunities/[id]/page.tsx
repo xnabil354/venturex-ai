@@ -12,6 +12,7 @@ import {
   OpportunityScoreService,
   type OpportunityScoreDisplayState,
 } from "@/scoring/opportunity-score-service";
+import { RiskAssessmentService, type RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 
 export default async function OpportunityDetailPage({
   params,
@@ -46,6 +47,17 @@ export default async function OpportunityDetailPage({
     ? { status: "ERROR" }
     : scoreResult;
 
+  let riskResult: Awaited<ReturnType<RiskAssessmentService["assessForOpportunity"]>> = null;
+  try {
+    riskResult = await new RiskAssessmentService({
+      currentUserResolver: async () => user,
+    }).assessForOpportunity(id);
+  } catch {
+    riskResult = { status: "ERROR" };
+  }
+  if (!riskResult) return notFound();
+  const riskAssessment: RiskAssessmentDisplayState = riskResult;
+
   let evidence: OpportunityEvidenceState | null;
   try {
     evidence = await new OpportunityEvidenceService({
@@ -66,5 +78,5 @@ export default async function OpportunityDetailPage({
   }
   if (!saveState) notFound();
 
-  return <OpportunityDetail evidence={evidence} item={item} opportunityScore={opportunityScore} saveState={saveState} />;
+  return <OpportunityDetail evidence={evidence} item={item} opportunityScore={opportunityScore} riskAssessment={riskAssessment} saveState={saveState} />;
 }

@@ -4,7 +4,9 @@ import { Button, Card, EmptyState, PageContainer } from "@/components/ui";
 import type { OpportunityFinderResult } from "@/opportunity/service";
 import type { OpportunityCategoryOption } from "@/opportunity/domain";
 import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
+import { RiskIndicatorDisplay } from "./risk-indicator-display";
 
 function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" }) {
   const copy = status === "ERROR"
@@ -59,9 +61,11 @@ function pageHref(page: number, categoryCode: string | null): string {
 export function OpportunityFinder({
   result,
   scoreByOpportunityId,
+  riskByOpportunityId,
 }: {
   readonly result: OpportunityFinderResult;
   readonly scoreByOpportunityId: Readonly<Record<string, OpportunityScoreDisplayState>>;
+  readonly riskByOpportunityId: Readonly<Record<string, RiskAssessmentDisplayState>>;
 }) {
   const catalog = result.status === "AVAILABLE" ||
     result.status === "EMPTY" ||
@@ -123,10 +127,10 @@ export function OpportunityFinder({
                           <span className="font-w540 text-ink-charcoal">Fit Score</span>
                           Data belum cukup
                         </p>
-                        <p className="grid gap-4 text-body-sm text-stone-gray">
+                        <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Risiko</span>
-                          Data belum cukup
-                        </p>
+                          <RiskIndicatorDisplay compact result={riskByOpportunityId[item.id] ?? { status: "ERROR" }} />
+                        </div>
                       </section>
 
                       <p className="border-t border-soft-mist pt-12 text-body-sm text-stone-gray">

@@ -6,8 +6,10 @@ import type { OpportunityDetailDto } from "@/opportunity/dto";
 import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
 import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 import { FitScoreSection } from "./fit-score-section";
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
+import { RiskIndicatorDisplay } from "./risk-indicator-display";
 import { SavedOpportunityControl } from "./saved-opportunity-control";
 
 function DetailSection({
@@ -37,11 +39,13 @@ export function OpportunityDetail({
   evidence,
   item,
   opportunityScore,
+  riskAssessment,
   saveState,
 }: {
   readonly evidence: OpportunityEvidenceState;
   readonly item: OpportunityDetailDto;
   readonly opportunityScore: OpportunityScoreDisplayState;
+  readonly riskAssessment: RiskAssessmentDisplayState;
   readonly saveState: OpportunitySaveState;
 }) {
   const titleId = `opportunity-detail-${item.id}`;
@@ -124,7 +128,7 @@ export function OpportunityDetail({
                 </div>
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Risk</dt>
-                  <dd className="text-body-sm text-stone-gray">Data belum cukup</dd>
+                  <dd className="min-w-0"><RiskIndicatorDisplay result={riskAssessment} /></dd>
                 </div>
               </dl>
             </DetailSection>

@@ -242,7 +242,7 @@ describe("OpportunityDetail Fit Score integration", () => {
   it("keeps existing Opportunity content visible when Fit Score fails", async () => {
     fetchMock.mockRejectedValue(new Error("sensitive infrastructure details"));
 
-    render(<OpportunityDetail evidence={emptyEvidence} item={opportunity} opportunityScore={{ status: "ERROR" }} saveState={unsaved} />);
+    render(<OpportunityDetail evidence={emptyEvidence} item={opportunity} opportunityScore={{ status: "ERROR" }} riskAssessment={{ status: "ERROR" }} saveState={unsaved} />);
 
     expect((await screen.findByRole("alert")).textContent).toContain("Detail Opportunity tetap tersedia.");
     expect(screen.getByRole("heading", { name: opportunity.name })).toBeTruthy();
