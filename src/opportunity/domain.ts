@@ -6,6 +6,12 @@ export const opportunityIdSchema = z.string().uuid().brand<"OpportunityId">();
 export type OpportunityId = z.infer<typeof opportunityIdSchema>;
 
 export const opportunityPageSchema = z.coerce.number().int().min(1).catch(1);
+export const opportunityCategoryCodeSchema = z.string().trim().min(1).max(64);
+
+export type OpportunityCategoryOption = {
+  readonly code: string;
+  readonly name: string;
+};
 
 export type OpportunityRecord = {
   readonly id: string;

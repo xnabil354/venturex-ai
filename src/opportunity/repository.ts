@@ -7,15 +7,18 @@ import type { UserType } from "../auth/user-types";
 import type {
   OpportunityDetailRecord,
   OpportunityFitInputOpportunityRecord,
+  OpportunityCategoryOption,
   OpportunityPageRequest,
   OpportunityRecord,
 } from "./domain";
 
 export interface OpportunityRepositoryPort {
-  countVisible(userType: UserType): Promise<number>;
+  listActiveCategories(): Promise<readonly OpportunityCategoryOption[]>;
+  countVisible(userType: UserType, categoryCode?: string): Promise<number>;
   listVisible(
     userType: UserType,
     page: OpportunityPageRequest,
+    categoryCode?: string,
   ): Promise<readonly OpportunityRecord[]>;
   listVisibleForTrend(
     userType: UserType,
@@ -83,9 +86,18 @@ export class OpportunityRepository implements OpportunityRepositoryPort {
     }
   }
 
-  async countVisible(userType: UserType): Promise<number> {
+  async listActiveCategories(): Promise<readonly OpportunityCategoryOption[]> {
+    const categories = await this.categoryModel.findAll({
+      where: { isActive: true },
+      attributes: ["code", "name"],
+      order: [["code", "ASC"]],
+    });
+    return categories.map(({ code, name }) => ({ code, name }));
+  }
+
+  async countVisible(userType: UserType, categoryCode?: string): Promise<number> {
     return this.opportunityModel.count({
-      include: this.visibleIncludes(userType),
+      include: this.visibleIncludes(userType, categoryCode),
       distinct: true,
       col: "id",
     });
@@ -94,10 +106,11 @@ export class OpportunityRepository implements OpportunityRepositoryPort {
   async listVisible(
     userType: UserType,
     page: OpportunityPageRequest,
+    categoryCode?: string,
   ): Promise<readonly OpportunityRecord[]> {
     const opportunities = await this.opportunityModel.findAll({
       attributes: ["id", "name", "description"],
-      include: this.visibleIncludes(userType),
+      include: this.visibleIncludes(userType, categoryCode),
       order: [["createdAt", "DESC"], ["id", "ASC"]],
       limit: page.limit,
       offset: page.offset,
@@ -162,7 +175,7 @@ export class OpportunityRepository implements OpportunityRepositoryPort {
     };
   }
 
-  private visibleIncludes(userType: UserType) {
+  private visibleIncludes(userType: UserType, categoryCode?: string) {
     return [
       {
         model: this.trendModel,
@@ -179,6 +192,7 @@ export class OpportunityRepository implements OpportunityRepositoryPort {
         as: "category",
         attributes: ["id", "name"],
         required: true,
+        ...(categoryCode ? { where: { code: categoryCode, isActive: true } } : {}),
       },
     ];
   }

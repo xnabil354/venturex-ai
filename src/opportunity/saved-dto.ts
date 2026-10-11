@@ -2,7 +2,8 @@ import type { OpportunityListItemDto } from "./dto";
 
 export type SavedOpportunityListResult =
   | { readonly status: "AVAILABLE"; readonly items: readonly OpportunityListItemDto[] }
-  | { readonly status: "EMPTY"; readonly items: readonly [] };
+  | { readonly status: "EMPTY"; readonly items: readonly [] }
+  | { readonly status: "ERROR" };
 
 export type OpportunitySaveState =
   | { readonly status: "AVAILABLE"; readonly saved: boolean }

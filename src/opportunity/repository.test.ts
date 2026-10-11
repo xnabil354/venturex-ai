@@ -47,15 +47,37 @@ function createRepository() {
     findAll,
     findOne,
   } as unknown as typeof Opportunity;
+  const categoryFindAll = vi.fn().mockResolvedValue([
+    { code: "BEVERAGES", name: "Minuman" },
+    { code: "SNACKS", name: "Camilan" },
+  ]);
+  const categoryModel = {
+    associations: {},
+    findAll: categoryFindAll,
+  } as unknown as typeof FnbCategory;
   const repository = new OpportunityRepository(
     opportunityModel,
     {} as typeof Trend,
-    {} as typeof FnbCategory,
+    categoryModel,
   );
-  return { repository, count, findAll, findOne };
+  return { repository, count, findAll, findOne, categoryFindAll };
 }
 
 describe("OpportunityRepository", () => {
+  it("lists active persisted F&B categories in deterministic code order", async () => {
+    const { repository, categoryFindAll } = createRepository();
+
+    await expect(repository.listActiveCategories()).resolves.toEqual([
+      { code: "BEVERAGES", name: "Minuman" },
+      { code: "SNACKS", name: "Camilan" },
+    ]);
+    expect(categoryFindAll).toHaveBeenCalledWith({
+      where: { isActive: true },
+      attributes: ["code", "name"],
+      order: [["code", "ASC"]],
+    });
+  });
+
   it.each([USER_TYPES.ENTREPRENEUR, USER_TYPES.UMKM_EXISTING])(
     "counts only PUBLISHED related Trends eligible for %s",
     async (userType) => {
@@ -79,6 +101,21 @@ describe("OpportunityRepository", () => {
       }));
     },
   );
+
+  it("applies the validated F&B category to the count query", async () => {
+    const { repository, count } = createRepository();
+
+    await repository.countVisible(USER_TYPES.ENTREPRENEUR, "BEVERAGES");
+
+    const options = count.mock.calls[0]?.[0];
+    expect(options?.include).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        as: "category",
+        required: true,
+        where: { code: "BEVERAGES", isActive: true },
+      }),
+    ]));
+  });
 
   it("projects persisted category and Trend labels with stable paginated ordering", async () => {
     const { repository, findAll } = createRepository();
@@ -105,6 +142,28 @@ describe("OpportunityRepository", () => {
       include: expect.arrayContaining([
         expect.objectContaining({ as: "relatedTrend", required: true }),
         expect.objectContaining({ as: "category", required: true }),
+      ]),
+    }));
+  });
+
+  it("filters in the database before applying the requested page", async () => {
+    const { repository, findAll } = createRepository();
+
+    await repository.listVisible(
+      USER_TYPES.ENTREPRENEUR,
+      { limit: 10, offset: 10 },
+      "BEVERAGES",
+    );
+
+    expect(findAll).toHaveBeenCalledWith(expect.objectContaining({
+      limit: 10,
+      offset: 10,
+      include: expect.arrayContaining([
+        expect.objectContaining({
+          as: "category",
+          required: true,
+          where: { code: "BEVERAGES", isActive: true },
+        }),
       ]),
     }));
   });

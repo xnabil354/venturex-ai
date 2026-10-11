@@ -244,7 +244,7 @@ describe("DashboardPage", () => {
     expect(markup).toContain(name);
     expect(markup).toContain("Peluang tersimpan yang masih sesuai untuk tipe akun Anda.");
     expect(markup).toContain(`href="/opportunities/${id}"`);
-    expect(markup).toContain('href="/saved-opportunities"');
+    expect(markup).toContain('href="/saved"');
   });
 
   it("renders honest empty and error states with access to the saved-opportunities list", () => {
@@ -264,9 +264,9 @@ describe("DashboardPage", () => {
     });
 
     expect(empty).toContain("Belum ada peluang eligible yang tersimpan.");
-    expect(empty).toContain('href="/saved-opportunities"');
+    expect(empty).toContain('href="/saved"');
     expect(error).toContain("Peluang tersimpan belum dapat dimuat saat ini. Ringkasan Dashboard tetap tersedia.");
-    expect(error).toContain('href="/saved-opportunities"');
+    expect(error).toContain('href="/saved"');
     expect(error).toContain("Ringkasan bisnis Kedai Pagi");
   });
 

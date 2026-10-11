@@ -35,6 +35,7 @@ export async function setOpportunitySavedAction(
     }
 
     revalidatePath(`/opportunities/${opportunityId}`);
+    revalidatePath("/saved");
     revalidatePath("/saved-opportunities");
     return {
       status: "SUCCESS",

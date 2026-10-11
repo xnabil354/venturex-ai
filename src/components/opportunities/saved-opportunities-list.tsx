@@ -31,8 +31,21 @@ export function SavedOpportunitiesList({
                 Buka Opportunity Finder
               </Link>
             )}
-            description="Belum ada opportunity yang disimpan. Jelajahi Opportunity Finder untuk mulai menyimpan peluang."
+            description="Belum ada opportunity yang disimpan."
             title="Belum ada simpanan"
+          />
+        ) : result.status === "ERROR" ? (
+          <EmptyState
+            action={(
+              <Link
+                className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
+                href="/saved"
+              >
+                Coba lagi
+              </Link>
+            )}
+            description="Peluang tersimpan belum dapat dimuat. Silakan coba kembali."
+            title="Terjadi kendala"
           />
         ) : (
           <ul aria-label="Peluang tersimpan" className="grid gap-16">

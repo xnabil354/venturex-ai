@@ -20,10 +20,10 @@ describe("Trend List navigation", () => {
 
   it("exposes Saved Opportunities and marks its route active", () => {
     expect(appNavigation).toContainEqual({
-      href: "/saved-opportunities",
+      href: "/saved",
       label: "Saved Opportunities",
     });
-    expect(isNavigationActive("/saved-opportunities", "/saved-opportunities")).toBe(true);
-    expect(getNavigationLabel("/saved-opportunities")).toBe("Saved Opportunities");
+    expect(isNavigationActive("/saved", "/saved")).toBe(true);
+    expect(getNavigationLabel("/saved")).toBe("Saved Opportunities");
   });
 });

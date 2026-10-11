@@ -193,6 +193,8 @@ function createService(
         list: async (): Promise<OpportunityFinderResult> => ({
           status: "EMPTY",
           items: [],
+          categories: [],
+          selectedCategory: null,
           page: 1,
           pageSize: 10,
           totalCount: 0,
@@ -397,6 +399,18 @@ describe("DashboardQueryService", () => {
     expect(result.modules.opportunities).toEqual({ status: "EMPTY", preview: [] });
   });
 
+  it("preserves an explicit saved-opportunity ERROR state", async () => {
+    const result = await createService(
+      user(ENTREPRENEUR_USER_ID, USER_TYPES.ENTREPRENEUR),
+      new MemoryEntrepreneurRepository(),
+      new MemoryBusinessRepository(),
+      undefined,
+      () => ({ listForCurrentUser: async () => ({ status: "ERROR" }) }),
+    ).get();
+
+    expect(result.modules.savedOpportunities).toEqual({ status: "ERROR", preview: [] });
+  });
+
   it("isolates saved-opportunity failures from profile and Trend data", async () => {
     const trend = trendDto({ affectedUserTypes: [USER_TYPES.UMKM_EXISTING] });
     const result = await createService(
@@ -436,6 +450,8 @@ describe("DashboardQueryService", () => {
     const list = vi.fn(async (): Promise<OpportunityFinderResult> => ({
       status: "AVAILABLE",
       items,
+      categories: [],
+      selectedCategory: null,
       page: 1,
       pageSize: 10,
       totalCount: items.length,
