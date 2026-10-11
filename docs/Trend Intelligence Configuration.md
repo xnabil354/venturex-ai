@@ -131,7 +131,17 @@ Do not treat an external source's index, count, or percentage as a VENTUREX metr
 
 ### MVP Data Architecture Decision
 
-The Hackathon MVP uses an **Internal Persistent Curated Trend Catalog**. The catalog stores reviewed Trend records and their traceable evidence. The MVP does not include external signal ingestion or an automated signal-processing pipeline.
+The user-facing Hackathon Trend MVP continues to use an **Internal Persistent Curated Trend Catalog**. It does not consume externally collected candidates in the published Trend catalog or Trend List; the optional candidate-collection extension below is not a dependency of that user-facing path.
+
+#### Approved Bright Data candidate-collection extension (Batch v1)
+
+The explicitly approved integration batch allows a server-only adapter to collect Google Trends Trending Now candidates for Indonesia through the Bright Data zone venturex_trends_serp. A deterministic keyword screener classifies each candidate as LIKELY_FNB, REVIEW_REQUIRED, or OUT_OF_SCOPE. This is ephemeral candidate triage only.
+
+The adapter is disabled by default. It reads BRIGHTDATA_TRENDS_ENABLED (true or false, default false), BRIGHTDATA_TRENDS_API_KEY (server-only and required only when enabled), and BRIGHTDATA_TRENDS_TIMEOUT_MS (default 10000; allowed range 250-30000). The zone, provider endpoint, and Google Trends target are fixed by this approved integration. The key must never use a NEXT_PUBLIC variable or appear in logs.
+
+The provider observations retain their original query, region, source metrics, related-query and category data, start time in Unix seconds, and provenance. The adapter retrieval timestamp is collection metadata; it is not the source date, catalog update time, or a freshness measure. Screening explanations state the matched terms or ambiguity. These outputs do not create a Trend record or lifecycle state, assign a Trend taxonomy category, verify evidence, or establish a factual market claim. A Data Curator must independently review the source and decide whether to create a DRAFT record.
+
+The adapter validates the response structure against the observed fields, and the keyword screener performs candidate triage only. Neither step validates whether source evidence supports a factual market claim. Factual evidence validation remains a separate human responsibility. The batch uses only mocked HTTP and synthetic fixtures; it makes no live provider requests and adds no scheduler, retry, polling, persistence, factual validation, or publication behavior.
 
 ```text
 Real-world source / evidence
@@ -149,7 +159,7 @@ Safe typed DTO
 Future user interface
 ```
 
-Curators may use real external sources as evidence, but they add and review catalog records through a trusted human process. The catalog remains provider-agnostic so a future ingestion mechanism can be considered without binding the MVP to a provider. Internal persistence does not authorize synthetic market data: fabricated trends, sources, or claims must never be published.
+Curators may use real external sources as evidence, but they add and review catalog records through a trusted human process. The Bright Data candidate collector remains separate from the catalog and does not create DRAFT records. The published catalog remains independent of any provider. Internal persistence does not authorize synthetic market data: fabricated trends, sources, or claims must never be published.
 
 ### Internal context
 
@@ -162,7 +172,7 @@ Internal profile data is not evidence that a market trend exists. It must not be
 
 ### External evidence
 
-Evidence may come from aggregated search-trend data, public market signals, published industry reports, and public aggregate social signals. These are possible source classes for human curation, not an ingestion pipeline or provider commitment. No provider, access method, coverage, reliability, license, or availability is selected here.
+Evidence may come from aggregated search-trend data, public market signals, published industry reports, and public aggregate social signals. These are source classes for human curation. The approved Bright Data collector is limited to candidate collection from Google Trends Trending Now for Indonesia; it does not establish broader provider coverage, reliability, licensing, or production availability. Candidate observations still require independent source review before they can support a Trend.
 
 ### Evidence quality gate
 
@@ -197,7 +207,7 @@ If evidence is missing, stale, conflicting, or insufficient, the result must sta
 
 ## 7. Trend Lifecycle and Ownership
 
-Only `PUBLISHED` trends are available for user discovery. The lifecycle has exactly four states; candidate intake creates a `DRAFT` record and is not a separate state. AI and automated processing cannot advance a lifecycle state.
+Only `PUBLISHED` trends are available for user discovery. The lifecycle has exactly four states; the Data Curator creates a `DRAFT` record only after manual review of a candidate. Provider collection and screening results are pre-lifecycle and do not create a lifecycle record. AI and automated processing cannot advance a lifecycle state.
 
 | State | Meaning |
 |---|---|
@@ -251,7 +261,7 @@ The selected data architecture, taxonomy distinction, server-side eligibility be
 
 The following remain unresolved and must not be treated as implementation facts:
 
-1. Future external provider(s), access method, licensing, geographic coverage, and availability; external ingestion is not part of this MVP.
+1. Additional external providers, source coverage, licensing, reliability, and any persistent or automated ingestion remain undecided. The approved Bright Data candidate collector is ephemeral and is not part of the user-facing Trend List data path.
 2. Assignment of the Data Curator, human reviewer, and Product/Data Owner; trusted server-side authorization and any audit trail for their actions.
 3. Operational evidence review details, including how uncertain or undated sources are recorded and whether reviewer identity must be persisted.
 4. Future derived source-freshness semantics and any threshold. List v1 date semantics are resolved in the approved contract; a source date is not the same as catalog `updatedAt`.
