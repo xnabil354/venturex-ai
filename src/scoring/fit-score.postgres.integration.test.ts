@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { QueryTypes, type Sequelize } from "sequelize";
+import { QueryTypes, UniqueConstraintError, type Sequelize } from "sequelize";
 
 vi.mock("server-only", () => ({}));
 vi.mock("../auth/current-user", () => ({ getCurrentUser: vi.fn() }));
@@ -10,11 +10,17 @@ import {
   type SafeUser,
   type UserType,
 } from "../auth/user-types";
+import { AIAnalysisResponseInvalidError, type OpportunityAnalysis } from "../ai-analysis/domain";
+import { AIAnalysisService, InMemoryOpportunityAnalysisRateLimiter } from "../ai-analysis/service";
 import { getSequelize } from "../db/sequelize";
 import {
   OpportunityFitInputContextAccessContextError,
   OpportunityFitInputContextService,
 } from "../opportunity/fit-input-context-service";
+import { OpportunityComparisonService } from "../opportunity/compare-service";
+import { SavedOpportunityService } from "../opportunity/saved-service";
+import { RoadmapRepository } from "../roadmap/repository";
+import { StartupRoadmapService } from "../roadmap/service";
 import { FitScoreService } from "./fit-score-service";
 
 const FIT_TEST_DB_NAME = "venturex_fit_score_test";
@@ -27,6 +33,7 @@ const SNAPSHOT_TABLES = [
   "sales_channels",
   "entrepreneur_profiles",
   "entrepreneur_profile_interests",
+  "entrepreneur_profile_customer_segments",
   "entrepreneur_profile_sales_channels",
   "business_profiles",
   "business_products",
@@ -39,6 +46,10 @@ const SNAPSHOT_TABLES = [
   "opportunity_sales_channels",
   "scoring_models",
   "user_opportunity_analyses",
+  "evidences",
+  "saved_opportunities",
+  "roadmaps",
+  "roadmap_steps",
 ] as const;
 
 const MIGRATION_NAMES = [
@@ -57,6 +68,7 @@ const MIGRATION_NAMES = [
   "013-create-scoring-models.ts",
   "014-create-user-opportunity-analyses.ts",
   "015-create-opportunity-fit-inputs.ts",
+  "016-create-roadmaps.ts",
 ];
 
 const IDS = {
@@ -80,6 +92,8 @@ const IDS = {
   entrepreneurOnlyOpportunity: "60000000-0000-4000-8000-000000000003",
   draftOpportunity: "60000000-0000-4000-8000-000000000004",
   missingOpportunity: "60000000-0000-4000-8000-000000000099",
+  evidenceA: "40000000-0000-4000-8000-000000000001",
+  evidenceB: "40000000-0000-4000-8000-000000000002",
 } as const;
 
 let sequelize: Sequelize | undefined;
@@ -90,17 +104,21 @@ function requireRow<T>(row: T | undefined): T {
 }
 
 function createFitScoreService(userId: string, userType: UserType): FitScoreService {
-  const currentUser: SafeUser = {
-    id: parseUserId(userId),
-    email: `synthetic-${userId.slice(-2)}@example.test`,
-    userType,
-    onboardingStatus: ONBOARDING_STATUSES.COMPLETED,
-  };
+  const currentUser = createSafeUser(userId, userType);
   const contextService = new OpportunityFitInputContextService({
     currentUserResolver: async () => currentUser,
   });
 
   return new FitScoreService({ fitInputContextService: contextService });
+}
+
+function createSafeUser(userId: string, userType: UserType): SafeUser {
+  return {
+    id: parseUserId(userId),
+    email: `synthetic-${userId.slice(-2)}@example.test`,
+    userType,
+    onboardingStatus: ONBOARDING_STATUSES.COMPLETED,
+  };
 }
 
 async function seedSyntheticFixtures(connection: Sequelize): Promise<void> {
@@ -152,6 +170,11 @@ async function seedSyntheticFixtures(connection: Sequelize): Promise<void> {
     `INSERT INTO entrepreneur_profile_interests (entrepreneur_profile_id, fnb_category_id)
      VALUES ($1, $2), ($3, $2)`,
     { bind: [IDS.entrepreneurProfileA, IDS.category, IDS.entrepreneurProfileB] },
+  );
+  await connection.query(
+    `INSERT INTO entrepreneur_profile_customer_segments (entrepreneur_profile_id, customer_segment_id)
+     VALUES ($1, $3), ($2, $3)`,
+    { bind: [IDS.entrepreneurProfileA, IDS.entrepreneurProfileB, IDS.segment] },
   );
   await connection.query(
     `INSERT INTO entrepreneur_profile_sales_channels (entrepreneur_profile_id, sales_channel_id)
@@ -230,6 +253,15 @@ async function seedSyntheticFixtures(connection: Sequelize): Promise<void> {
     `INSERT INTO opportunity_sales_channels (opportunity_id, sales_channel_id)
      VALUES ($1, $3), ($2, $3)`,
     { bind: [IDS.availableOpportunity, IDS.insufficientOpportunity, IDS.channel] },
+  );
+  await connection.query(
+    `INSERT INTO evidences
+       (id, trend_id, opportunity_id, source_name, source_type, source_mode,
+        source_reference, source_url, source_date, retrieved_at, metadata)
+     VALUES
+       ($1, NULL, $3, 'Synthetic Evidence A', 'SYNTHETIC', 'PREPARED', 'reference-a', 'https://example.test/a', NULL, CURRENT_TIMESTAMP, '{}'::jsonb),
+       ($2, NULL, $3, 'Synthetic Evidence B', 'SYNTHETIC', 'PREPARED', 'reference-b', 'https://example.test/b', NULL, CURRENT_TIMESTAMP, '{}'::jsonb)`,
+    { bind: [IDS.evidenceA, IDS.evidenceB, IDS.availableOpportunity] },
   );
 }
 
@@ -444,5 +476,166 @@ describe.skipIf(!integrationEnabled)("Fit Score PostgreSQL integration (disposab
       scoring_models: { count: "0" },
       user_opportunity_analyses: { count: "0" },
     });
+  });
+
+  it("persists six-step Startup and five-step Growth Roadmaps with ordered evidence and owner isolation", async () => {
+    const startupOwner = createSafeUser(IDS.entrepreneurA, "ENTREPRENEUR");
+    const startupService = new StartupRoadmapService({ currentUserResolver: async () => startupOwner });
+    const startup = await startupService.generate({ opportunityId: IDS.availableOpportunity });
+    expect(startup.roadmapType).toBe("STARTUP");
+    expect(startup.steps.map(({ sequence }) => sequence)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(startup.generationContext.evidence.map(({ sourceReference }) => sourceReference))
+      .toEqual(["reference-a", "reference-b"]);
+
+    await expect(startupService.getForCurrentUser(startup.id)).resolves.toMatchObject({
+      id: startup.id,
+      roadmapType: "STARTUP",
+      steps: expect.arrayContaining([expect.objectContaining({ sequence: 1 })]),
+    });
+    await expect(startupService.listForCurrentUser({ page: 1, pageSize: 10 }))
+      .resolves.toMatchObject({ totalCount: 1, items: [expect.objectContaining({ id: startup.id })] });
+
+    const otherOwnerService = new StartupRoadmapService({
+      currentUserResolver: async () => createSafeUser(IDS.entrepreneurB, "ENTREPRENEUR"),
+    });
+    await expect(otherOwnerService.getForCurrentUser(startup.id)).resolves.toBeNull();
+    await expect(otherOwnerService.listForCurrentUser({ page: 1, pageSize: 10 }))
+      .resolves.toMatchObject({ totalCount: 0, items: [] });
+
+    const growthService = new StartupRoadmapService({
+      currentUserResolver: async () => createSafeUser(IDS.businessUser, "UMKM_EXISTING"),
+    });
+    const growth = await growthService.generate({ opportunityId: IDS.availableOpportunity });
+    expect(growth.roadmapType).toBe("GROWTH");
+    expect(growth.steps.map(({ sequence }) => sequence)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("rolls back a Roadmap header when PostgreSQL rejects the step insert", async () => {
+    const userId = parseUserId(IDS.entrepreneurA);
+    const startupService = new StartupRoadmapService({
+      currentUserResolver: async () => createSafeUser(IDS.entrepreneurA, "ENTREPRENEUR"),
+    });
+    const startup = await startupService.generate({ opportunityId: IDS.availableOpportunity });
+    const beforeRows = await sequelize!.query<{ roadmaps: string; steps: string }>(
+      `SELECT (SELECT count(*)::text FROM roadmaps) AS roadmaps,
+              (SELECT count(*)::text FROM roadmap_steps) AS steps`,
+      { type: QueryTypes.SELECT },
+    );
+    const before = requireRow(beforeRows[0]);
+    const invalidSteps = startup.steps.map((step, index) => ({
+      sequence: index === startup.steps.length - 1 ? startup.steps[0]!.sequence : step.sequence,
+      stage: step.stage,
+      action: step.action,
+      objective: step.objective,
+      timeline: step.timeline,
+      expectedOutput: step.expectedOutput,
+    }));
+
+    await expect(sequelize!.transaction((transaction) => new RoadmapRepository().createWithSteps({
+      userId,
+      roadmapType: "STARTUP",
+      opportunityId: IDS.availableOpportunity,
+      analysisId: null,
+      generationContext: startup.generationContext,
+      steps: invalidSteps,
+    }, transaction))).rejects.toBeInstanceOf(UniqueConstraintError);
+
+    const afterRows = await sequelize!.query<{ roadmaps: string; steps: string }>(
+      `SELECT (SELECT count(*)::text FROM roadmaps) AS roadmaps,
+              (SELECT count(*)::text FROM roadmap_steps) AS steps`,
+      { type: QueryTypes.SELECT },
+    );
+    expect(requireRow(afterRows[0])).toEqual(before);
+  });
+
+  it("persists saved relationships idempotently and removes only the current user's relationship", async () => {
+    const ownerA = new SavedOpportunityService({
+      currentUserResolver: async () => createSafeUser(IDS.entrepreneurA, "ENTREPRENEUR"),
+    });
+    const ownerB = new SavedOpportunityService({
+      currentUserResolver: async () => createSafeUser(IDS.entrepreneurB, "ENTREPRENEUR"),
+    });
+
+    await expect(ownerA.saveForCurrentUser(IDS.availableOpportunity)).resolves.toEqual({ saved: true, created: true });
+    await expect(ownerA.saveForCurrentUser(IDS.availableOpportunity)).resolves.toEqual({ saved: true, created: false });
+    await expect(ownerB.saveForCurrentUser(IDS.availableOpportunity)).resolves.toEqual({ saved: true, created: true });
+    await expect(ownerA.getSaveState(IDS.availableOpportunity)).resolves.toEqual({ status: "AVAILABLE", saved: true });
+
+    await expect(ownerA.setSaved(IDS.availableOpportunity, false)).resolves.toBe(false);
+    await expect(ownerA.getSaveState(IDS.availableOpportunity)).resolves.toEqual({ status: "AVAILABLE", saved: false });
+    await expect(ownerB.getSaveState(IDS.availableOpportunity)).resolves.toEqual({ status: "AVAILABLE", saved: true });
+
+    const businessOwner = new SavedOpportunityService({
+      currentUserResolver: async () => createSafeUser(IDS.businessUser, "UMKM_EXISTING"),
+    });
+    await expect(businessOwner.saveForCurrentUser(IDS.entrepreneurOnlyOpportunity)).resolves.toBeNull();
+  });
+
+  it("compares persisted Opportunities with user-specific Fit Scores and null unavailable metrics", async () => {
+    const opportunityIds = [IDS.availableOpportunity, IDS.insufficientOpportunity];
+    const compareAs = (userId: string) => new OpportunityComparisonService({
+      currentUserResolver: async () => createSafeUser(userId, "ENTREPRENEUR"),
+    });
+    const ownerA = await compareAs(IDS.entrepreneurA).compare({ opportunityIds });
+    const ownerB = await compareAs(IDS.entrepreneurB).compare({ opportunityIds });
+    const ownerAFit = ownerA.items.find(({ opportunityId }) => opportunityId === IDS.availableOpportunity)?.fitScore;
+    const ownerBFit = ownerB.items.find(({ opportunityId }) => opportunityId === IDS.availableOpportunity)?.fitScore;
+    const missingFit = ownerA.items.find(({ opportunityId }) => opportunityId === IDS.insufficientOpportunity)?.fitScore;
+
+    expect(ownerAFit).toMatchObject({ status: "AVAILABLE", value: 100 });
+    expect(ownerBFit).toMatchObject({ status: "AVAILABLE", value: 60 });
+    expect(missingFit).toMatchObject({ status: "INSUFFICIENT_DATA", value: null });
+    for (const item of ownerA.items) {
+      expect(item.opportunityScore.value).toBeNull();
+      expect(item.risk.value).toBeNull();
+    }
+  });
+
+  it("stores and retrieves schema-valid synthetic AI analysis by owner and rejects invalid output without persistence", async () => {
+    const analysis: OpportunityAnalysis = {
+      summary: "Opportunity ini dapat diuji sebagai hipotesis awal untuk usaha F&B.",
+      whyRelevant: "Kategori dan kanal yang tercatat pada profil berkaitan dengan Opportunity tersimpan.",
+      targetConsumer: "Gunakan segmen pelanggan pada profil sebagai titik awal wawancara.",
+      competition: "Katalog belum mencantumkan tingkat kompetisi untuk Opportunity ini.",
+      potential: "Trend terpublikasi memberi konteks, tetapi belum membuktikan permintaan lokal.",
+      risks: ["Evidence langsung untuk Opportunity ini terbatas; validasi pasar belum dilakukan."],
+      nextAction: "Wawancarai calon pelanggan dan catat respons sebelum mengeluarkan biaya besar.",
+    };
+    const createAnalysisService = (userId: string, output: unknown) => new AIAnalysisService({
+      currentUserResolver: async () => createSafeUser(userId, "ENTREPRENEUR"),
+      providerFactory: () => ({
+        provider: "synthetic-postgres-provider",
+        model: "schema-valid-fixture-v1",
+        generate: async () => output as OpportunityAnalysis,
+      }),
+      rateLimiter: new InMemoryOpportunityAnalysisRateLimiter(),
+    });
+    const ownerA = createAnalysisService(IDS.entrepreneurA, analysis);
+    const created = await ownerA.generate(IDS.availableOpportunity, { forceRefresh: true });
+    expect(created).toMatchObject({
+      provider: "synthetic-postgres-provider",
+      model: "schema-valid-fixture-v1",
+      summary: analysis.summary,
+    });
+    await expect(ownerA.getLatest(IDS.availableOpportunity)).resolves.toMatchObject({
+      analysisId: created.analysisId,
+      nextAction: analysis.nextAction,
+    });
+
+    const otherOwner = createAnalysisService(IDS.entrepreneurB, analysis);
+    await expect(otherOwner.getLatest(IDS.availableOpportunity)).resolves.toBeNull();
+
+    const beforeRows = await sequelize!.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM user_opportunity_analyses`,
+      { type: QueryTypes.SELECT },
+    );
+    const invalidOwner = createAnalysisService(IDS.entrepreneurA, { summary: "Incomplete provider output" });
+    await expect(invalidOwner.generate(IDS.availableOpportunity, { forceRefresh: true }))
+      .rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
+    const afterRows = await sequelize!.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM user_opportunity_analyses`,
+      { type: QueryTypes.SELECT },
+    );
+    expect(requireRow(afterRows[0]).count).toBe(requireRow(beforeRows[0]).count);
   });
 });
