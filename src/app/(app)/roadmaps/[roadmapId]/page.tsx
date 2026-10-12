@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { getCurrentUser } from "@/auth/current-user";
 import { ONBOARDING_STATUSES, isUserType } from "@/auth/user-types";
@@ -11,6 +12,7 @@ export default async function RoadmapDetailPage({
 }: {
   readonly params: Promise<{ readonly roadmapId: string }>;
 }) {
+  await connection();
   const [user, { roadmapId }] = await Promise.all([getCurrentUser(), params]);
   if (!user || user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || !isUserType(user.userType) || !roadmapIdSchema.safeParse(roadmapId).success) {
     notFound();

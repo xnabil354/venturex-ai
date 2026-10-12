@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "node scripts/e2e/run.mjs",
     "db:migrate": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs up",
     "db:migrate:status": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs status",
     "db:migrate:undo": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs down",
@@ -37,6 +38,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@testing-library/dom": "10.4.2",
     "@testing-library/react": "16.3.3",
     "@types/node": "^24.0.0",
