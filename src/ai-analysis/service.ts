@@ -242,6 +242,7 @@ export class AIAnalysisService {
     } catch (error) {
       if (error instanceof AIAnalysisResponseInvalidError) throw error;
       if (error instanceof AIAnalysisProviderFailureError) throw error;
+      if (error instanceof AIAnalysisRateLimitedError) throw error;
       throw new AIAnalysisProviderFailureError();
     }
 

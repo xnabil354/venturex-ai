@@ -6,16 +6,32 @@ vi.mock("ai", async (importOriginal) => {
   return { ...actual, generateText: vi.fn() };
 });
 
-import { generateText } from "ai";
+import { APICallError, generateText } from "ai";
 import { testAnalysis, testAnalysisContext } from "./test-fixtures";
 import { AIAnalysisProviderUnavailableError } from "./domain";
-import { OpenAICompatibleOpportunityAnalysisProvider, readAIAnalysisProviderConfig } from "./provider";
+import {
+  GEMINI_BASE_URL,
+  GEMINI_FREE_TIER_CONFIRMED_FLAG,
+  GEMINI_MODEL,
+  GEMINI_PROVIDER,
+  GEMINI_SYNTHETIC_SMOKE_FLAG,
+  OpenAICompatibleOpportunityAnalysisProvider,
+  readAIAnalysisProviderConfig,
+} from "./provider";
 
 const config = {
   provider: "approved-test-provider",
   baseURL: "https://api.example.test/v1",
   apiKey: "synthetic-test-key",
   model: "test-structured-model",
+  timeoutMs: 12000,
+};
+
+const geminiConfig = {
+  provider: GEMINI_PROVIDER,
+  baseURL: GEMINI_BASE_URL,
+  apiKey: "synthetic-test-key",
+  model: GEMINI_MODEL,
   timeoutMs: 12000,
 };
 
@@ -37,6 +53,55 @@ describe("OpenAI-compatible analysis adapter", () => {
       AI_ANALYSIS_MODEL: "model",
     })).toBeNull();
     expect(() => new OpenAICompatibleOpportunityAnalysisProvider(null)).toThrow(AIAnalysisProviderUnavailableError);
+  });
+
+  it("accepts only the documented Gemini endpoint and stable model configuration", () => {
+    expect(readAIAnalysisProviderConfig({
+      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
+      AI_ANALYSIS_BASE_URL: `${GEMINI_BASE_URL}/`,
+      AI_ANALYSIS_API_KEY: "synthetic-test-key",
+      AI_ANALYSIS_MODEL: GEMINI_MODEL,
+    })).toMatchObject({ provider: GEMINI_PROVIDER, baseURL: GEMINI_BASE_URL, model: GEMINI_MODEL });
+    expect(readAIAnalysisProviderConfig({
+      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
+      AI_ANALYSIS_BASE_URL: "https://api.example.test/v1",
+      AI_ANALYSIS_API_KEY: "synthetic-test-key",
+      AI_ANALYSIS_MODEL: GEMINI_MODEL,
+    })).toBeNull();
+    expect(readAIAnalysisProviderConfig({
+      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
+      AI_ANALYSIS_BASE_URL: GEMINI_BASE_URL,
+      AI_ANALYSIS_API_KEY: "synthetic-test-key",
+      AI_ANALYSIS_MODEL: "gemini-preview-model",
+    })).toBeNull();
+  });
+
+  it("blocks Gemini from the normal application path even when credentials and demo flag are configured", async () => {
+    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(geminiConfig, {
+      env: {
+        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
+        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "true",
+      },
+    });
+    await expect(adapter.generate(testAnalysisContext())).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
+    expect(generateText).not.toHaveBeenCalled();
+  });
+
+  it("requires the explicit server-side flag for the synthetic smoke mode", () => {
+    expect(() => new OpenAICompatibleOpportunityAnalysisProvider(geminiConfig, {
+      mode: "synthetic-smoke",
+      env: {
+        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
+        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "false",
+      },
+    })).toThrow(AIAnalysisProviderUnavailableError);
+    expect(() => new OpenAICompatibleOpportunityAnalysisProvider(config, {
+      mode: "synthetic-smoke",
+      env: {
+        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
+        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "true",
+      },
+    })).toThrow(AIAnalysisProviderUnavailableError);
   });
 
   it("uses structured Zod output, bounded timeout, and no automatic retries", async () => {
@@ -65,5 +130,31 @@ describe("OpenAI-compatible analysis adapter", () => {
     vi.mocked(generateText).mockRejectedValue(new Error("synthetic raw provider body and token"));
     const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
     await expect(adapter.generate(testAnalysisContext())).rejects.toMatchObject({ name: "AIAnalysisProviderFailureError" });
+  });
+
+  it("maps upstream 429 to the existing sanitized rate-limit contract", async () => {
+    vi.mocked(generateText).mockRejectedValue(new APICallError({
+      message: "synthetic private provider response",
+      url: "https://api.example.test/v1/chat/completions",
+      requestBodyValues: {},
+      statusCode: 429,
+      responseHeaders: { "retry-after": "19" },
+    }));
+    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
+    await expect(adapter.generate(testAnalysisContext())).rejects.toEqual(expect.objectContaining({
+      name: "AIAnalysisRateLimitedError",
+      retryAfterSeconds: 19,
+    }));
+  });
+
+  it.each([401, 403, 404])("maps upstream %i to a sanitized unavailable state", async (statusCode) => {
+    vi.mocked(generateText).mockRejectedValue(new APICallError({
+      message: "synthetic private provider response",
+      url: "https://api.example.test/v1/chat/completions",
+      requestBodyValues: {},
+      statusCode,
+    }));
+    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
+    await expect(adapter.generate(testAnalysisContext())).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
   });
 });

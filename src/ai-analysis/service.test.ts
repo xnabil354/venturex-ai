@@ -185,6 +185,18 @@ describe("AIAnalysisService", () => {
     expect(limiter.acquire).not.toHaveBeenCalled();
   });
 
+  it("preserves an upstream provider rate limit and does not persist an analysis", async () => {
+    const repo = repository();
+    const generate = vi.fn().mockRejectedValue(new AIAnalysisRateLimitedError(19));
+    const { service } = createService({ repo: repo.repo, provider: provider(generate) });
+
+    await expect(service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toMatchObject({
+      name: "AIAnalysisRateLimitedError",
+      retryAfterSeconds: 19,
+    });
+    expect(repo.repo.create).not.toHaveBeenCalled();
+  });
+
   it("sanitizes provider failures and never persists an invalid response", async () => {
     const repo = repository();
     const { service } = createService({ repo: repo.repo, provider: provider(vi.fn().mockRejectedValue(new Error("secret provider response"))) });

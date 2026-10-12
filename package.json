@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:gemini-smoke": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --config vitest.gemini-smoke.config.ts",
     "test:e2e": "node scripts/e2e/run.mjs",
     "db:migrate": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs up",
     "db:migrate:status": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs status",
