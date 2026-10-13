@@ -6,6 +6,7 @@ import { z, ZodError } from "zod";
 
 import { registrationSchema } from "@/auth/validation";
 import { Button, Input } from "@/components/ui";
+import { EyeIcon, EyeOffIcon } from "./auth-icons";
 
 type RegisterValues = {
   email: string;
@@ -86,6 +87,8 @@ function getServerFieldErrors(
 
 export function RegisterForm() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [values, setValues] = useState<RegisterValues>(initialValues);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -170,41 +173,61 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="grid gap-16">
+    <div className="grid gap-20">
       {formError ? (
         <div
           aria-live="assertive"
-          className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal"
+          className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-10 text-body-sm font-w460 text-ink-charcoal"
           ref={errorSummaryRef}
           role="alert"
           tabIndex={-1}
-        >
-          {formError}
-        </div>
+        >{formError}</div>
       ) : null}
       <form className="grid gap-16" noValidate onSubmit={handleSubmit}>
         <Input
           autoComplete="email"
+          enterKeyHint="next"
           error={fieldErrors.email}
           id="register-email"
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
+          placeholder="nama@perusahaan.com"
+          required
           type="email"
           value={values.email}
         />
         <Input
           autoComplete="new-password"
+          enterKeyHint="next"
           error={fieldErrors.password}
+          hint="Minimal 8 karakter."
           id="register-password"
           label="Password"
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
-          type="password"
+          placeholder="••••••••"
+          required
+          type={showPassword ? "text" : "password"}
           value={values.password}
+          suffix={
+            <button
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              className="inline-flex h-28 w-28 items-center justify-center rounded-sm text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
+              onClick={() => setShowPassword((prev) => !prev)}
+              type="button"
+            >
+              {showPassword ? (
+                <EyeOffIcon className="h-16 w-16" />
+              ) : (
+                <EyeIcon className="h-16 w-16" />
+              )}
+            </button>
+          }
         />
         <Input
           autoComplete="new-password"
+          enterKeyHint="done"
           error={fieldErrors.passwordConfirmation}
           id="register-password-confirmation"
           label="Konfirmasi password"
@@ -212,10 +235,26 @@ export function RegisterForm() {
           onChange={(event) =>
             updateField("passwordConfirmation", event.target.value)
           }
-          type="password"
+          placeholder="••••••••"
+          required
+          type={showConfirmation ? "text" : "password"}
           value={values.passwordConfirmation}
+          suffix={
+            <button
+              aria-label={showConfirmation ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
+              className="inline-flex h-28 w-28 items-center justify-center rounded-sm text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
+              onClick={() => setShowConfirmation((prev) => !prev)}
+              type="button"
+            >
+              {showConfirmation ? (
+                <EyeOffIcon className="h-16 w-16" />
+              ) : (
+                <EyeIcon className="h-16 w-16" />
+              )}
+            </button>
+          }
         />
-        <Button loading={isSubmitting} type="submit">
+        <Button className="w-full justify-center shadow-sm mt-4" loading={isSubmitting} type="submit">
           Buat akun
         </Button>
       </form>
