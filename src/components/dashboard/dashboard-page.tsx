@@ -9,10 +9,7 @@ import { BusinessSummary } from "./business-summary";
 import { DashboardHeader } from "./dashboard-header";
 import { EntrepreneurSummary } from "./entrepreneur-summary";
 import { ModuleStatusCard } from "./module-status-card";
-import { OpportunityPreviewSection } from "./opportunity-preview-section";
 import { ProfileSummary } from "./profile-summary";
-import { SavedOpportunityPreviewSection } from "./saved-opportunity-preview-section";
-import { TrendPreviewSection } from "./trend-preview-section";
 
 type ModuleDefinition = {
   readonly description: string;
@@ -22,21 +19,6 @@ type ModuleDefinition = {
 
 const entrepreneurModules = [
   {
-    description: "Data peluang belum tersedia di aplikasi.",
-    key: "opportunities",
-    title: "Jelajahi Peluang",
-  },
-  {
-    description: "Data tren belum tersedia di aplikasi.",
-    key: "trends",
-    title: "Trend Radar",
-  },
-  {
-    description: "Penyimpanan peluang belum tersedia di aplikasi.",
-    key: "savedOpportunities",
-    title: "Peluang tersimpan",
-  },
-  {
     description: "Lihat roadmap yang tersimpan atau mulai dari Opportunity yang eligible.",
     key: "roadmap",
     title: "Startup Roadmap",
@@ -44,21 +26,6 @@ const entrepreneurModules = [
 ] satisfies readonly ModuleDefinition[];
 
 const businessModules = [
-  {
-    description: "Data tren relevan belum tersedia di aplikasi.",
-    key: "trends",
-    title: "Trend relevan",
-  },
-  {
-    description: "Data peluang pertumbuhan belum tersedia di aplikasi.",
-    key: "opportunities",
-    title: "Jelajahi Peluang",
-  },
-  {
-    description: "Penyimpanan peluang belum tersedia di aplikasi.",
-    key: "savedOpportunities",
-    title: "Peluang tersimpan",
-  },
   {
     description: "Lihat Growth Roadmap tersimpan atau mulai dari Opportunity yang memenuhi syarat.",
     key: "roadmap",
@@ -113,37 +80,27 @@ function DashboardLayout({
         >
           {profileSummary}
         </ProfileSummary>
+        <section aria-label="Sumber data dan hipotesis" className="grid gap-12 border-y border-soft-mist py-20 sm:grid-cols-2">
+          <div className="grid content-start gap-8">
+            <h2 className="text-heading-sm font-w460 text-ink-charcoal">Sinyal pencarian terbaru</h2>
+            <p className="text-body-sm leading-body-sm text-stone-gray">Muat observasi Google Trends Indonesia saat Anda membutuhkannya. Tidak ada katalog historis yang dipakai sebagai pengganti.</p>
+            <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href="/trends">Buka Trend Radar</Link>
+          </div>
+          <div className="grid content-start gap-8">
+            <h2 className="text-heading-sm font-w460 text-ink-charcoal">Hipotesis peluang pribadi</h2>
+            <p className="text-body-sm leading-body-sm text-stone-gray">Buat ide dari sinyal live yang tersedia. Setiap ide tetap hipotesis dan perlu diuji secara langsung.</p>
+            <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href="/opportunities">Buka Opportunity Finder</Link>
+          </div>
+        </section>
         <div className="grid gap-24">
           {modules.map((module) => (
-            module.key === "opportunities" ? (
-              <OpportunityPreviewSection
-                key={module.key}
-                state={dashboard.modules.opportunities}
-                title={module.title}
-              />
-            ) : module.key === "trends" ? (
-              <TrendPreviewSection
-                key={module.key}
-                state={dashboard.modules.trends}
-                title={module.title}
-              />
-            ) : module.key === "savedOpportunities" ? (
-              <SavedOpportunityPreviewSection
-                key={module.key}
-                state={dashboard.modules.savedOpportunities}
-                title={module.title}
-              />
-            ) : (
-              <ModuleStatusCard
-                description={module.description}
-                key={module.key}
-                state={dashboard.modules[module.key]}
-                title={module.title}
-                {...(module.key === "roadmap"
-                  ? { href: "/roadmaps" }
-                  : {})}
-              />
-            )
+            <ModuleStatusCard
+              description={module.description}
+              key={module.key}
+              state={dashboard.modules[module.key]}
+              title={module.title}
+              href="/roadmaps"
+            />
           ))}
         </div>
       </div>

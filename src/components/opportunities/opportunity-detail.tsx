@@ -13,6 +13,7 @@ import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { RiskIndicatorDisplay } from "./risk-indicator-display";
 import { SavedOpportunityControl } from "./saved-opportunity-control";
 import { AIAnalysisSection } from "./ai-analysis-section";
+import { OpportunityHypothesisNotice } from "./opportunity-hypothesis-notice";
 
 function DetailSection({
   id,
@@ -87,6 +88,7 @@ export function OpportunityDetail({
               <p className="max-w-[76ch] wrap-anywhere text-body leading-body text-ink-charcoal">
                 {item.description}
               </p>
+              <OpportunityHypothesisNotice />
               <SavedOpportunityControl initialState={saveState} opportunityId={item.id} />
             </header>
 

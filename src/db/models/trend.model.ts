@@ -4,9 +4,11 @@ import {
   type CreationOptional,
   type InferAttributes,
   type InferCreationAttributes,
+  type NonAttribute,
 } from "sequelize";
 
 import type { UserType } from "../../auth/user-types";
+import type { TrendEvidenceProvenance } from "./trend-evidence-provenance.model";
 import {
   TREND_DIRECTIONS,
   TREND_LIFECYCLE_STATES,
@@ -48,6 +50,7 @@ export class TrendEvidence extends Model<InferAttributes<TrendEvidence>, InferCr
   declare supportingDetail: string;
   declare sourceDate: Date | null;
   declare limitations: string | null;
+  declare provenance?: NonAttribute<TrendEvidenceProvenance | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }

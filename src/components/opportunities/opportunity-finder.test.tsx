@@ -87,7 +87,12 @@ describe("OpportunityFinder", () => {
     expect(markup).toContain('href="/trends/70000000-0000-4000-8000-000000000001"');
     expect(markup).toContain("Tren minuman terpublikasi");
     expect(markup).toContain("Risiko belum dapat dinilai berdasarkan data dan kebijakan yang tersedia.");
-    expect(markup.match(/Data belum cukup/gu)).toHaveLength(2);
+    expect(markup.match(/Data belum cukup/gu)).toHaveLength(1);
+    expect(markup).toContain("Memuat Fit Score");
+    expect(markup).not.toMatch(/aria-label="Fit Score \d/u);
+    expect(markup).toContain("Hipotesis Peluang — Perlu Validasi");
+    expect(markup).toContain("Sinyal pencarian historis 2025 menunjukkan minat pencarian");
+    expect(markup).toContain("bukan bukti permintaan pasar, pendapatan, atau keberhasilan usaha.");
     expect(markup).toContain("Halaman 1 dari 2 · 12 peluang");
     expect(markup).toContain('href="/opportunities?page=2"');
     expect(markup).toContain('action="/opportunities" method="get"');

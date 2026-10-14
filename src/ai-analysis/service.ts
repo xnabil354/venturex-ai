@@ -9,6 +9,7 @@ import type { OpportunityAnalysisContext } from "./context";
 import { OpportunityAnalysisContextBuilder, serializeGenerationContext } from "./context";
 import {
   AIAnalysisAccessContextError,
+  AIAnalysisConsentRequiredError,
   AIAnalysisContextChangedError,
   AIAnalysisInsufficientDataError,
   AIAnalysisProfileIncompleteError,
@@ -24,7 +25,7 @@ import {
   type OpportunityAnalysisDto,
   type StoredOpportunityAnalysis,
 } from "./domain";
-import { OpenAICompatibleOpportunityAnalysisProvider, type OpportunityAnalysisProvider } from "./provider";
+import { NineRouterOpportunityAnalysisProvider, type OpportunityAnalysisProvider } from "./provider";
 import { OpportunityAnalysisRepository, type OpportunityAnalysisCreateValues, type OpportunityAnalysisRecord, type OpportunityAnalysisRepositoryPort } from "./repository";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -78,11 +79,12 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function dtoFromRecord(
   record: OpportunityAnalysisRecord | null,
   context: OpportunityAnalysisContext,
+  provider: OpportunityAnalysisProvider,
 ): OpportunityAnalysisDto | null {
   if (!record || !record.aiAnalysis) return null;
   const stored = storedOpportunityAnalysisSchema.safeParse(record.aiAnalysis);
   if (!stored.success || !isCurrent(stored.data, context)) return null;
-  if (!record.aiProvider || !record.aiModel) return null;
+  if (record.aiProvider !== provider.provider || record.aiModel !== provider.model) return null;
   return {
     analysisId: record.id,
     ...stored.data.analysis,
@@ -189,7 +191,7 @@ export class AIAnalysisService {
     this.repository = dependencies.repository ?? new OpportunityAnalysisRepository();
     this.contextBuilder = dependencies.contextBuilder ?? new OpportunityAnalysisContextBuilder();
     this.currentUserResolver = dependencies.currentUserResolver ?? defaultCurrentUserResolver;
-    this.providerFactory = dependencies.providerFactory ?? (() => new OpenAICompatibleOpportunityAnalysisProvider());
+    this.providerFactory = dependencies.providerFactory ?? (() => new NineRouterOpportunityAnalysisProvider());
     this.rateLimiter = dependencies.rateLimiter ?? defaultRateLimiter;
     this.now = dependencies.now ?? Date.now;
   }
@@ -206,20 +208,21 @@ export class AIAnalysisService {
       throw error;
     }
     if (!context) throw new AIAnalysisResourceNotFoundError();
-    return dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context);
+    let provider: OpportunityAnalysisProvider;
+    try {
+      provider = this.providerFactory();
+    } catch {
+      return null;
+    }
+    return dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context, provider);
   }
 
-  async generate(idInput: unknown, options: { readonly forceRefresh?: boolean } = {}): Promise<OpportunityAnalysisDto> {
+  async generate(idInput: unknown, options: { readonly forceRefresh?: boolean; readonly consentConfirmed?: boolean } = {}): Promise<OpportunityAnalysisDto> {
     const user = await this.requireUser();
     const opportunityId = opportunityIdSchema.safeParse(idInput);
     if (!opportunityId.success) throw new AIAnalysisResourceNotFoundError();
     const context = await this.contextBuilder.build(user, opportunityId.data);
     if (!context) throw new AIAnalysisResourceNotFoundError();
-
-    if (!options.forceRefresh) {
-      const cached = dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context);
-      if (cached) return cached;
-    }
 
     let provider: OpportunityAnalysisProvider;
     try {
@@ -227,6 +230,13 @@ export class AIAnalysisService {
     } catch (error) {
       if (error instanceof AIAnalysisProviderUnavailableError) throw error;
       throw new AIAnalysisProviderUnavailableError();
+    }
+
+    if (options.consentConfirmed !== true) throw new AIAnalysisConsentRequiredError();
+
+    if (!options.forceRefresh) {
+      const cached = dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context, provider);
+      if (cached) return cached;
     }
 
     const retryAfter = this.rateLimiter.acquire(user.id, this.now());
@@ -253,7 +263,7 @@ export class AIAnalysisService {
 
     const generatedAt = new Date(this.now());
     const saved = await this.repository.create(persistenceValues(context, user.id, generated, provider.provider, provider.model, generatedAt));
-    const result = dtoFromRecord(saved, context);
+    const result = dtoFromRecord(saved, context, provider);
     if (!result) throw new AIAnalysisResponseInvalidError();
     return result;
   }

@@ -1,0 +1,142 @@
+{
+  "manifestId": "venturex-curated-fnb-google-yis-2025-v1",
+  "manifestVersion": 1,
+  "status": "PENDING_PRODUCT_OWNER_REVIEW",
+  "reviewNotes": [
+    "Source facts describe Google's Indonesia Year in Search 2025 recipe list; they do not establish sales, market demand, revenue, profitability, or current 2026 interest.",
+    "Google describes Year in Search lists as queries whose search interest increased fastest in 2025 compared with the same period in 2024; this is not a most-searched ranking or a time-series volume measurement.",
+    "BEVERAGES and SNACKS subject-area assignments, both affected user types, and every business Opportunity are proposals requiring Product Owner review.",
+    "All Opportunity records are hypotheses. Consumer targeting, competition, financial values, feasibility, sustainability, fit inputs, and scores are intentionally unavailable.",
+    "The importer may create DRAFT Trends only. Source presence does not mean factual review, validation, or publication approval."
+  ],
+  "reviewChecklist": [
+    "Confirm the cited Google pages and the quoted Indonesia recipe-list entries against the source.",
+    "Review whether each signal is within the approved F&B scope and whether PRODUCT_MENU is the right Trend taxonomy.",
+    "Review the proposed BEVERAGES and SNACKS subject-area classifications; these are not source facts.",
+    "Review whether RISING and the stated 2025 observation window accurately represent the cited methodology.",
+    "Review limitations and decide whether both ENTREPRENEUR and UMKM_EXISTING are appropriate affected audiences.",
+    "Review each Opportunity as a separate hypothesis; do not treat the source signal as validation or approve publication by importing."
+  ],
+  "trends": [
+    {
+      "id": "b1200000-2025-5500-8000-000000000001",
+      "title": "Sinyal pencarian resep Matcha di Indonesia pada 2025",
+      "categoryCode": "PRODUCT_MENU",
+      "subjectAreaCode": "BEVERAGES",
+      "signal": {
+        "summary": "Google Year in Search 2025 menempatkan Resep Matcha pada urutan pertama dalam kategori Resep Indonesia.",
+        "description": "Ini adalah sinyal historis tentang pencarian yang meningkat pada periode Year in Search 2025. Google menyebut daftar tersebut sebagai pencarian dengan kenaikan minat tercepat, bukan pencarian terbanyak. Sinyal ini tidak membuktikan permintaan pembelian, ukuran pasar, penjualan, margin, atau minat konsumen saat ini.",
+        "direction": "RISING",
+        "periodStart": "2025-01-01",
+        "periodEnd": "2025-11-25"
+      },
+      "evidence": [
+        {
+          "id": "b1200000-2025-5500-8000-000000000201",
+          "sourceName": "Google Year in Search 2025 — Indonesia",
+          "sourceReference": "https://trends.withgoogle.com/year-in-search/2025/id/",
+          "supportingDetail": "Pada kategori Resep untuk Indonesia, halaman Google menampilkan Resep Matcha pada urutan 1.",
+          "sourceDate": null,
+          "limitations": "Urutan dalam daftar trending bukan volume pencarian, jumlah pembeli, permintaan pasar, atau ukuran komersial. Halaman ini tidak membuktikan relevansi yang masih berlaku pada 2026."
+        },
+        {
+          "id": "b1200000-2025-5500-8000-000000000202",
+          "sourceName": "Google Year in Search Data Methodology",
+          "sourceReference": "https://trends.withgoogle.com/year-in-search/data-methodology/",
+          "supportingDetail": "Google menjelaskan bahwa daftar 2025 berisi query dengan kenaikan minat pencarian tercepat selama 1 Januari–25 November 2025 dibanding periode yang sama tahun sebelumnya.",
+          "sourceDate": null,
+          "limitations": "Metodologi mengukur kenaikan relatif minat pencarian, bukan total pencarian, penjualan, demand, pendapatan, atau margin. Ini tidak memberi hasil khusus untuk calon Opportunity."
+        }
+      ],
+      "businessRelevanceExplanation": "Pemetaan ke kategori BEVERAGES merupakan klasifikasi produk yang diusulkan karena istilah sumber adalah resep Matcha. Opportunity terkait hanya eksperimen bisnis yang perlu divalidasi terpisah; sinyal pencarian historis ini bukan bukti demand atau kelayakan.",
+      "affectedUserTypes": ["ENTREPRENEUR", "UMKM_EXISTING"]
+    },
+    {
+      "id": "b1200000-2025-5500-8000-000000000002",
+      "title": "Sinyal pencarian resep Rempeyek Kacang Tanah di Indonesia pada 2025",
+      "categoryCode": "PRODUCT_MENU",
+      "subjectAreaCode": "SNACKS",
+      "signal": {
+        "summary": "Google Year in Search 2025 menempatkan Resep Rempeyek Kacang Tanah pada urutan kedua dalam kategori Resep Indonesia.",
+        "description": "Ini adalah sinyal historis tentang pencarian yang meningkat pada periode Year in Search 2025. Google menyebut daftar tersebut sebagai pencarian dengan kenaikan minat tercepat, bukan pencarian terbanyak. Sinyal ini tidak membuktikan permintaan pembelian, ukuran pasar, penjualan, margin, atau minat konsumen saat ini.",
+        "direction": "RISING",
+        "periodStart": "2025-01-01",
+        "periodEnd": "2025-11-25"
+      },
+      "evidence": [
+        {
+          "id": "b1200000-2025-5500-8000-000000000203",
+          "sourceName": "Google Year in Search 2025 — Indonesia",
+          "sourceReference": "https://trends.withgoogle.com/year-in-search/2025/id/",
+          "supportingDetail": "Pada kategori Resep untuk Indonesia, halaman Google menampilkan Resep Rempeyek Kacang Tanah pada urutan 2.",
+          "sourceDate": null,
+          "limitations": "Urutan dalam daftar trending bukan volume pencarian, jumlah pembeli, permintaan pasar, atau ukuran komersial. Halaman ini tidak membuktikan relevansi yang masih berlaku pada 2026."
+        },
+        {
+          "id": "b1200000-2025-5500-8000-000000000204",
+          "sourceName": "Google Year in Search Data Methodology",
+          "sourceReference": "https://trends.withgoogle.com/year-in-search/data-methodology/",
+          "supportingDetail": "Google menjelaskan bahwa daftar 2025 berisi query dengan kenaikan minat pencarian tercepat selama 1 Januari–25 November 2025 dibanding periode yang sama tahun sebelumnya.",
+          "sourceDate": null,
+          "limitations": "Metodologi mengukur kenaikan relatif minat pencarian, bukan total pencarian, penjualan, demand, pendapatan, atau margin. Ini tidak memberi hasil khusus untuk calon Opportunity."
+        }
+      ],
+      "businessRelevanceExplanation": "Pemetaan ke kategori SNACKS merupakan klasifikasi produk yang diusulkan untuk rempeyek. Opportunity terkait hanya eksperimen bisnis yang perlu divalidasi terpisah; sinyal pencarian historis ini bukan bukti demand atau kelayakan.",
+      "affectedUserTypes": ["ENTREPRENEUR", "UMKM_EXISTING"]
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "b1200000-2025-5500-8000-000000000101",
+      "relatedTrendId": "b1200000-2025-5500-8000-000000000001",
+      "fnbCategoryCode": "BEVERAGES",
+      "name": "Uji konsep minuman Matcha untuk calon usaha",
+      "description": "Hipotesis eksperimen produk untuk calon pengusaha: susun satu konsep minuman Matcha sederhana, lalu validasi melalui percakapan dengan calon pelanggan dan uji produk berskala kecil sebelum mengambil keputusan usaha. Daftar pencarian 2025 hanya menjadi pemicu hipotesis; belum ada bukti pelanggan, biaya, harga, penjualan, atau kelayakan.",
+      "opportunityType": "NEW_PRODUCT",
+      "targetConsumerSummary": null,
+      "competitionLevel": null,
+      "competitionSummary": null,
+      "hypothesisLabel": "BUSINESS_HYPOTHESIS",
+      "productOwnerReview": "PENDING"
+    },
+    {
+      "id": "b1200000-2025-5500-8000-000000000102",
+      "relatedTrendId": "b1200000-2025-5500-8000-000000000001",
+      "fnbCategoryCode": "BEVERAGES",
+      "name": "Uji varian minuman Matcha untuk UMKM existing",
+      "description": "Hipotesis eksperimen menu untuk UMKM yang sudah berjalan: uji satu varian Matcha secara terbatas dan kumpulkan umpan balik pelanggan sebelum memutuskan apakah menu dilanjutkan. Sinyal pencarian 2025 bukan bukti bahwa pelanggan usaha tersebut meminta atau akan membeli varian ini.",
+      "opportunityType": "NEW_PRODUCT",
+      "targetConsumerSummary": null,
+      "competitionLevel": null,
+      "competitionSummary": null,
+      "hypothesisLabel": "BUSINESS_HYPOTHESIS",
+      "productOwnerReview": "PENDING"
+    },
+    {
+      "id": "b1200000-2025-5500-8000-000000000103",
+      "relatedTrendId": "b1200000-2025-5500-8000-000000000002",
+      "fnbCategoryCode": "SNACKS",
+      "name": "Uji konsep produk Rempeyek Kacang Tanah untuk calon usaha",
+      "description": "Hipotesis eksperimen produk untuk calon pengusaha: susun konsep produk Rempeyek Kacang Tanah dan validasi penerimaan melalui percakapan calon pelanggan serta uji produk kecil sebelum mengambil keputusan usaha. Daftar pencarian 2025 tidak membuktikan permintaan pembelian, persaingan, ketahanan produk, atau kelayakan komersial.",
+      "opportunityType": "NEW_PRODUCT",
+      "targetConsumerSummary": null,
+      "competitionLevel": null,
+      "competitionSummary": null,
+      "hypothesisLabel": "BUSINESS_HYPOTHESIS",
+      "productOwnerReview": "PENDING"
+    },
+    {
+      "id": "b1200000-2025-5500-8000-000000000104",
+      "relatedTrendId": "b1200000-2025-5500-8000-000000000002",
+      "fnbCategoryCode": "SNACKS",
+      "name": "Uji varian Rempeyek Kacang Tanah untuk UMKM existing",
+      "description": "Hipotesis eksperimen produk untuk UMKM yang sudah berjalan: uji satu varian Rempeyek Kacang Tanah dalam jumlah terbatas dan catat umpan balik sebelum memutuskan langkah berikutnya. Sinyal pencarian 2025 tidak membuktikan kecocokan dengan pelanggan, kemampuan produksi, biaya, atau hasil usaha.",
+      "opportunityType": "NEW_PRODUCT",
+      "targetConsumerSummary": null,
+      "competitionLevel": null,
+      "competitionSummary": null,
+      "hypothesisLabel": "BUSINESS_HYPOTHESIS",
+      "productOwnerReview": "PENDING"
+    }
+  ]
+}

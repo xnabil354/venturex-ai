@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AIAnalysisService } from "../../../../../../ai-analysis/service";
 import {
   AIAnalysisAccessContextError,
+  AIAnalysisConsentRequiredError,
   AIAnalysisContextChangedError,
   AIAnalysisInsufficientDataError,
   AIAnalysisProfileIncompleteError,
@@ -13,13 +14,18 @@ import {
   AIAnalysisResourceNotFoundError,
   AIAnalysisResponseInvalidError,
   AIAnalysisUnauthenticatedError,
+  OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION,
 } from "../../../../../../ai-analysis/domain";
 import { opportunityIdSchema } from "../../../../../../opportunity/domain";
 
 export const runtime = "nodejs";
 
 type RouteContext = { readonly params: Promise<{ readonly id: string }> };
-const requestSchema = z.object({ forceRefresh: z.boolean().optional() }).strict();
+const requestSchema = z.object({
+  consent: z.literal(true),
+  disclosureVersion: z.literal(OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION),
+  forceRefresh: z.boolean().optional(),
+}).strict();
 
 function response(requestId: string, status: number, body: Record<string, unknown>, extraHeaders: HeadersInit = {}): Response {
   return NextResponse.json(body, {
@@ -37,6 +43,7 @@ function mapError(error: unknown, requestId: string): Response {
   if (error instanceof AIAnalysisAccessContextError || error instanceof AIAnalysisProfileIncompleteError) {
     return errorResponse(requestId, "PROFILE_INCOMPLETE", "Lengkapi profil sesuai tipe akun sebelum membuat AI Analysis.", 422);
   }
+  if (error instanceof AIAnalysisConsentRequiredError) return errorResponse(requestId, "CONSENT_REQUIRED", "Persetujuan pemrosesan AI diperlukan sebelum konteks profil dikirim ke provider.", 400);
   if (error instanceof AIAnalysisResourceNotFoundError) return errorResponse(requestId, "RESOURCE_NOT_FOUND", "Opportunity tidak ditemukan.", 404);
   if (error instanceof AIAnalysisInsufficientDataError) return errorResponse(requestId, "INSUFFICIENT_DATA", "Data tepercaya belum cukup untuk membuat analisis.", 422);
   if (error instanceof AIAnalysisRateLimitedError) {
@@ -71,7 +78,10 @@ export async function POST(request: Request, route: RouteContext): Promise<Respo
   try {
     const { id } = await route.params;
     if (!opportunityIdSchema.safeParse(id).success) return errorResponse(requestId, "RESOURCE_NOT_FOUND", "Opportunity tidak ditemukan.", 404);
-    const data = await new AIAnalysisService().generate(id, { forceRefresh: parsedBody.data.forceRefresh ?? false });
+    const data = await new AIAnalysisService().generate(id, {
+      consentConfirmed: parsedBody.data.consent,
+      forceRefresh: parsedBody.data.forceRefresh ?? false,
+    });
     return response(requestId, 200, { success: true, data, requestId });
   } catch (error) {
     return mapError(error, requestId);

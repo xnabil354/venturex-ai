@@ -1827,23 +1827,17 @@ Recommended.
 
 ## Request
 
-MVP request body dapat kosong:
-
-```json
-{}
-```
-
-Optional:
+Request body wajib berisi persetujuan eksplisit untuk disclosure yang sedang berlaku. `forceRefresh` tetap opsional:
 
 ```json
 {
+  "consent": true,
+  "disclosureVersion": "opportunity-analysis-ninerouter-v1",
   "forceRefresh": false
 }
 ```
 
-Client **tidak mengirim profile, score, risk, atau evidence sebagai source of truth**.
-
-Server memuat data sendiri untuk mencegah tampering.
+Request tanpa persetujuan atau dengan versi disclosure yang tidak dikenal ditolak sebelum panggilan provider. Persetujuan hanya berlaku untuk permintaan yang dimulai pengguna. Client **tidak mengirim profile, score, risk, atau evidence sebagai source of truth**; server membangun konteks minimal yang diizinkan.
 
 ## Process
 
@@ -3393,3 +3387,7 @@ tanpa menduplikasi backend architecture.
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026: live observations and private ideas
+
+The existing authenticated refresh route remains explicit-action only and returns an owner-bound, short-lived live snapshot. It does not read or fall back to the historical catalog. A new authenticated `GET/POST/PATCH /api/v1/opportunities/ideas` resource lists the current user's generated hypotheses, explicitly generates from `{ snapshotId, signalId, consent: true, disclosureVersion }`, and changes only that user's `saved` state. The server resolves the snapshot and signal; client-supplied profile, source text, metrics, or model output are never authoritative. POST requires same-origin validation, a completed supported persona, current owner-bound `LIKELY_FNB` signal, explicit disclosure consent, rate limiting, secure configured 9Router, and strict JSON/schema/grounding validation. It returns a sanitized unavailable/configuration error when secure transport is absent. No global Opportunity or Trend lifecycle operation is exposed by these routes.

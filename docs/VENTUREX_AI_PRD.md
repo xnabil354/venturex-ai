@@ -2381,3 +2381,7 @@ Apabila terdapat konflik antara PRD dan BRD terkait tujuan bisnis, target penggu
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026
+
+The previous published-catalog-only Trend List decision is superseded for the local hackathon user flow. Dashboard, Trend Radar, and Opportunity Finder must not display the historical 2025 catalog as current or as a fallback. The records and manifest remain archived and unchanged. Trend Radar may display only observations fetched on an explicit authenticated request from Bright Data. AI-generated Opportunities are private, per-user hypotheses linked to a live source observation; they are not catalog Opportunities and receive no Opportunity Score, Fit Score, Risk Indicator, or automatic publication. Generation requires explicit disclosure/consent and a secure 9Router connection. Public plaintext HTTP must never carry real profile context.

@@ -120,6 +120,9 @@ describe("OpportunityDetail", () => {
 
     expect(markup).toContain(item.name);
     expect(markup).toContain(item.description);
+    expect(markup).toContain("Hipotesis Peluang — Perlu Validasi");
+    expect(markup).toContain("Sinyal pencarian historis 2025 menunjukkan minat pencarian");
+    expect(markup).toContain("bukan bukti permintaan pasar, pendapatan, atau keberhasilan usaha.");
     expect(markup).toContain(item.categoryName);
     expect(markup).toContain(item.opportunityType);
     expect(markup).toContain(item.targetConsumerSummary);
@@ -180,6 +183,8 @@ describe("OpportunityDetail", () => {
 
     expect(entrepreneur).toContain(`Buat Startup Roadmap ${item.id}`);
     expect(umkm).toContain(`Buat Growth Roadmap ${item.id}`);
+    expect(entrepreneur).toContain("Hipotesis Peluang — Perlu Validasi");
+    expect(umkm).toContain("Hipotesis Peluang — Perlu Validasi");
     expect(unavailable).toContain("Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.");
     expect(unavailable).not.toContain("Buat Startup Roadmap");
   });

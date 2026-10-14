@@ -387,20 +387,12 @@ export class DashboardQueryService {
       return buildBusinessDto(profile, state, { categories, segments, channels });
     });
 
-    const [trendState, savedOpportunityState, opportunityState, roadmapState] = await Promise.all([
-      this.loadTrendState(currentUser, userType),
-      this.loadSavedOpportunityState(currentUser),
-      this.loadOpportunityState(currentUser),
-      this.loadRoadmapState(currentUser),
-    ]);
+    const roadmapState = await this.loadRoadmapState(currentUser);
 
     return {
       ...dashboard,
       modules: {
         ...dashboard.modules,
-        trends: trendState,
-        savedOpportunities: savedOpportunityState,
-        opportunities: opportunityState,
         roadmap: roadmapState,
       },
     };

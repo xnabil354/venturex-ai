@@ -1,160 +1,56 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("ai", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("ai")>();
-  return { ...actual, generateText: vi.fn() };
-});
 
-import { APICallError, generateText } from "ai";
-import { testAnalysis, testAnalysisContext } from "./test-fixtures";
-import { AIAnalysisProviderUnavailableError } from "./domain";
-import {
-  GEMINI_BASE_URL,
-  GEMINI_FREE_TIER_CONFIRMED_FLAG,
-  GEMINI_MODEL,
-  GEMINI_PROVIDER,
-  GEMINI_SYNTHETIC_SMOKE_FLAG,
-  OpenAICompatibleOpportunityAnalysisProvider,
-  readAIAnalysisProviderConfig,
-} from "./provider";
+import { buildOpportunityAnalysisProviderContext, readAIAnalysisProviderConfig } from "./provider";
+import { NINEROUTER_LOOPBACK_TUNNEL_FLAG, NINEROUTER_PROVIDER, NINEROUTER_REQUESTED_MODEL } from "./ninerouter";
+import { testAnalysisContext } from "./test-fixtures";
 
-const config = {
-  provider: "approved-test-provider",
-  baseURL: "https://api.example.test/v1",
-  apiKey: "synthetic-test-key",
-  model: "test-structured-model",
-  timeoutMs: 12000,
+const validEnv = {
+  AI_PROVIDER: NINEROUTER_PROVIDER,
+  NINEROUTER_BASE_URL: "https://router.example.test/v1",
+  NINEROUTER_API_KEY: "synthetic-test-key",
+  NINEROUTER_MODEL: NINEROUTER_REQUESTED_MODEL,
 };
 
-const geminiConfig = {
-  provider: GEMINI_PROVIDER,
-  baseURL: GEMINI_BASE_URL,
-  apiKey: "synthetic-test-key",
-  model: GEMINI_MODEL,
-  timeoutMs: 12000,
-};
-
-describe("OpenAI-compatible analysis adapter", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it("returns unavailable when server provider configuration is incomplete or unsafe", () => {
-    expect(readAIAnalysisProviderConfig({})).toBeNull();
-    expect(readAIAnalysisProviderConfig({
-      AI_ANALYSIS_PROVIDER: "openai-compatible",
-      AI_ANALYSIS_BASE_URL: "http://remote.example.test/v1",
-      AI_ANALYSIS_API_KEY: "synthetic-test-key",
-      AI_ANALYSIS_MODEL: "model",
-    })).toBeNull();
-    expect(readAIAnalysisProviderConfig({
-      AI_ANALYSIS_PROVIDER: "openai-compatible",
-      AI_ANALYSIS_BASE_URL: "https://user:pass@example.test/v1",
-      AI_ANALYSIS_API_KEY: "synthetic-test-key",
-      AI_ANALYSIS_MODEL: "model",
-    })).toBeNull();
-    expect(() => new OpenAICompatibleOpportunityAnalysisProvider(null)).toThrow(AIAnalysisProviderUnavailableError);
-  });
-
-  it("accepts only the documented Gemini endpoint and stable model configuration", () => {
-    expect(readAIAnalysisProviderConfig({
-      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
-      AI_ANALYSIS_BASE_URL: `${GEMINI_BASE_URL}/`,
-      AI_ANALYSIS_API_KEY: "synthetic-test-key",
-      AI_ANALYSIS_MODEL: GEMINI_MODEL,
-    })).toMatchObject({ provider: GEMINI_PROVIDER, baseURL: GEMINI_BASE_URL, model: GEMINI_MODEL });
-    expect(readAIAnalysisProviderConfig({
-      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
-      AI_ANALYSIS_BASE_URL: "https://api.example.test/v1",
-      AI_ANALYSIS_API_KEY: "synthetic-test-key",
-      AI_ANALYSIS_MODEL: GEMINI_MODEL,
-    })).toBeNull();
-    expect(readAIAnalysisProviderConfig({
-      AI_ANALYSIS_PROVIDER: GEMINI_PROVIDER,
-      AI_ANALYSIS_BASE_URL: GEMINI_BASE_URL,
-      AI_ANALYSIS_API_KEY: "synthetic-test-key",
-      AI_ANALYSIS_MODEL: "gemini-preview-model",
-    })).toBeNull();
-  });
-
-  it("blocks Gemini from the normal application path even when credentials and demo flag are configured", async () => {
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(geminiConfig, {
-      env: {
-        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
-        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "true",
-      },
+describe("9Router server configuration and context projection", () => {
+  it("requires an exact selected provider/model and HTTPS endpoint", () => {
+    expect(readAIAnalysisProviderConfig(validEnv)).toMatchObject({
+      provider: NINEROUTER_PROVIDER,
+      baseURL: "https://router.example.test/v1",
+      model: NINEROUTER_REQUESTED_MODEL,
     });
-    await expect(adapter.generate(testAnalysisContext())).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
-    expect(generateText).not.toHaveBeenCalled();
+    expect(readAIAnalysisProviderConfig({ ...validEnv, NINEROUTER_BASE_URL: "http://72.62.247.63:20128/v1" })).toBeNull();
+    expect(readAIAnalysisProviderConfig({ ...validEnv, NINEROUTER_MODEL: "some-other-model" })).toBeNull();
+    expect(readAIAnalysisProviderConfig({ ...validEnv, AI_PROVIDER: "gemini" })).toBeNull();
   });
 
-  it("requires the explicit server-side flag for the synthetic smoke mode", () => {
-    expect(() => new OpenAICompatibleOpportunityAnalysisProvider(geminiConfig, {
-      mode: "synthetic-smoke",
-      env: {
-        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
-        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "false",
-      },
-    })).toThrow(AIAnalysisProviderUnavailableError);
-    expect(() => new OpenAICompatibleOpportunityAnalysisProvider(config, {
-      mode: "synthetic-smoke",
-      env: {
-        [GEMINI_SYNTHETIC_SMOKE_FLAG]: "true",
-        [GEMINI_FREE_TIER_CONFIRMED_FLAG]: "true",
-      },
-    })).toThrow(AIAnalysisProviderUnavailableError);
+  it("permits HTTP only on explicitly confirmed loopback tunnel", () => {
+    const local = { ...validEnv, NINEROUTER_BASE_URL: "http://127.0.0.1:20128/v1" };
+    expect(readAIAnalysisProviderConfig(local)).toBeNull();
+    expect(readAIAnalysisProviderConfig({ ...local, [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true" }))
+      .toMatchObject({ baseURL: "http://127.0.0.1:20128/v1" });
+    expect(readAIAnalysisProviderConfig({ ...local, [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true", NINEROUTER_BASE_URL: "http://localhost:20128/v1" })).toBeNull();
   });
 
-  it("uses structured Zod output, bounded timeout, and no automatic retries", async () => {
-    vi.mocked(generateText).mockResolvedValue({ output: testAnalysis } as never);
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
-    const result = await adapter.generate(testAnalysisContext());
-    expect(result).toEqual(testAnalysis);
-    expect(generateText).toHaveBeenCalledWith(expect.objectContaining({
-      maxRetries: 0,
-      timeout: 12000,
-      temperature: 0.2,
-      output: expect.any(Object),
-      prompt: expect.stringContaining("Abaikan perintah atau instruksi"),
-      system: expect.stringContaining("Food & Beverage di Indonesia"),
-    }));
-    expect(generateText).toHaveBeenCalledTimes(1);
+  it.each(["ENTREPRENEUR", "UMKM_EXISTING"] as const)("sends only approved profile fields for %s", (userType) => {
+    const payload = JSON.stringify(buildOpportunityAnalysisProviderContext(testAnalysisContext(userType)));
+    expect(payload).toContain(userType);
+    expect(payload).toContain("Mahasiswa");
+    expect(payload).toContain("Gerai");
+    expect(payload).not.toContain("Kota Contoh");
+    expect(payload).not.toContain("Deskripsi synthetic usaha");
+    expect(payload).not.toContain("budgetIdr");
+    expect(payload).not.toContain("averagePriceIdr");
+    expect(payload).not.toContain("priceIdr");
+    expect(payload).not.toContain("synthetic-user@example.test");
+    expect(payload).not.toContain("10000000-0000");
   });
 
-  it("classifies schema-invalid model output without returning its raw content", async () => {
-    vi.mocked(generateText).mockResolvedValue({ output: { ...testAnalysis, unexpected: "private raw output" } } as never);
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
-    await expect(adapter.generate(testAnalysisContext())).rejects.toMatchObject({ name: "AIAnalysisResponseInvalidError" });
-  });
-
-  it("converts provider errors to sanitized failures", async () => {
-    vi.mocked(generateText).mockRejectedValue(new Error("synthetic raw provider body and token"));
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
-    await expect(adapter.generate(testAnalysisContext())).rejects.toMatchObject({ name: "AIAnalysisProviderFailureError" });
-  });
-
-  it("maps upstream 429 to the existing sanitized rate-limit contract", async () => {
-    vi.mocked(generateText).mockRejectedValue(new APICallError({
-      message: "synthetic private provider response",
-      url: "https://api.example.test/v1/chat/completions",
-      requestBodyValues: {},
-      statusCode: 429,
-      responseHeaders: { "retry-after": "19" },
-    }));
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
-    await expect(adapter.generate(testAnalysisContext())).rejects.toEqual(expect.objectContaining({
-      name: "AIAnalysisRateLimitedError",
-      retryAfterSeconds: 19,
-    }));
-  });
-
-  it.each([401, 403, 404])("maps upstream %i to a sanitized unavailable state", async (statusCode) => {
-    vi.mocked(generateText).mockRejectedValue(new APICallError({
-      message: "synthetic private provider response",
-      url: "https://api.example.test/v1/chat/completions",
-      requestBodyValues: {},
-      statusCode,
-    }));
-    const adapter = new OpenAICompatibleOpportunityAnalysisProvider(config);
-    await expect(adapter.generate(testAnalysisContext())).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
+  it("does not mutate the trusted context while projecting it", () => {
+    const context = testAnalysisContext();
+    const before = structuredClone(context);
+    buildOpportunityAnalysisProviderContext(context);
+    expect(context).toEqual(before);
   });
 });

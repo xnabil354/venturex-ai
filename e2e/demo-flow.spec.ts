@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 
 const STARTUP_TREND = "E2E synthetic fixture Trend A (not market evidence)";
 const GROWTH_TREND = "E2E synthetic fixture Trend B (not market evidence)";
@@ -106,9 +106,64 @@ async function navigate(page: Page, label: string): Promise<void> {
   }
 }
 
+async function verifyTrendSignalGate(page: Page): Promise<void> {
+  const section = page.getByRole("region", { name: "Observasi Google Trends Indonesia", exact: true });
+  const refreshButton = section.getByRole("button", { name: "Muat sinyal terbaru", exact: true });
+  let refreshRequests = 0;
+  const onRequest = (request: import("@playwright/test").Request) => {
+    if (request.url().includes("/api/v1/trends/live-signals/refresh")) refreshRequests += 1;
+  };
+  page.on("request", onRequest);
+  try {
+    await expect(section).toBeVisible();
+    await expect(refreshButton).toBeVisible();
+    expect(refreshRequests).toBe(0);
+
+    const responsePromise = page.waitForResponse((response) =>
+      response.request().method() === "POST"
+        && response.url().includes("/api/v1/trends/live-signals/refresh"),
+    );
+    await refreshButton.click();
+    const response = await responsePromise;
+    expect(response.status()).toBe(403);
+    expect(await response.json()).toMatchObject({
+      error: { code: "DISPLAY_RIGHTS_UNVERIFIED" },
+    });
+    await expect(section).toContainText("izin penggunaan output Bright Data dikonfirmasi");
+    expect(refreshRequests).toBe(1);
+  } finally {
+    page.off("request", onRequest);
+  }
+}
+
+async function expectNoHorizontalOverflow(locator: Locator): Promise<void> {
+  const dimensions = await locator.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
+}
+
 async function openOpportunityFromTrend(page: Page, trendTitle: string, opportunityName: string): Promise<void> {
+  await navigate(page, "Opportunity Finder");
+  await expect(page.getByRole("heading", { name: "Opportunity Finder", exact: true })).toBeVisible();
+  const finderNotice = page.getByRole("note", { name: "Status dan batasan hipotesis peluang", exact: true });
+  await expect(finderNotice).toBeVisible();
+  await expect(finderNotice).toContainText("Hipotesis Peluang — Perlu Validasi");
+  await expect(finderNotice).toContainText("Sinyal pencarian historis 2025 menunjukkan minat pencarian");
+  await expect(finderNotice).toContainText("bukan bukti permintaan pasar, pendapatan, atau keberhasilan usaha.");
+  await expectNoHorizontalOverflow(finderNotice);
+  const finderCard = page.getByRole("article").filter({
+    has: page.getByRole("link", { name: `Lihat detail ${opportunityName}`, exact: true }),
+  });
+  await expect(finderCard).toBeVisible();
+  const finderIndicators = finderCard.getByRole("region", { name: `Indikator untuk ${opportunityName}`, exact: true });
+  await expect(finderIndicators).toContainText(/MVP Heuristic Fit Score|Data belum cukup untuk menghitung Fit Score/u);
+  await expect(finderIndicators).not.toContainText("Fit Score belum dapat dimuat.");
+
   await navigate(page, "Trend Radar");
   await expect(page.getByRole("heading", { name: "Trend Radar", exact: true })).toBeVisible();
+  await verifyTrendSignalGate(page);
   await page.getByRole("link", { name: trendTitle, exact: true }).click();
   await expect(page.getByRole("heading", { name: "Peluang terkait", exact: true })).toBeVisible();
   await page.getByRole("link", { name: opportunityName, exact: true }).click();
@@ -116,13 +171,19 @@ async function openOpportunityFromTrend(page: Page, trendTitle: string, opportun
 }
 
 async function verifyOpportunityAndAIFallback(page: Page): Promise<void> {
+  const hypothesisNotice = page.getByRole("note", { name: "Status dan batasan hipotesis peluang", exact: true });
+  await expect(hypothesisNotice).toBeVisible();
+  await expect(hypothesisNotice).toContainText("Hipotesis Peluang — Perlu Validasi");
+  await expect(hypothesisNotice).toContainText("bukan bukti permintaan pasar, pendapatan, atau keberhasilan usaha.");
+  await expectNoHorizontalOverflow(hypothesisNotice);
+
   const scoreSection = page.getByRole("region", { name: "Score, Fit, dan Risk", exact: true });
   await expect(scoreSection).toBeVisible();
   await expect(scoreSection).toContainText("Opportunity Score");
   await expect(scoreSection).toContainText("Data belum cukup untuk menghitung skor secara layak.");
   await expect(scoreSection).toContainText("Fit Score");
   await expect(scoreSection).toContainText(/MVP Heuristic Fit Score|Data belum cukup untuk menghitung Fit Score/u);
-  await expect(scoreSection).not.toContainText("sementara tidak dapat dimuat");
+  await expect(scoreSection).not.toContainText("Fit Score belum dapat dimuat.");
   await expect(scoreSection).toContainText("Risiko belum dapat dinilai berdasarkan data dan kebijakan yang tersedia.");
 
   const evidence = page.getByRole("region", { name: "Evidence", exact: true });
@@ -134,11 +195,17 @@ async function verifyOpportunityAndAIFallback(page: Page): Promise<void> {
   await expect(aiSection.getByText("Analisis belum dibuat. Pembuatan hanya dimulai saat Anda memilih tombol di bawah.", { exact: true })).toBeVisible();
   const opportunityId = new URL(page.url()).pathname.split("/").at(-1);
   if (!opportunityId) throw new Error("Opportunity detail route did not include an identifier.");
+  const consent = aiSection.getByRole("checkbox");
+  const generateButton = aiSection.getByRole("button", { name: "Generate AI Analysis", exact: true });
+  await expect(consent).toBeVisible();
+  await expect(generateButton).toBeDisabled();
+  await consent.check();
+  await expect(generateButton).toBeEnabled();
   const fallbackResponse = page.waitForResponse((response) =>
     response.request().method() === "POST"
       && response.url().includes(`/api/v1/opportunities/${opportunityId}/analysis`),
   );
-  await aiSection.getByRole("button", { name: "Generate AI Analysis", exact: true }).click();
+  await generateButton.click();
   const response = await fallbackResponse;
   expect(response.status()).toBe(503);
   expect(await response.json()).toMatchObject({ success: false, error: { code: "AI_SERVICE_UNAVAILABLE" } });
@@ -149,23 +216,23 @@ async function verifyOpportunityAndAIFallback(page: Page): Promise<void> {
   await expect(evidence).toBeVisible();
 }
 
-async function saveOpportunity(page: Page): Promise<void> {
+async function saveOpportunity(page: Page, opportunityName: string): Promise<void> {
   await page.getByRole("button", { name: "Simpan opportunity", exact: true }).click();
   await expect(page.getByRole("button", { name: "Hapus dari simpanan", exact: true })).toBeVisible();
   await navigate(page, "Saved Opportunities");
   await expect(page.getByRole("heading", { name: "Saved Opportunities", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: STARTUP_OPPORTUNITY, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: opportunityName, exact: true })).toBeVisible();
 }
 
-async function compareTwoOpportunities(page: Page): Promise<void> {
+async function compareTwoOpportunities(page: Page, firstOpportunity: string, secondOpportunity: string): Promise<void> {
   await navigate(page, "Opportunity Finder");
   await expect(page.getByRole("heading", { name: "Opportunity Finder", exact: true })).toBeVisible();
-  await page.getByRole("checkbox", { name: `Pilih ${STARTUP_OPPORTUNITY} untuk perbandingan`, exact: true }).check();
-  await page.getByRole("checkbox", { name: `Pilih ${COMPARE_OPPORTUNITY} untuk perbandingan`, exact: true }).check();
+  await page.getByRole("checkbox", { name: `Pilih ${firstOpportunity} untuk perbandingan`, exact: true }).check();
+  await page.getByRole("checkbox", { name: `Pilih ${secondOpportunity} untuk perbandingan`, exact: true }).check();
   await page.getByRole("button", { name: "Bandingkan (2/3)", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Hasil perbandingan", exact: true })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Hasil perbandingan" })).toContainText(STARTUP_OPPORTUNITY);
-  await expect(page.getByRole("region", { name: "Hasil perbandingan" })).toContainText(COMPARE_OPPORTUNITY);
+  await expect(page.getByRole("region", { name: "Hasil perbandingan" })).toContainText(firstOpportunity);
+  await expect(page.getByRole("region", { name: "Hasil perbandingan" })).toContainText(secondOpportunity);
 }
 
 async function createAndReopenRoadmap(page: Page, roadmapType: "STARTUP" | "GROWTH"): Promise<string> {
@@ -232,8 +299,8 @@ test("entrepreneur discovers an eligible Opportunity and reopens a private persi
   const primaryUserId = await currentUserId(page);
   await openOpportunityFromTrend(page, STARTUP_TREND, STARTUP_OPPORTUNITY);
   await verifyOpportunityAndAIFallback(page);
-  await saveOpportunity(page);
-  await compareTwoOpportunities(page);
+  await saveOpportunity(page, STARTUP_OPPORTUNITY);
+  await compareTwoOpportunities(page, STARTUP_OPPORTUNITY, COMPARE_OPPORTUNITY);
   await openOpportunityFromTrend(page, STARTUP_TREND, STARTUP_OPPORTUNITY);
   const roadmapUrl = await createAndReopenRoadmap(page, "STARTUP");
 
@@ -285,6 +352,9 @@ test("UMKM uses its own business profile for a persisted Growth Roadmap without 
   await expect(page.getByRole("button", { name: "Buat Growth Roadmap", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Buat Startup Roadmap", exact: true })).toHaveCount(0);
   await verifyOpportunityAndAIFallback(page);
+  await saveOpportunity(page, GROWTH_OPPORTUNITY);
+  await compareTwoOpportunities(page, GROWTH_OPPORTUNITY, COMPARE_OPPORTUNITY);
+  await openOpportunityFromTrend(page, GROWTH_TREND, GROWTH_OPPORTUNITY);
   const roadmapUrl = await createAndReopenRoadmap(page, "GROWTH");
   expect(roadmapUrl).toMatch(/\/roadmaps\/[0-9a-f-]+$/iu);
   await logout(page);

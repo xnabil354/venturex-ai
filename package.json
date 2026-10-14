@@ -14,12 +14,16 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:gemini-smoke": "node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --config vitest.gemini-smoke.config.ts",
     "test:e2e": "node scripts/e2e/run.mjs",
+    "test:e2e:ninerouter-live": "node --env-file-if-exists=.env --experimental-strip-types scripts/demo/run-ninerouter-live-e2e.mjs",
     "db:migrate": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs up",
     "db:migrate:status": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs status",
     "db:migrate:undo": "node --env-file-if-exists=.env --experimental-strip-types scripts/db.mjs down",
-    "db:seed:reference": "node --env-file-if-exists=.env --experimental-strip-types scripts/reference-seed.mjs"
+    "db:seed:reference": "node --env-file-if-exists=.env --experimental-strip-types scripts/reference-seed.mjs",
+    "catalog:import": "node --env-file-if-exists=.env --experimental-strip-types scripts/catalog/import-curated-catalog.mjs",
+    "catalog:lifecycle": "node --conditions=react-server --env-file-if-exists=.env --experimental-transform-types scripts/catalog/lifecycle.mjs",
+    "trend:preview": "node --conditions=react-server --experimental-transform-types scripts/trend/preview-brightdata-candidates.mjs",
+    "trend:curate": "node --conditions=react-server --experimental-transform-types scripts/trend/prepare-candidate-curation.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.67",

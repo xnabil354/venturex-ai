@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+export const OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION = "opportunity-analysis-ninerouter-v1" as const;
 const field = (maximum: number) => z.string().trim().min(1).max(maximum);
 
 export const opportunityAnalysisSchema = z.object({
@@ -84,4 +85,9 @@ export class AIAnalysisRateLimitedError extends Error {
 export class AIAnalysisContextChangedError extends Error {
   override readonly name = "AIAnalysisContextChangedError";
   constructor() { super("Trusted context changed during generation."); }
+}
+
+export class AIAnalysisConsentRequiredError extends Error {
+  override readonly name = "AIAnalysisConsentRequiredError";
+  constructor() { super("Explicit consent is required before sending profile context to the AI provider."); }
 }

@@ -6,6 +6,7 @@ vi.mock("../auth/current-user", () => ({ getCurrentUser: vi.fn() }));
 import type { OpportunityAnalysisContext } from "./context";
 import {
   AIAnalysisAccessContextError,
+  AIAnalysisConsentRequiredError,
   AIAnalysisContextChangedError,
   AIAnalysisInsufficientDataError,
   AIAnalysisProfileIncompleteError,
@@ -103,14 +104,14 @@ function staleRecord(userId = testUser().id, contextFingerprint = "b".repeat(64)
 describe("AIAnalysisService", () => {
   it("requires authentication, a completed role, and an eligible Opportunity", async () => {
     const unauthenticated = createService({ user: null });
-    await expect(unauthenticated.service.generate(TEST_OPPORTUNITY_ID)).rejects.toBeInstanceOf(AIAnalysisUnauthenticatedError);
+    await expect(unauthenticated.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true })).rejects.toBeInstanceOf(AIAnalysisUnauthenticatedError);
 
     const incompleteUser = { ...testUser(), onboardingStatus: "PROFILE_IN_PROGRESS" as const };
     const incomplete = createService({ user: incompleteUser });
-    await expect(incomplete.service.generate(TEST_OPPORTUNITY_ID)).rejects.toBeInstanceOf(AIAnalysisAccessContextError);
+    await expect(incomplete.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true })).rejects.toBeInstanceOf(AIAnalysisAccessContextError);
 
     const hidden = createService({ context: null });
-    await expect(hidden.service.generate(TEST_OPPORTUNITY_ID)).rejects.toBeInstanceOf(AIAnalysisResourceNotFoundError);
+    await expect(hidden.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true })).rejects.toBeInstanceOf(AIAnalysisResourceNotFoundError);
   });
 
   it("returns no cached analysis when the current role-specific profile is incomplete", async () => {
@@ -125,7 +126,7 @@ describe("AIAnalysisService", () => {
     const repo = repository();
     const generate = vi.fn().mockResolvedValue(testAnalysis);
     const { service } = createService({ user: testUser(userType), repo: repo.repo, provider: provider(generate) });
-    const result = await service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true });
+    const result = await service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
 
     expect(result).toMatchObject({ analysisId: expect.any(String), ...testAnalysis, provider: "test-provider", model: "test-model" });
     expect(repo.repo.create).toHaveBeenCalledTimes(1);
@@ -145,7 +146,7 @@ describe("AIAnalysisService", () => {
     const generatedForOther = provider();
     const otherUser = testUser("UMKM_EXISTING", OTHER_TEST_USER_ID);
     const first = createService({ user: otherUser, repo: repo.repo, provider: generatedForOther });
-    await first.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true });
+    await first.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
     const own = createService({ user: testUser(), repo: repo.repo, provider: generatedForOther });
     await expect(own.service.getLatest(TEST_OPPORTUNITY_ID)).resolves.toBeNull();
     expect(repo.repo.findLatest).toHaveBeenLastCalledWith(testUser().id, TEST_OPPORTUNITY_ID, testAnalysisContext().contextFingerprint);
@@ -156,15 +157,24 @@ describe("AIAnalysisService", () => {
     const generate = vi.fn().mockResolvedValue(testAnalysis);
     let now = 1_800_000_000_000;
     const service = createService({ repo: repo.repo, provider: provider(generate), now: () => now });
-    const first = await service.service.generate(TEST_OPPORTUNITY_ID);
-    const cached = await service.service.generate(TEST_OPPORTUNITY_ID);
+    const first = await service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true });
+    const cached = await service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true });
     expect(generate).toHaveBeenCalledTimes(1);
     expect(cached.analysisId).toBe(first.analysisId);
 
     now += 60_001;
-    const refreshed = await service.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true });
+    const refreshed = await service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
     expect(generate).toHaveBeenCalledTimes(2);
     expect(refreshed.analysisId).not.toBe(first.analysisId);
+  });
+
+  it("requires explicit consent before generation or returning a POST cache result", async () => {
+    const repo = repository();
+    const generate = vi.fn().mockResolvedValue(testAnalysis);
+    const { service } = createService({ repo: repo.repo, provider: provider(generate) });
+    await expect(service.generate(TEST_OPPORTUNITY_ID)).rejects.toBeInstanceOf(AIAnalysisConsentRequiredError);
+    expect(generate).not.toHaveBeenCalled();
+    expect(repo.repo.create).not.toHaveBeenCalled();
   });
 
   it("does not return or reuse an analysis whose context fingerprint is stale", async () => {
@@ -173,7 +183,7 @@ describe("AIAnalysisService", () => {
     const generate = vi.fn().mockResolvedValue(testAnalysis);
     const { service } = createService({ repo: memory.repo, provider: provider(generate) });
     await expect(service.getLatest(TEST_OPPORTUNITY_ID)).resolves.toBeNull();
-    await service.generate(TEST_OPPORTUNITY_ID);
+    await service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true });
     expect(generate).toHaveBeenCalledTimes(1);
     expect(memory.repo.create).toHaveBeenCalledTimes(1);
   });
@@ -181,7 +191,7 @@ describe("AIAnalysisService", () => {
   it("returns 503 conditions before using the rate limit when provider configuration is missing", async () => {
     const limiter = { acquire: vi.fn().mockReturnValue(null) };
     const { service } = createService({ providerFactory: () => { throw new AIAnalysisProviderUnavailableError(); }, rateLimiter: limiter });
-    await expect(service.generate(TEST_OPPORTUNITY_ID)).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
+    await expect(service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true })).rejects.toBeInstanceOf(AIAnalysisProviderUnavailableError);
     expect(limiter.acquire).not.toHaveBeenCalled();
   });
 
@@ -190,7 +200,7 @@ describe("AIAnalysisService", () => {
     const generate = vi.fn().mockRejectedValue(new AIAnalysisRateLimitedError(19));
     const { service } = createService({ repo: repo.repo, provider: provider(generate) });
 
-    await expect(service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toMatchObject({
+    await expect(service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toMatchObject({
       name: "AIAnalysisRateLimitedError",
       retryAfterSeconds: 19,
     });
@@ -200,19 +210,19 @@ describe("AIAnalysisService", () => {
   it("sanitizes provider failures and never persists an invalid response", async () => {
     const repo = repository();
     const { service } = createService({ repo: repo.repo, provider: provider(vi.fn().mockRejectedValue(new Error("secret provider response"))) });
-    await expect(service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisProviderFailureError);
+    await expect(service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisProviderFailureError);
     expect(repo.repo.create).not.toHaveBeenCalled();
 
     const invalid = createService({ repo: repo.repo, provider: provider(vi.fn().mockResolvedValue({ ...testAnalysis, rawResponse: "invalid" })) });
-    await expect(invalid.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
+    await expect(invalid.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
     expect(repo.repo.create).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported numerical claims and guaranteed outcomes", async () => {
     const numerical = createService({ provider: provider(vi.fn().mockResolvedValue({ ...testAnalysis, summary: "Pasar akan tumbuh 82% tahun ini." })) });
-    await expect(numerical.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
+    await expect(numerical.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
     const promise = createService({ provider: provider(vi.fn().mockResolvedValue({ ...testAnalysis, potential: "Keuntungan pasti berhasil." })) });
-    await expect(promise.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
+    await expect(promise.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
   });
 
   it("requires the trusted context to remain unchanged during generation", async () => {
@@ -226,7 +236,7 @@ describe("AIAnalysisService", () => {
       rateLimiter: new InMemoryOpportunityAnalysisRateLimiter(),
       now: () => 1_800_000_000_000,
     });
-    await expect(service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisContextChangedError);
+    await expect(service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisContextChangedError);
     expect(repo.repo.create).not.toHaveBeenCalled();
   });
 
@@ -243,12 +253,12 @@ describe("AIAnalysisService", () => {
     const generate = vi.fn().mockResolvedValue(testAnalysis);
     let now = 1_800_000_000_000;
     const service = createService({ repo: repo.repo, provider: provider(generate), now: () => now });
-    await service.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true });
-    await expect(service.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisRateLimitedError);
+    await service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
+    await expect(service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true })).rejects.toBeInstanceOf(AIAnalysisRateLimitedError);
     expect(generate).toHaveBeenCalledTimes(1);
 
     now += 60_001;
-    await service.service.generate(TEST_OPPORTUNITY_ID, { forceRefresh: true });
+    await service.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
     expect(generate).toHaveBeenCalledTimes(2);
     expect(repo.repo.create).toHaveBeenCalledTimes(2);
   });

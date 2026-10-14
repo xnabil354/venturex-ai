@@ -69,6 +69,7 @@ const MIGRATION_NAMES = [
   "014-create-user-opportunity-analyses.ts",
   "015-create-opportunity-fit-inputs.ts",
   "016-create-roadmaps.ts",
+  "017-create-trend-evidence-provenances.ts",
 ];
 
 const IDS = {
@@ -611,7 +612,7 @@ describe.skipIf(!integrationEnabled)("Fit Score PostgreSQL integration (disposab
       rateLimiter: new InMemoryOpportunityAnalysisRateLimiter(),
     });
     const ownerA = createAnalysisService(IDS.entrepreneurA, analysis);
-    const created = await ownerA.generate(IDS.availableOpportunity, { forceRefresh: true });
+    const created = await ownerA.generate(IDS.availableOpportunity, { consentConfirmed: true, forceRefresh: true });
     expect(created).toMatchObject({
       provider: "synthetic-postgres-provider",
       model: "schema-valid-fixture-v1",
@@ -630,7 +631,7 @@ describe.skipIf(!integrationEnabled)("Fit Score PostgreSQL integration (disposab
       { type: QueryTypes.SELECT },
     );
     const invalidOwner = createAnalysisService(IDS.entrepreneurA, { summary: "Incomplete provider output" });
-    await expect(invalidOwner.generate(IDS.availableOpportunity, { forceRefresh: true }))
+    await expect(invalidOwner.generate(IDS.availableOpportunity, { consentConfirmed: true, forceRefresh: true }))
       .rejects.toBeInstanceOf(AIAnalysisResponseInvalidError);
     const afterRows = await sequelize!.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM user_opportunity_analyses`,

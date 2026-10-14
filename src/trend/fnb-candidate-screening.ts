@@ -1,4 +1,7 @@
-import type { BrightDataGoogleTrendsCandidate } from "./brightdata-google-trends";
+import type {
+  BrightDataGoogleTrendsBatchCandidate,
+  BrightDataGoogleTrendsCandidate,
+} from "./brightdata-google-trends.ts";
 
 export const FNB_CANDIDATE_CLASSIFICATIONS = [
   "LIKELY_FNB",
@@ -9,13 +12,19 @@ export const FNB_CANDIDATE_CLASSIFICATIONS = [
 export type FnbCandidateClassification =
   (typeof FNB_CANDIDATE_CLASSIFICATIONS)[number];
 
-export type ScreenedFnbCandidate = {
+type FnbScreeningInputCandidate =
+  | BrightDataGoogleTrendsCandidate
+  | BrightDataGoogleTrendsBatchCandidate;
+
+export type ScreenedFnbCandidate<
+  TCandidate extends FnbScreeningInputCandidate = BrightDataGoogleTrendsCandidate,
+> = {
   readonly query: string;
   readonly normalizedQuery: string;
   readonly classification: FnbCandidateClassification;
   readonly matchedKeywords: readonly string[];
   readonly explanation: string;
-  readonly observations: readonly BrightDataGoogleTrendsCandidate[];
+  readonly observations: readonly TCandidate[];
 };
 
 const likelyFnbKeywords = [
@@ -204,15 +213,15 @@ function classifyQuery(normalizedQuery: string): {
   };
 }
 
-export function screenFnbCandidates(
-  candidates: readonly BrightDataGoogleTrendsCandidate[],
-): readonly ScreenedFnbCandidate[] {
+export function screenFnbCandidates<TCandidate extends FnbScreeningInputCandidate>(
+  candidates: readonly TCandidate[],
+): readonly ScreenedFnbCandidate<TCandidate>[] {
   const grouped = new Map<
     string,
     {
       readonly query: string;
       readonly normalizedQuery: string;
-      readonly observations: BrightDataGoogleTrendsCandidate[];
+      readonly observations: TCandidate[];
     }
   >();
 

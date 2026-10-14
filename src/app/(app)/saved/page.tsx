@@ -2,28 +2,24 @@ import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/auth/current-user";
 import { ONBOARDING_STATUSES, isUserType } from "@/auth/user-types";
-import { SavedOpportunitiesList } from "@/components/opportunities/saved-opportunities-list";
-import { SavedOpportunityService } from "@/opportunity/saved-service";
-import type { SavedOpportunityListResult } from "@/opportunity/saved-dto";
+import { PrivateOpportunityFinder } from "@/components/opportunities/private-opportunity-finder";
+import { PrivateOpportunityHypothesisRepository } from "@/opportunity/private-hypothesis-repository";
+
+export const dynamic = "force-dynamic";
 
 export default async function SavedPage() {
   const user = await getCurrentUser();
-  if (
-    !user ||
-    user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED ||
-    !isUserType(user.userType)
-  ) {
+  if (!user || user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || !isUserType(user.userType)) {
     notFound();
   }
 
-  let result: SavedOpportunityListResult;
+  let items = [] as Awaited<ReturnType<PrivateOpportunityHypothesisRepository["listForUser"]>>;
+  let initialLoadFailed = false;
   try {
-    result = await new SavedOpportunityService({
-      currentUserResolver: async () => user,
-    }).listForCurrentUser();
+    items = await new PrivateOpportunityHypothesisRepository().listForUser(user.id, true);
   } catch {
-    result = { status: "ERROR" };
+    initialLoadFailed = true;
   }
 
-  return <SavedOpportunitiesList result={result} />;
+  return <PrivateOpportunityFinder initialItems={items} initialLoadFailed={initialLoadFailed} view="saved" />;
 }

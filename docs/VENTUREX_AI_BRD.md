@@ -1782,3 +1782,7 @@ BRD versi 2.0 merupakan pengembangan dari BRD VENTUREX sebelumnya dengan perubah
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026
+
+For the local hackathon flow, Trend Radar uses manually requested live Google Trends observations through the configured Bright Data adapter. The 2025 curated catalog is retained as an archive and is not used as fallback or displayed in Dashboard, Trend Radar, or Opportunity Finder. AI-generated ideas are private, user-owned hypotheses, not globally published Opportunities. No automated publication is authorized.

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { opportunityAnalysisDtoSchema, type OpportunityAnalysisDto } from "@/ai-analysis/domain";
+import { OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION, opportunityAnalysisDtoSchema, type OpportunityAnalysisDto } from "@/ai-analysis/domain";
 import { Button } from "@/components/ui/button";
 
 type AnalysisState = {
@@ -71,6 +71,7 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
     error: null,
     providerUnavailable: false,
   });
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -96,7 +97,11 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
         credentials: "same-origin",
         cache: "no-store",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ forceRefresh: state.analysis !== null }),
+        body: JSON.stringify({
+          consent,
+          disclosureVersion: OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION,
+          forceRefresh: state.analysis !== null,
+        }),
       });
       const analysis = await readResponse(response);
       if (!analysis) throw new Error("ANALYSIS_UNAVAILABLE");
@@ -104,6 +109,8 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
     } catch (error) {
       const copy = errorCopy(error instanceof Error ? error.message : null);
       setState((current) => ({ ...current, loading: false, generating: false, error: copy.message, providerUnavailable: copy.unavailable }));
+    } finally {
+      setConsent(false);
     }
   }
 
@@ -148,9 +155,20 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
           Analisis belum dibuat. Pembuatan hanya dimulai saat Anda memilih tombol di bawah.
         </p>
       ) : null}
+      <div className="grid max-w-[76ch] gap-10 rounded-xl border border-soft-mist bg-white p-14">
+        <label className="flex items-start gap-10 text-body-sm leading-body-sm text-ink-charcoal">
+          <input checked={consent} className="mt-3 size-16 accent-royal-violet" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
+          <span>
+            Saya setuju VENTUREX mengirim konteks minimum profil yang sesuai tipe akun saya, ringkasan Opportunity, Trend terpublikasi, dan evidence terpilih ke layanan 9Router yang dikonfigurasi operator untuk dianalisis dengan model {state.analysis?.model ?? "cx/gpt-6-luna-xhigh"}. Lokasi, anggaran/harga persis, uraian bebas, nama produk, identitas akun, dan kontak tidak dikirim. Persetujuan ini berlaku untuk permintaan yang saya mulai.
+          </span>
+        </label>
+        <p className="text-caption leading-body-sm text-stone-gray">
+          Hasil disimpan sebagai AI Analysis akun Anda sesuai fitur aplikasi. Retensi dan pemrosesan lanjutan pada layanan 9Router tidak diverifikasi oleh VENTUREX. Jangan lanjutkan bila Anda tidak menyetujui pengiriman ini.
+        </p>
+      </div>
       <Button
         className="w-fit"
-        disabled={state.loading || state.generating}
+        disabled={state.loading || state.generating || !consent}
         onClick={() => void generate()}
         type="button"
       >

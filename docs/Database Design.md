@@ -38,7 +38,7 @@ Database tidak boleh menambahkan fitur bisnis baru di luar PRD/FSD.
 
 ### Trend MVP contract
 
-Trend Intelligence MVP uses an internal persistent curated catalog. Its minimal persistence is `trends` and `trend_evidences`, matching `db/migrations/008-create-trends.ts`. `dataset_versions` and the shared `evidences` table below are not part of this Trend path. The shared `evidences` design remains for planned Opportunity evidence and possible future reuse; do not treat its Trend relationship as the current Trend evidence store. The catalog requires real, human-reviewed evidence and must not be populated with fabricated Trend records.
+Trend Intelligence MVP uses an internal persistent curated catalog. Its core persistence is `trends` and `trend_evidences`, matching `db/migrations/008-create-trends.ts`. Migration `017-create-trend-evidence-provenances.ts` adds optional source metadata linked one-to-zero-or-one with a Trend Evidence row; it neither backfills historical records nor changes the user-facing Trend path. `dataset_versions` and the shared `evidences` table below are not part of this Trend path. The shared `evidences` design remains for planned Opportunity evidence and possible future reuse; do not treat its Trend relationship as the current Trend evidence store. The catalog requires real, human-reviewed evidence and must not be populated with fabricated Trend records.
 
 ---
 
@@ -195,6 +195,7 @@ timestamps: true
 | `business_profiles` | Profil UMKM existing |
 | `trends` | Curated Trend signal, lifecycle, and audience scope |
 | `trend_evidences` | Source and supporting detail for a curated Trend |
+| `trend_evidence_provenances` | Optional, bounded source and collection metadata for Trend Evidence |
 | `opportunities` | Peluang bisnis/menu |
 | `user_opportunity_analyses` | Score, fit, risk, AI analysis |
 | `evidences` | Planned shared evidence for Opportunity and future reuse; not used by Trend MVP |
@@ -246,6 +247,7 @@ erDiagram
     FNB_CATEGORIES o|--o{ TRENDS : categorizes
     TRENDS ||--o{ OPPORTUNITIES : produces
     TRENDS ||--o{ TREND_EVIDENCES : supported_by
+    TREND_EVIDENCES ||--o| TREND_EVIDENCE_PROVENANCES : provenance
     FNB_CATEGORIES ||--o{ OPPORTUNITIES : categorizes
 
     OPPORTUNITIES ||--o| OPPORTUNITY_FIT_REQUIREMENTS : requires
@@ -556,7 +558,7 @@ The current curated-catalog schema is defined by `db/migrations/008-create-trend
 | `created_at` | TIMESTAMPTZ | No | Defaults to current time; catalog record timestamp |
 | `updated_at` | TIMESTAMPTZ | No | Defaults to current time; catalog record timestamp |
 
-The database checks that `period_end` is not before `period_start` when both exist. The `category_code`, `direction`, `affected_user_types`, and `lifecycle_state` checks constrain allowed values. Empty `affected_user_types` and a missing relevance explanation are permitted on drafts; publication readiness is checked by the application. The schema does not store a dataset version, source mode, source retrieval time, numeric signal value, raw source payload, or reviewer identity.
+The database checks that `period_end` is not before `period_start` when both exist. The `category_code`, `direction`, `affected_user_types`, and `lifecycle_state` checks constrain allowed values. Empty `affected_user_types` and a missing relevance explanation are permitted on drafts; publication readiness is checked by the application. The `trends` row itself does not store a dataset version, source mode, source retrieval time, numeric signal value, raw source payload, or reviewer identity. Optional source retrieval metadata and explicitly described provider metrics belong only in `trend_evidence_provenances`.
 
 ## `trend_evidences`
 
@@ -573,6 +575,30 @@ The database checks that `period_end` is not before `period_start` when both exi
 | `updated_at` | TIMESTAMPTZ | No | Defaults to current time |
 
 At least one evidence row is required before validation/publication, but the database does not enforce a minimum child-row count. The service currently checks evidence presence and required relevance/audience fields; it cannot prove that a source is real or that an authorized person fact-checked it. Factual verification and reviewer authorization remain operational requirements, not persisted schema facts.
+
+## `trend_evidence_provenances`
+
+Added by migration `017-create-trend-evidence-provenances.ts` as an optional one-to-zero-or-one extension. No historical provenance is inferred or backfilled.
+
+| Column | Type | Null | Constraint / purpose |
+|---|---|---:|---|
+| `trend_evidence_id` | UUID | No | Primary key and FK to `trend_evidences(id)`; delete/update CASCADE; enforces at most one row per evidence |
+| `schema_version` | SMALLINT | No | Currently constrained to version `1` |
+| `source_id` | VARCHAR(80) | No | Restricted to Google Year in Search Indonesia 2025 or Google Trends Trending Now Indonesia |
+| `original_publisher` | VARCHAR(32) | No | Restricted to `GOOGLE`; publisher is separate from collection intermediary |
+| `transport_provider` | VARCHAR(32) | No | `BRIGHTDATA_SERP_API`, `UNKNOWN`, or `NOT_APPLICABLE`, with source-specific combinations constrained |
+| `source_product` | VARCHAR(64) | No | Approved product/method paired with `source_id` |
+| `collection_target_url` | TEXT | Yes | HTTPS target for the approved Google Trends/Bright Data combination; no embedded credentials |
+| `retrieved_at` | TIMESTAMPTZ | Yes | Retrieval time only; never an observation-period boundary |
+| `observation_period_status` | VARCHAR(24) | No | `KNOWN`, `NOT_PROVIDED`, `UNKNOWN`, or `NOT_APPLICABLE` |
+| `observation_period_start`, `observation_period_end` | DATE | Yes | Both required and ordered only when period status is `KNOWN`; otherwise both null |
+| `geography_code` | VARCHAR(2) | Yes | Approved `ID` code or unknown (`NULL`) |
+| `metrics_availability` | VARCHAR(16) | No | `AVAILABLE`, `PARTIAL`, `UNAVAILABLE`, or `UNKNOWN` |
+| `metrics` | JSONB | No | Bounded array (maximum three entries and 512 bytes); strict model validation limits metric names, fields, values, semantic/unit availability, and unknown keys |
+| `completeness` | VARCHAR(16) | No | `COMPLETE`, `PARTIAL`, or `UNKNOWN` |
+| `created_at`, `updated_at` | TIMESTAMPTZ | No | Metadata record timestamps |
+
+The linked `trend_evidences.source_reference` and `limitations` remain the source reference and evidence caveats; they are not duplicated. This table does not accept complete provider responses. Actual Bright Data output must not be persisted until licensing, retention, and attribution rights are separately approved. The existing lifecycle fingerprint deliberately excludes this relation; a future provenance-aware approval requires a versioned fingerprint/lifecycle change approved separately.
 
 ---
 
@@ -955,6 +981,7 @@ Recommended delete behavior:
 | categories | referenced data | RESTRICT |
 | trend | opportunities | RESTRICT |
 | trend | `trend_evidences` | CASCADE |
+| `trend_evidences` | `trend_evidence_provenances` | CASCADE |
 | opportunity | analysis | RESTRICT |
 | opportunity | saved | RESTRICT |
 | opportunity | roadmap | RESTRICT |
@@ -1027,6 +1054,14 @@ INDEX(trend_id)
 ```
 
 The child index supports loading evidence by Trend and parent-row maintenance.
+
+## `trend_evidence_provenances`
+
+```text
+PRIMARY KEY(trend_evidence_id)
+```
+
+The primary key is also the foreign key to `trend_evidences.id`; no additional index is required for the one-to-one optional relation.
 
 ## `opportunities`
 
@@ -1309,7 +1344,7 @@ Migration harus:
 
 # 38. Migration Order
 
-Repository migrations currently use the sequence below. Migration `008-create-trends.ts` creates `trends` and `trend_evidences`; earlier proposed numbering that assigned Trend to `007` and Opportunity to `008` is superseded. Number future module migrations after `008` when those schemas are approved.
+Repository migrations currently use the sequence below. Migration `008-create-trends.ts` creates `trends` and `trend_evidences`; migration `017-create-trend-evidence-provenances.ts` adds the optional provenance relation. Earlier proposed numbering that assigned Trend to `007` and Opportunity to `008` is superseded.
 
 ```text
 001-create-users.ts
@@ -1320,8 +1355,15 @@ Repository migrations currently use the sequence below. Migration `008-create-tr
 006-create-business-products.ts
 007-create-business-profile-junctions.ts
 008-create-trends.ts
-
-Future Opportunity and support-table migrations: number after 008
+009-create-opportunities.ts
+010-create-evidences.ts
+011-create-saved-opportunities.ts
+012-create-dataset-versions.ts
+013-create-scoring-models.ts
+014-create-user-opportunity-analyses.ts
+015-create-opportunity-fit-inputs.ts
+016-create-roadmaps.ts
+017-create-trend-evidence-provenances.ts
 ```
 
 ---
@@ -1739,7 +1781,7 @@ Schema dibuat agar keputusan tersebut tidak memerlukan redesign besar.
 | User Type | `users` |
 | Entrepreneur Profile | `entrepreneur_profiles` + junctions |
 | Business Profile | `business_profiles`, `business_products` + junctions |
-| Trend Radar MVP | `trends`, `trend_evidences` |
+| Trend Radar MVP | `trends`, `trend_evidences`; optional provenance in `trend_evidence_provenances` |
 | Opportunity Finder | `opportunities`, `opportunity_fit_requirements` |
 | Target Consumer | customer segment junctions |
 | Channel Fit | sales channel junctions |
@@ -1950,3 +1992,7 @@ Discover → Analyze → Grow
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026: private generated hypotheses
+
+Additive migration 018 introduces `user_generated_opportunities`, separate from the global `opportunities` catalog and `saved_opportunities` relation. Each row is owned by `user_id`, records the supported `user_type`, validated hypothesis JSON, a bounded source reference (Google Trends title, publisher, transport, source URL, retrieval time, and heuristic classification), provider/model metadata, generation time, and `is_saved`/`saved_at`. It stores no prompt, full profile, email, location, notes, raw Bright Data payload, business metrics, score, or risk result. Reads and save updates must filter by both row ID and authenticated `user_id`. Rows are generated only by an explicit, consented provider action and never enter the global Trend/Opportunity lifecycle.

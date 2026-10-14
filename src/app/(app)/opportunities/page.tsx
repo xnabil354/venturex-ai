@@ -2,62 +2,44 @@ import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/auth/current-user";
 import { ONBOARDING_STATUSES, isUserType } from "@/auth/user-types";
-import { OpportunityFinder } from "@/components/opportunities/opportunity-finder";
-import { OpportunityService, type OpportunityFinderResult } from "@/opportunity/service";
-import { OpportunityScoreService, type OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
-import { RiskAssessmentService, type RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
+import { PrivateOpportunityFinder } from "@/components/opportunities/private-opportunity-finder";
+import { getLiveTrendSignalsService } from "@/trend/live-signals";
+import { PrivateOpportunityHypothesisRepository } from "@/opportunity/private-hypothesis-repository";
+import { isPublicHttpTransport, readLocalProfileNineRouterConfig } from "@/ai-analysis/ninerouter";
 
-type OpportunitiesPageProps = {
-  readonly searchParams: Promise<{
-    readonly page?: string | readonly string[];
-    readonly category?: string | readonly string[];
-  }>;
-};
+export const dynamic = "force-dynamic";
 
-export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
-  const [user, query] = await Promise.all([getCurrentUser(), searchParams]);
-  if (
-    !user ||
-    user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED ||
-    !isUserType(user.userType)
-  ) {
+export default async function OpportunitiesPage() {
+  const user = await getCurrentUser();
+  if (!user || user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || !isUserType(user.userType)) {
     notFound();
   }
 
-  const page = typeof query.page === "string" ? query.page : 1;
-  let result: OpportunityFinderResult;
+  const snapshot = getLiveTrendSignalsService().latestForUser(user.id);
+  let initialItems = [] as Awaited<ReturnType<PrivateOpportunityHypothesisRepository["listForUser"]>>;
+  let initialLoadFailed = false;
   try {
-    result = await new OpportunityService({
-      currentUserResolver: async () => user,
-    }).list(page, query.category);
+    initialItems = await new PrivateOpportunityHypothesisRepository().listForUser(user.id);
   } catch {
-    result = { status: "ERROR" };
+    initialLoadFailed = true;
   }
 
-  let scoreByOpportunityId: Readonly<Record<string, OpportunityScoreDisplayState>> = {};
-  let riskByOpportunityId: Readonly<Record<string, RiskAssessmentDisplayState>> = {};
-  if (result.status === "AVAILABLE") {
-    const ids = result.items.map(({ id }) => id);
-    const loadScores = async (): Promise<Readonly<Record<string, OpportunityScoreDisplayState>>> => {
-      try {
-        return await new OpportunityScoreService({
-          currentUserResolver: async () => user,
-        }).calculateForOpportunities(ids);
-      } catch {
-        return Object.fromEntries(ids.map((id) => [id, { status: "ERROR" as const }]));
-      }
-    };
-    const loadRisks = async (): Promise<Readonly<Record<string, RiskAssessmentDisplayState>>> => {
-      try {
-        return await new RiskAssessmentService({
-          currentUserResolver: async () => user,
-        }).assessForOpportunities(ids);
-      } catch {
-        return Object.fromEntries(ids.map((id) => [id, { status: "ERROR" as const }]));
-      }
-    };
-    [scoreByOpportunityId, riskByOpportunityId] = await Promise.all([loadScores(), loadRisks()]);
-  }
+  const providerConfig = readLocalProfileNineRouterConfig();
+  const providerAvailable = process.env.AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED === "true"
+    && process.env.NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED === "true"
+    && providerConfig !== null;
 
-  return <OpportunityFinder result={result} riskByOpportunityId={riskByOpportunityId} scoreByOpportunityId={scoreByOpportunityId} />;
+  const sourceOptions = snapshot
+    ? snapshot.signals.map((signal) => ({ snapshotId: snapshot.snapshotId, signal }))
+    : [];
+
+  return (
+    <PrivateOpportunityFinder
+      initialItems={initialItems}
+      initialLoadFailed={initialLoadFailed}
+      providerAvailable={providerAvailable}
+      publicHttpTransport={isPublicHttpTransport(providerConfig?.baseURL)}
+      sourceOptions={sourceOptions}
+    />
+  );
 }

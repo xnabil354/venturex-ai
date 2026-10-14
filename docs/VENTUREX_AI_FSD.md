@@ -2741,3 +2741,10 @@ Jika terdapat perbedaan scope atau product behavior, PRD harus direview terlebih
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026
+
+- Trend Radar no longer queries the published catalog for its main list. It requests the existing Bright Data adapter only after an authenticated user action; page load and errors do not trigger a provider call or catalog fallback.
+- Dashboard and Opportunity Finder do not render the 2025 catalog. Catalog rows remain unchanged as archived records.
+- A generated idea is stored under its authenticated owner only after consent, source-snapshot ownership/freshness checks, provider output schema validation, and secure 9Router configuration. It remains a hypothesis and is not linked to the global Opportunity or scoring lifecycle.
+- User-generated hypotheses use a separate persistence contract and are listed/saved only for the owning user. Existing normal AI Opportunity guard and published catalog lifecycle remain separate.

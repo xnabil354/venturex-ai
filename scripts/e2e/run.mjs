@@ -28,6 +28,8 @@ const MIGRATIONS = [
   "014-create-user-opportunity-analyses.ts",
   "015-create-opportunity-fit-inputs.ts",
   "016-create-roadmaps.ts",
+  "017-create-trend-evidence-provenances.ts",
+  "018-create-private-opportunity-hypotheses.ts",
 ];
 
 const runId = randomUUID();
@@ -148,12 +150,14 @@ async function assertDatabaseIdentity(url, expectedDatabase, { requireSuperuser 
     const result = await client.query(
       `SELECT current_database() AS database_name,
               current_user AS database_user,
+              (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = current_database()) AS database_owner,
               current_setting('server_version_num') AS version_number,
               (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS is_superuser`,
     );
     const identity = result.rows[0];
     if (identity?.database_name !== expectedDatabase
       || identity?.database_user !== DATABASE_USER
+      || identity?.database_owner !== DATABASE_USER
       || typeof identity?.version_number !== "string"
       || !identity.version_number.startsWith("18")) {
       throw new Error("Refusing database operation: PostgreSQL identity/version check failed.");
@@ -187,7 +191,7 @@ async function assertMigrations(url, databaseName) {
     const result = await client.query('SELECT name FROM "SequelizeMeta" ORDER BY name');
     const names = result.rows.map(({ name }) => name);
     if (JSON.stringify(names) !== JSON.stringify(MIGRATIONS)) {
-      throw new Error(`Expected all 16 migrations on ${databaseName}; found ${names.length}.`);
+      throw new Error(`Expected all 18 migrations on ${databaseName}; found ${names.length}.`);
     }
   } finally {
     await client.end();
@@ -216,12 +220,21 @@ function environmentFor(url, appPort = undefined) {
     DB_POOL_ACQUIRE: "15000",
     AUTH_SECRET: authSecret,
     AUTH_TRUST_HOST: "true",
-    AI_ANALYSIS_PROVIDER: "",
-    AI_ANALYSIS_BASE_URL: "",
-    AI_ANALYSIS_API_KEY: "",
-    AI_ANALYSIS_MODEL: "",
+    AI_PROVIDER: "",
+    NINEROUTER_BASE_URL: "",
+    NINEROUTER_API_KEY: "",
+    NINEROUTER_MODEL: "",
+    NINEROUTER_LOOPBACK_TUNNEL_CONFIRMED: "false",
+    NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "false",
+    AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED: "false",
+    AI_ANALYSIS_NINEROUTER_SYNTHETIC_SMOKE_ENABLED: "false",
+    AI_ANALYSIS_SYNTHETIC_DEMO_ENABLED: "false",
+    AI_ANALYSIS_SYNTHETIC_DEMO_LIVE_AUTHORIZED: "false",
+    AI_ANALYSIS_SYNTHETIC_DEMO_PROVIDER_MODE: "MOCK",
     BRIGHTDATA_TRENDS_ENABLED: "false",
     BRIGHTDATA_TRENDS_API_KEY: "",
+    VENTUREX_LOCAL_DEMO_BRIGHTDATA_LIVE_AUTHORIZED: "false",
+    VENTUREX_LOCAL_DEMO_BRIGHTDATA_PRECHECK_CONFIRMED: "false",
     NODE_ENV: "development",
   };
   delete env.AI_ANALYSIS_TIMEOUT_MS;
@@ -305,7 +318,7 @@ async function createDisposablePostgres() {
   integrationUrl = databaseUrl(port, INTEGRATION_DATABASE);
   const identity = await waitForPostgres(integrationUrl);
   if (!container.Config?.Image) throw new Error("PostgreSQL image identity is unavailable.");
-  console.log(`[batch-10] Verified ${identity.database_name}, PostgreSQL ${Number(identity.version_number) / 10000}, user ${identity.database_user}, localhost port ${port}; container has no persistent mounts.`);
+  console.log(`[batch-10] Verified ${identity.database_name}, PostgreSQL ${Number(identity.version_number) / 10000}, user/owner ${identity.database_user}, localhost port ${port}; container has no persistent mounts.`);
   return port;
 }
 
@@ -379,7 +392,7 @@ async function main() {
     await runProcess(
       process.execPath,
       ["--env-file-if-exists=.env", "--experimental-strip-types", "scripts/db.mjs", "up"],
-      "Apply migrations 001-016 to the empty PostgreSQL integration database",
+      "Apply migrations 001-018 to the empty PostgreSQL integration database",
       environmentFor(integrationUrl),
       [integrationUrl],
     );
@@ -400,7 +413,7 @@ async function main() {
     await runProcess(
       process.execPath,
       ["--env-file-if-exists=.env", "--experimental-strip-types", "scripts/db.mjs", "up"],
-      "Apply migrations 001-016 to the fresh E2E database",
+      "Apply migrations 001-018 to the fresh E2E database",
       environmentFor(e2eUrl),
       [e2eUrl],
     );

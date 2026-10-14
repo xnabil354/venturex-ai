@@ -11,6 +11,7 @@ vi.mock("@/ai-analysis/service", () => ({
 
 import {
   AIAnalysisAccessContextError,
+  AIAnalysisConsentRequiredError,
   AIAnalysisContextChangedError,
   AIAnalysisInsufficientDataError,
   AIAnalysisProfileIncompleteError,
@@ -20,6 +21,7 @@ import {
   AIAnalysisResourceNotFoundError,
   AIAnalysisResponseInvalidError,
   AIAnalysisUnauthenticatedError,
+  OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION,
 } from "@/ai-analysis/domain";
 import { GET as latestGET } from "./latest/route";
 import { POST } from "./route";
@@ -40,7 +42,9 @@ const data = {
   limitedEvidence: true,
 };
 
-function postRequest(body = "{}") {
+const validConsent = { consent: true, disclosureVersion: OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION };
+
+function postRequest(body = JSON.stringify(validConsent)) {
   return new Request("http://localhost/api/v1/opportunities", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -55,20 +59,25 @@ describe("AI Opportunity Analysis API", () => {
     mocks.getLatest.mockResolvedValue(null);
   });
 
-  it("accepts an empty request and passes only the optional refresh flag", async () => {
-    const response = await POST(postRequest(""), { params: Promise.resolve({ id: opportunityId }) });
-    expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual(data);
-    expect(mocks.generate).toHaveBeenCalledWith(opportunityId, { forceRefresh: false });
-    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  it("requires disclosure consent before generation", async () => {
+    const response = await POST(postRequest("{}"), { params: Promise.resolve({ id: opportunityId }) });
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.code).toBe("VALIDATION_ERROR");
+    expect(mocks.generate).not.toHaveBeenCalled();
+
+    const consented = await POST(postRequest(), { params: Promise.resolve({ id: opportunityId }) });
+    expect(consented.status).toBe(200);
+    expect((await consented.json()).data).toEqual(data);
+    expect(mocks.generate).toHaveBeenCalledWith(opportunityId, { consentConfirmed: true, forceRefresh: false });
+    expect(consented.headers.get("Cache-Control")).toBe("private, no-store");
   });
 
   it("passes forceRefresh but rejects client-supplied authoritative context", async () => {
-    const response = await POST(postRequest(JSON.stringify({ forceRefresh: true })), { params: Promise.resolve({ id: opportunityId }) });
+    const response = await POST(postRequest(JSON.stringify({ ...validConsent, forceRefresh: true })), { params: Promise.resolve({ id: opportunityId }) });
     expect(response.status).toBe(200);
-    expect(mocks.generate).toHaveBeenCalledWith(opportunityId, { forceRefresh: true });
+    expect(mocks.generate).toHaveBeenCalledWith(opportunityId, { consentConfirmed: true, forceRefresh: true });
 
-    const invalid = await POST(postRequest(JSON.stringify({ profile: { budget: 1 }, evidence: [] })), { params: Promise.resolve({ id: opportunityId }) });
+    const invalid = await POST(postRequest(JSON.stringify({ ...validConsent, profile: { budget: 1 }, evidence: [] })), { params: Promise.resolve({ id: opportunityId }) });
     expect(invalid.status).toBe(400);
     expect(mocks.generate).toHaveBeenCalledTimes(1);
   });
@@ -76,6 +85,7 @@ describe("AI Opportunity Analysis API", () => {
   it("maps authentication, profile, resource, throttle, provider, and validation failures", async () => {
     const cases: readonly [Error, number, string][] = [
       [new AIAnalysisUnauthenticatedError(), 401, "UNAUTHORIZED"],
+      [new AIAnalysisConsentRequiredError(), 400, "CONSENT_REQUIRED"],
       [new AIAnalysisAccessContextError(), 422, "PROFILE_INCOMPLETE"],
       [new AIAnalysisProfileIncompleteError(), 422, "PROFILE_INCOMPLETE"],
       [new AIAnalysisInsufficientDataError(), 422, "INSUFFICIENT_DATA"],

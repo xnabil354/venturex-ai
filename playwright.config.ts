@@ -13,6 +13,8 @@ const quote = (value: string) => `"${value.replaceAll('"', '\\"')}"`;
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "**/*.spec.ts",
+  // Provider-backed local demos require explicit dedicated configs and must never run in disposable core E2E.
+  testIgnore: ["**/synthetic-ai-demo.spec.ts", "**/live-account-opportunity.spec.ts"],
   outputDir: "./test-results/e2e",
   fullyParallel: false,
   forbidOnly: true,

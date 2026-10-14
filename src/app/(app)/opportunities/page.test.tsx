@@ -3,230 +3,75 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
-  notFound: vi.fn(),
-  list: vi.fn(),
-  calculateScores: vi.fn(),
-  calculateRisks: vi.fn(),
-  currentUserResolver: null as null | (() => Promise<unknown>),
-  scoreResolver: null as null | (() => Promise<unknown>),
-  riskResolver: null as null | (() => Promise<unknown>),
-  pages: [] as unknown[],
-  categories: [] as unknown[],
-  resolvedUsers: [] as unknown[],
-  scoreIds: [] as string[][],
-  scoreUsers: [] as unknown[],
-  riskIds: [] as string[][],
-  riskUsers: [] as unknown[],
+  notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }),
+  latestForUser: vi.fn(),
+  listForUser: vi.fn(),
+  readNineRouterConfig: vi.fn(() => null),
 }));
 
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
-vi.mock("@/opportunity/service", () => ({
-  OpportunityService: class MockOpportunityService {
-    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
-      mocks.currentUserResolver = dependencies.currentUserResolver;
-    }
-
-    async list(page: unknown, category: unknown) {
-      mocks.pages.push(page);
-      mocks.categories.push(category);
-      const resolver = mocks.currentUserResolver;
-      if (!resolver) throw new Error("The current-user resolver was not supplied.");
-      mocks.resolvedUsers.push(await resolver());
-      return mocks.list(page, category);
+vi.mock("@/trend/live-signals", () => ({
+  getLiveTrendSignalsService: () => ({ latestForUser: mocks.latestForUser }),
+}));
+vi.mock("@/opportunity/private-hypothesis-repository", () => ({
+  PrivateOpportunityHypothesisRepository: class {
+    listForUser(...args: unknown[]) {
+      return mocks.listForUser(...args);
     }
   },
 }));
-vi.mock("@/scoring/opportunity-score-service", () => ({
-  OpportunityScoreService: class MockOpportunityScoreService {
-    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
-      mocks.scoreResolver = dependencies.currentUserResolver;
-    }
+vi.mock("@/ai-analysis/ninerouter", () => ({ readNineRouterConfig: mocks.readNineRouterConfig }));
 
-    async calculateForOpportunities(ids: string[]) {
-      mocks.scoreIds.push(ids);
-      const resolver = mocks.scoreResolver;
-      if (!resolver) throw new Error("The score current-user resolver was not supplied.");
-      mocks.scoreUsers.push(await resolver());
-      return mocks.calculateScores(ids);
-    }
-  },
-}));
-vi.mock("@/scoring/risk-assessment-service", () => ({
-  RiskAssessmentService: class MockRiskAssessmentService {
-    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
-      mocks.riskResolver = dependencies.currentUserResolver;
-    }
-
-    async assessForOpportunities(ids: string[]) {
-      mocks.riskIds.push(ids);
-      const resolver = mocks.riskResolver;
-      if (!resolver) throw new Error("The Risk current-user resolver was not supplied.");
-      mocks.riskUsers.push(await resolver());
-      return mocks.calculateRisks(ids);
-    }
-  },
-}));
-
-import {
-  ONBOARDING_STATUSES,
-  USER_TYPES,
-  userIdSchema,
-  type SafeUser,
-} from "@/auth/user-types";
+import { ONBOARDING_STATUSES, USER_TYPES, userIdSchema, type SafeUser } from "@/auth/user-types";
 import OpportunitiesPage from "./page";
 
-const persistedUser: SafeUser = {
+const completedUser: SafeUser = {
   id: userIdSchema.parse("80000000-0000-4000-8000-000000000001"),
   email: "founder@example.com",
   userType: USER_TYPES.ENTREPRENEUR,
   onboardingStatus: ONBOARDING_STATUSES.COMPLETED,
 };
 
-describe("/opportunities page", () => {
+describe("/opportunities private live-first page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.currentUserResolver = null;
-    mocks.scoreResolver = null;
-    mocks.riskResolver = null;
-    mocks.pages.length = 0;
-    mocks.categories.length = 0;
-    mocks.resolvedUsers.length = 0;
-    mocks.scoreIds.length = 0;
-    mocks.scoreUsers.length = 0;
-    mocks.riskIds.length = 0;
-    mocks.riskUsers.length = 0;
-    mocks.calculateScores.mockResolvedValue({});
-    mocks.calculateRisks.mockResolvedValue({});
-    mocks.notFound.mockImplementation(() => {
-      throw new Error("NOT_FOUND");
-    });
+    mocks.latestForUser.mockReturnValue(null);
+    mocks.listForUser.mockResolvedValue([]);
+    mocks.readNineRouterConfig.mockReturnValue(null);
   });
 
   it.each([USER_TYPES.ENTREPRENEUR, USER_TYPES.UMKM_EXISTING])(
-    "passes the persisted %s identity to the server-side catalog service",
+    "renders the private hypothesis flow for %s and never queries archived global opportunities",
     async (userType) => {
-      const user: SafeUser = { ...persistedUser, userType };
+      const user: SafeUser = { ...completedUser, userType };
       mocks.currentUser.mockResolvedValue(user);
-      mocks.list.mockResolvedValue({
-        status: "EMPTY",
-        items: [],
-        categories: [],
-        selectedCategory: null,
-        page: 1,
-        pageSize: 10,
-        totalCount: 0,
-        totalPages: 1,
-      });
-
-      const markup = renderToStaticMarkup(await OpportunitiesPage({
-        searchParams: Promise.resolve({ page: "2" }),
-      })).replace(/\s+/gu, " ");
+      const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/s+/gu, " ");
 
       expect(markup).toContain("Opportunity Finder");
-      expect(mocks.currentUser).toHaveBeenCalledOnce();
-      expect(mocks.resolvedUsers).toEqual([user]);
-      expect(mocks.pages).toEqual(["2"]);
-      expect(mocks.categories).toEqual([undefined]);
-      expect(mocks.list).toHaveBeenCalledWith("2", undefined);
-      expect(mocks.calculateScores).not.toHaveBeenCalled();
-      expect(mocks.calculateRisks).not.toHaveBeenCalled();
+      expect(markup).toContain("Belum ada sinyal F&amp;B live");
+      expect(markup).not.toContain("Matcha");
+      expect(markup).not.toContain("Rempeyek");
+      expect(mocks.latestForUser).toHaveBeenCalledWith(user.id);
+      expect(mocks.listForUser).toHaveBeenCalledWith(user.id);
     },
   );
 
-  it("passes the category query to the server-side service without trusting client identity", async () => {
-    mocks.currentUser.mockResolvedValue(persistedUser);
-    mocks.list.mockResolvedValue({
-      status: "INVALID_CATEGORY",
-      items: [],
-      categories: [{ code: "BEVERAGES", name: "Minuman" }],
-      selectedCategory: null,
-    });
-
-    await OpportunitiesPage({
-      searchParams: Promise.resolve({ page: "4", category: "BEVERAGES" }),
-    });
-
-    expect(mocks.list).toHaveBeenCalledWith("4", "BEVERAGES");
-    expect(mocks.resolvedUsers).toEqual([persistedUser]);
+  it("rejects an unauthenticated page", async () => {
+    mocks.currentUser.mockResolvedValue(null);
+    await expect(OpportunitiesPage()).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(mocks.notFound).toHaveBeenCalledOnce();
+    expect(mocks.listForUser).not.toHaveBeenCalled();
   });
 
-  it("passes duplicate category parameters through for safe service validation", async () => {
-    mocks.currentUser.mockResolvedValue(persistedUser);
-    mocks.list.mockResolvedValue({
-      status: "INVALID_CATEGORY",
-      items: [],
-      categories: [],
-      selectedCategory: null,
-    });
+  it("shows storage unavailability without generating or exposing catalog data", async () => {
+    mocks.currentUser.mockResolvedValue(completedUser);
+    mocks.listForUser.mockRejectedValue(new Error("database internals"));
 
-    await OpportunitiesPage({
-      searchParams: Promise.resolve({ category: ["BEVERAGES", "SNACKS"] }),
-    });
+    const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/s+/gu, " ");
 
-    expect(mocks.list).toHaveBeenCalledWith(1, ["BEVERAGES", "SNACKS"]);
-  });
-
-  it.each([
-    ["missing user", null],
-    ["incomplete onboarding", {
-      ...persistedUser,
-      onboardingStatus: ONBOARDING_STATUSES.PROFILE_IN_PROGRESS,
-    }],
-    ["missing user type", { ...persistedUser, userType: null }],
-    ["unsupported user type", { ...persistedUser, userType: "UNKNOWN" }],
-  ])("denies a %s before querying the service", async (_case, user) => {
-    mocks.currentUser.mockResolvedValue(user);
-
-    await expect(OpportunitiesPage({ searchParams: Promise.resolve({}) }))
-      .rejects.toThrow("NOT_FOUND");
-    expect(mocks.list).not.toHaveBeenCalled();
-  });
-
-  it("shows ERROR when the catalog service fails instead of showing EMPTY", async () => {
-    mocks.currentUser.mockResolvedValue(persistedUser);
-    mocks.list.mockRejectedValue(new Error("database internals"));
-
-    const markup = renderToStaticMarkup(await OpportunitiesPage({
-      searchParams: Promise.resolve({}),
-    })).replace(/\s+/gu, " ");
-
-    expect(markup).toContain("Katalog peluang belum dapat dimuat");
-    expect(markup).not.toContain("Belum ada peluang tersimpan");
+    expect(markup).toContain("Penyimpanan hipotesis belum siap");
     expect(markup).not.toContain("database internals");
-  });
-
-  it("loads scores only for the authenticated page of visible Opportunities", async () => {
-    const item = {
-      id: "60000000-0000-4000-8000-000000000001",
-      name: "Menu minuman",
-      categoryName: "Minuman",
-      summary: "Ringkasan katalog.",
-      relatedTrend: { id: "70000000-0000-4000-8000-000000000001", title: "Trend terpublikasi" },
-    };
-    mocks.currentUser.mockResolvedValue(persistedUser);
-    mocks.list.mockResolvedValue({
-      status: "AVAILABLE",
-      items: [item],
-      categories: [],
-      selectedCategory: null,
-      page: 1,
-      pageSize: 10,
-      totalCount: 1,
-      totalPages: 1,
-    });
-    mocks.calculateScores.mockResolvedValue({ [item.id]: { status: "ERROR" } });
-    mocks.calculateRisks.mockResolvedValue({ [item.id]: { status: "ERROR" } });
-
-    const markup = renderToStaticMarkup(await OpportunitiesPage({
-      searchParams: Promise.resolve({}),
-    })).replace(/\s+/gu, " ");
-
-    expect(markup).toContain("Opportunity Score sementara tidak dapat dimuat.");
-    expect(markup).toContain("Indikator Risiko sementara tidak dapat dimuat.");
-    expect(mocks.scoreIds).toEqual([[item.id]]);
-    expect(mocks.scoreUsers).toEqual([persistedUser]);
-    expect(mocks.riskIds).toEqual([[item.id]]);
-    expect(mocks.riskUsers).toEqual([persistedUser]);
+    expect(markup).not.toContain("Matcha");
   });
 });

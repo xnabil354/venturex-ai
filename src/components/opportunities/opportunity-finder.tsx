@@ -10,6 +10,8 @@ import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-servi
 import { OpportunityScoreDisplay } from "./opportunity-score-display";
 import { RiskIndicatorDisplay } from "./risk-indicator-display";
 import { OpportunityComparisonPanel, useOpportunityCompare } from "./opportunity-comparison";
+import { FitScoreSection } from "./fit-score-section";
+import { OpportunityHypothesisNotice } from "./opportunity-hypothesis-notice";
 
 function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" }) {
   const copy = status === "ERROR"
@@ -96,6 +98,7 @@ export function OpportunityFinder({
 
         {result.status === "AVAILABLE" ? (
           <>
+            <OpportunityHypothesisNotice />
             <ul aria-label="Katalog peluang F&B" className="grid gap-16">
               {result.items.map((item) => (
                 <li key={item.id}>
@@ -139,10 +142,10 @@ export function OpportunityFinder({
                           <span className="font-w540 text-ink-charcoal">Opportunity Score</span>
                           <OpportunityScoreDisplay compact result={scoreByOpportunityId[item.id] ?? { status: "ERROR" }} />
                         </div>
-                        <p className="grid gap-4 text-body-sm text-stone-gray">
+                        <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Fit Score</span>
-                          Data belum cukup
-                        </p>
+                          <FitScoreSection compact opportunityId={item.id} />
+                        </div>
                         <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Risiko</span>
                           <RiskIndicatorDisplay compact result={riskByOpportunityId[item.id] ?? { status: "ERROR" }} />
