@@ -1,5 +1,6 @@
 import type {
   InputHTMLAttributes,
+  ReactNode,
   SelectHTMLAttributes,
 } from "react";
 
@@ -14,6 +15,7 @@ type FieldProps = {
 export type InputProps = InputHTMLAttributes<HTMLInputElement> &
   FieldProps & {
     id: string;
+    suffix?: ReactNode;
   };
 
 export function Input({
@@ -22,6 +24,7 @@ export function Input({
   hint,
   id,
   label,
+  suffix,
   ...props
 }: InputProps) {
   const describedBy = error
@@ -37,17 +40,25 @@ export function Input({
       <label className="text-body-sm font-w540 text-ink-charcoal" htmlFor={id}>
         {label}
       </label>
-      <input
-        {...props}
-        aria-describedby={describedBy}
-        aria-invalid={error ? true : undefined}
-        className={cx(
-          "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,box-shadow] duration-200 ease-out focus:border-royal-violet focus:shadow-subtle",
-          error ? "border-midnight-wine" : "border-stone-gray",
-          className,
-        )}
-        id={id}
-      />
+      <div className="relative flex items-center">
+        <input
+          {...props}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : undefined}
+          className={cx(
+            "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,box-shadow] duration-200 ease-out focus:border-royal-violet focus:shadow-subtle",
+            Boolean(suffix) && "pr-44",
+            error ? "border-midnight-wine" : "border-stone-gray",
+            className,
+          )}
+          id={id}
+        />
+        {suffix ? (
+          <div className="absolute right-8 flex items-center text-stone-gray">
+            {suffix}
+          </div>
+        ) : null}
+      </div>
       {hint ? (
         <p className="text-body-sm text-stone-gray" id={`${id}-hint`}>
           {hint}
