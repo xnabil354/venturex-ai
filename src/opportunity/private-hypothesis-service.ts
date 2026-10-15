@@ -196,7 +196,7 @@ export class PrivateOpportunityHypothesisService {
     generationNextAllowedAt.set(user.id, now + GENERATION_COOLDOWN_MS);
 
     let generated: z.infer<typeof GENERATED_IDEAS_SCHEMA>;
-    let providerRunDiagnostic: NineRouterDiagnostic | null = null;
+    const providerRunDiagnostic: { current: NineRouterDiagnostic | null } = { current: null };
     try {
       generated = await generateNineRouterJson({
         config,
@@ -205,7 +205,7 @@ export class PrivateOpportunityHypothesisService {
         schema: GENERATED_IDEAS_SCHEMA,
         requestBytesLimit: 16 * 1024,
         responseBytesLimit: 24 * 1024,
-        onDiagnostic: (diagnostic) => { providerRunDiagnostic = diagnostic; },
+        onDiagnostic: (diagnostic) => { providerRunDiagnostic.current = diagnostic; },
       });
     } catch (error) {
       activeGenerations.delete(user.id);
@@ -238,8 +238,8 @@ export class PrivateOpportunityHypothesisService {
     if (contentPolicyFailure) {
       throw new PrivateOpportunityError("AI_RESPONSE_INVALID", 60, {
         category: "CONTENT_POLICY_REJECTED",
-        upstreamStatus: providerRunDiagnostic?.upstreamStatus ?? null,
-        outboundAttempted: providerRunDiagnostic?.outboundAttempted ?? false,
+        upstreamStatus: providerRunDiagnostic.current?.upstreamStatus ?? null,
+        outboundAttempted: providerRunDiagnostic.current?.outboundAttempted ?? false,
         rejectedRule: contentPolicyFailure.rejectedRule,
         fields: contentPolicyFailure.fields,
       });
