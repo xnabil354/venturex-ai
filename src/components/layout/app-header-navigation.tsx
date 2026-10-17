@@ -56,23 +56,21 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-soft-mist bg-warm-parchment/95 backdrop-blur-[12px]">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#14080e]/95 backdrop-blur-[16px] text-paper-white shadow-md">
       <PageContainer>
         <div className="flex min-h-64 items-center justify-between gap-16">
           <Link
             aria-label="VENTUREX home"
-            className="shrink-0 text-body font-w540 tracking-[0.02em] text-ink-charcoal transition-colors hover:text-royal-violet"
+            className="flex items-center gap-8 font-w540 text-heading-sm tracking-tight text-paper-white transition-opacity hover:opacity-90 shrink-0"
             href="/dashboard"
           >
-            VENTUREX
+            <span className="h-8 w-8 rounded-full bg-lilac-mist" aria-hidden="true" />
+            <span>VENTUREX</span>
           </Link>
 
-          <div className="hidden min-w-0 items-center gap-24 lg:flex">
-            <p className="shrink-0 text-caption text-stone-gray">
-              Current: <span className="font-w540 text-ink-charcoal">{currentLabel}</span>
-            </p>
+          <div className="hidden min-w-0 items-center lg:flex">
             <nav aria-label="Primary navigation">
-              <ul className="flex items-center gap-8">
+              <ul className="flex items-center gap-12 xl:gap-20">
                 {primaryNavigation.map((item) => {
                   const isActive = isNavigationActive(pathname, item.href);
                   return (
@@ -82,8 +80,8 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
                         className={cx(
                           desktopLinkClasses,
                           isActive
-                            ? "border-midnight-wine text-ink-charcoal"
-                            : "border-transparent text-stone-gray hover:border-soft-mist hover:text-ink-charcoal",
+                            ? "border-lilac-mist text-paper-white font-w540"
+                            : "border-transparent text-paper-white/70 hover:border-white/20 hover:text-lilac-mist",
                         )}
                         href={item.href}
                       >
@@ -104,17 +102,17 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
                     isNavigationActive(pathname, "/profile") ? "page" : undefined
                   }
                   className={cx(
-                    "flex min-h-button cursor-pointer list-none items-center border-l border-soft-mist pl-12 text-body-sm font-w540 transition-colors duration-150 ease-out focus-visible:rounded-small-buttons",
+                    "flex min-h-button cursor-pointer list-none items-center border-l border-white/15 pl-12 text-body-sm font-w540 transition-colors duration-150 ease-out focus-visible:rounded-small-buttons",
                     isNavigationActive(pathname, "/profile")
-                      ? "text-ink-charcoal"
-                      : "text-stone-gray hover:text-royal-violet",
+                      ? "text-paper-white"
+                      : "text-paper-white/70 hover:text-lilac-mist",
                   )}
                 >
                   Profile
                 </summary>
-                <div className="absolute right-0 top-full z-30 mt-8 w-64 border border-soft-mist bg-paper-white p-12">
-                  <p className="break-words text-body-sm text-stone-gray">{userEmail}</p>
-                  <LogoutButton className="mt-12 w-full" />
+                <div className="absolute right-0 top-full z-30 mt-8 w-72 rounded-cards border border-white/15 bg-[#14080e] p-16 text-paper-white shadow-2xl backdrop-blur-md">
+                  <p className="break-words text-caption text-paper-white/70">{userEmail}</p>
+                  <LogoutButton className="mt-12 w-full justify-center" />
                 </div>
               </details>
             ) : null}
@@ -122,7 +120,7 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
               aria-controls="mobile-navigation-panel"
               aria-expanded={isMenuOpen}
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-              className="inline-flex min-h-button items-center justify-center rounded-small-buttons border border-ink-charcoal px-12 text-body-sm font-w540 text-ink-charcoal transition-[background-color,color] duration-150 ease-out hover:bg-paper-white hover:text-royal-violet lg:hidden"
+              className="inline-flex min-h-button items-center justify-center rounded-small-buttons border border-white/20 bg-white/10 px-12 text-body-sm font-w540 text-paper-white transition-[background-color,color] duration-150 ease-out hover:bg-white/20 hover:text-lilac-mist lg:hidden"
               onClick={() => setIsMenuOpen((current) => !current)}
               ref={menuButtonRef}
               type="button"
@@ -132,13 +130,13 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
           </div>
         </div>
 
-        <div className="flex min-h-48 items-center border-t border-soft-mist lg:hidden">
-          <p className="text-body-sm font-w540 text-ink-charcoal">{currentLabel}</p>
+        <div className="flex min-h-40 items-center border-t border-white/10 lg:hidden">
+          <p className="text-caption font-w540 text-paper-white/70">Halaman saat ini: <span className="text-paper-white">{currentLabel}</span></p>
         </div>
 
         {isMenuOpen ? (
           <div
-            className="border-t border-soft-mist pb-16 pt-8 lg:hidden"
+            className="border-t border-white/10 pb-16 pt-8 lg:hidden"
             id="mobile-navigation-panel"
           >
             <nav aria-label="Mobile navigation">
@@ -152,8 +150,8 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
                         className={cx(
                           mobileLinkClasses,
                           isActive
-                            ? "border-midnight-wine bg-paper-white text-ink-charcoal"
-                            : "border-transparent text-stone-gray hover:border-soft-mist hover:bg-paper-white hover:text-ink-charcoal",
+                            ? "border-lilac-mist bg-white/10 text-paper-white font-w540"
+                            : "border-transparent text-paper-white/70 hover:border-white/20 hover:bg-white/5 hover:text-paper-white",
                         )}
                         href={item.href}
                         onClick={closeMenu}
@@ -167,8 +165,8 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
               </ul>
             </nav>
             {userEmail ? (
-              <div className="mt-12 border-t border-soft-mist pt-12">
-                <p className="break-words text-body-sm text-stone-gray">{userEmail}</p>
+              <div className="mt-12 border-t border-white/10 pt-12">
+                <p className="break-words text-caption text-paper-white/70">{userEmail}</p>
                 <LogoutButton className="mt-8 w-full justify-start px-12" />
               </div>
             ) : null}

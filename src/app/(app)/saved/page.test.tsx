@@ -9,17 +9,17 @@ const mocks = vi.hoisted(() => ({
   constructorCalls: 0,
 }));
 
+vi.mock("server-only", () => ({}));
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
-vi.mock("@/opportunity/saved-service", () => ({
-  SavedOpportunityService: class MockSavedOpportunityService {
-    constructor(dependencies: { currentUserResolver: () => Promise<unknown> }) {
+vi.mock("@/opportunity/private-hypothesis-repository", () => ({
+  PrivateOpportunityHypothesisRepository: class MockPrivateOpportunityHypothesisRepository {
+    constructor() {
       mocks.constructorCalls += 1;
-      mocks.resolver = dependencies.currentUserResolver;
     }
 
-    listForCurrentUser() {
-      return mocks.list();
+    listForUser(...args: unknown[]) {
+      return mocks.list(...args);
     }
   },
 }));
@@ -51,28 +51,33 @@ describe("/saved page", () => {
 
   it("renders persisted saved opportunities using the authenticated user's identity", async () => {
     mocks.currentUser.mockResolvedValue(persistedUser);
-    mocks.list.mockResolvedValue({
-      status: "AVAILABLE",
-      items: [{
-        id: "60000000-0000-4000-8000-000000000001",
-        name: "Menu minuman tersimpan",
-        categoryName: "Minuman",
-        summary: "Ringkasan peluang tersimpan.",
-        relatedTrend: {
-          id: "70000000-0000-4000-8000-000000000001",
-          title: "Trend terpublikasi",
-        },
-      }],
-    });
+    mocks.list.mockResolvedValue([{
+      id: "60000000-0000-4000-8000-000000000001",
+      hypothesis: {
+        title: "Menu minuman tersimpan",
+        concept: "Ringkasan peluang tersimpan.",
+        targetCustomer: "Segmen keluarga",
+        validationSteps: ["Langkah 1"],
+        assumptions: ["Asumsi 1"],
+      },
+      source: {
+        publisher: "Google Trends",
+        title: "Trend terpublikasi",
+        retrievedAt: new Date().toISOString(),
+        classification: "LIKELY_FNB",
+      },
+      provider: "ninerouter",
+      model: "cx/gpt-6-luna-xhigh",
+      generatedAt: new Date().toISOString(),
+      saved: true,
+    }]);
 
     const markup = renderToStaticMarkup(await SavedPage());
 
     expect(markup).toContain("Menu minuman tersimpan");
     expect(markup).toContain("Trend terpublikasi");
-    expect(markup).toContain('href="/opportunities/60000000-0000-4000-8000-000000000001"');
     expect(mocks.constructorCalls).toBe(1);
-    expect(await mocks.resolver?.()).toBe(persistedUser);
-    expect(mocks.list).toHaveBeenCalledOnce();
+    expect(mocks.list).toHaveBeenCalledWith(persistedUser.id, true);
   });
 
   it.each([
@@ -99,8 +104,8 @@ describe("/saved page", () => {
 
     const markup = renderToStaticMarkup(await SavedPage());
 
-    expect(markup).toContain("Peluang tersimpan belum dapat dimuat");
-    expect(markup).toContain('href="/saved"');
+    expect(markup).toContain("Penyimpanan belum tersedia");
+    expect(markup).toContain('href="/opportunities"');
     expect(markup).not.toContain("database internals");
   });
 });

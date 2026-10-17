@@ -3,13 +3,16 @@ import Link from "next/link";
 
 import { USER_TYPES } from "../../auth/user-types";
 import type { DashboardDto, DashboardModules } from "../../dashboard/dto";
-import { PageContainer } from "../ui";
+import { PageContainer, StatusNotice } from "../ui";
 
 import { BusinessSummary } from "./business-summary";
 import { DashboardHeader } from "./dashboard-header";
 import { EntrepreneurSummary } from "./entrepreneur-summary";
 import { ModuleStatusCard } from "./module-status-card";
+import { OpportunityPreviewSection } from "./opportunity-preview-section";
 import { ProfileSummary } from "./profile-summary";
+import { SavedOpportunityPreviewSection } from "./saved-opportunity-preview-section";
+import { TrendPreviewSection } from "./trend-preview-section";
 
 type ModuleDefinition = {
   readonly description: string;
@@ -55,20 +58,16 @@ function DashboardLayout({
       <div className="grid gap-32 py-32 sm:gap-48 sm:py-48 lg:py-64">
         <DashboardHeader dashboard={dashboard} />
         {profileUpdated ? (
-          <p
-            aria-live="polite"
-            className="border-l-2 border-royal-violet bg-paper-white px-16 py-12 text-body-sm text-ink-charcoal"
-            role="status"
-          >
+          <StatusNotice aria-live="polite" role="status" tone="success">
             Profil berhasil diperbarui. Ringkasan ini menampilkan data terbaru.
-          </p>
+          </StatusNotice>
         ) : null}
         <ProfileSummary
           action={
             dashboard.userType === USER_TYPES.ENTREPRENEUR ||
             dashboard.userType === USER_TYPES.UMKM_EXISTING ? (
             <Link
-              className="text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
+              className="inline-flex min-h-button items-center rounded-small-buttons border border-soft-mist bg-paper-white px-14 py-6 text-body-sm font-w540 text-royal-violet transition-colors hover:border-royal-violet hover:bg-lilac-mist/20 focus-visible:outline-2 focus-visible:outline-royal-violet"
               href="/profile"
             >
               Edit profil
@@ -80,29 +79,39 @@ function DashboardLayout({
         >
           {profileSummary}
         </ProfileSummary>
-        <section aria-label="Sumber data dan hipotesis" className="grid gap-12 border-y border-soft-mist py-20 sm:grid-cols-2">
-          <div className="grid content-start gap-8">
-            <h2 className="text-heading-sm font-w460 text-ink-charcoal">Sinyal pencarian terbaru</h2>
-            <p className="text-body-sm leading-body-sm text-stone-gray">Muat observasi Google Trends Indonesia saat Anda membutuhkannya. Tidak ada katalog historis yang dipakai sebagai pengganti.</p>
-            <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href="/trends">Buka Trend Radar</Link>
+
+        <section aria-labelledby="dashboard-next-steps" className="grid gap-20">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-baseline sm:justify-between border-b border-soft-mist pb-16">
+            <h2 className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal" id="dashboard-next-steps">
+              Lanjutkan eksplorasi
+            </h2>
+            <p className="max-w-[48ch] text-body-sm leading-relaxed text-stone-gray">
+              Mulai dari sinyal terbaru, susun hipotesis, lalu simpan dan uji pilihan yang paling relevan.
+            </p>
           </div>
-          <div className="grid content-start gap-8">
-            <h2 className="text-heading-sm font-w460 text-ink-charcoal">Hipotesis peluang pribadi</h2>
-            <p className="text-body-sm leading-body-sm text-stone-gray">Buat ide dari sinyal live yang tersedia. Setiap ide tetap hipotesis dan perlu diuji secara langsung.</p>
-            <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href="/opportunities">Buka Opportunity Finder</Link>
+
+          {/* Featured Milestone Card: Roadmap (Flagship Bento Card) */}
+          <div className="grid gap-16">
+            {modules.map((module) => (
+              <ModuleStatusCard
+                description={module.description}
+                key={module.key}
+                state={dashboard.modules[module.key]}
+                title={module.title}
+                href="/roadmaps"
+              />
+            ))}
           </div>
+
+          {/* 2-Column Bento Grid: Trend Radar & Opportunity Finder */}
+          <div className="grid gap-16 lg:grid-cols-2">
+            <TrendPreviewSection state={dashboard.modules.trends} title="Trend Radar" />
+            <OpportunityPreviewSection state={dashboard.modules.opportunities} title="Opportunity Finder" />
+          </div>
+
+          {/* Bottom Bento Card: Saved Opportunities */}
+          <SavedOpportunityPreviewSection state={dashboard.modules.savedOpportunities} title="Peluang tersimpan" />
         </section>
-        <div className="grid gap-24">
-          {modules.map((module) => (
-            <ModuleStatusCard
-              description={module.description}
-              key={module.key}
-              state={dashboard.modules[module.key]}
-              title={module.title}
-              href="/roadmaps"
-            />
-          ))}
-        </div>
       </div>
     </PageContainer>
   );

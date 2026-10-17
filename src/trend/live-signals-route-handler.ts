@@ -40,15 +40,24 @@ function isSameOriginPost(request: Request): boolean {
   }
 }
 
+function isLiveSignalsError(error: unknown): error is LiveSignalsError {
+  return error instanceof LiveSignalsError || (typeof error === "object" && error !== null && (error as Error).name === "LiveSignalsError" && "code" in error);
+}
+
+function isTrendSignalAnalysisError(error: unknown): error is TrendSignalAnalysisError {
+  return error instanceof TrendSignalAnalysisError || (typeof error === "object" && error !== null && (error as Error).name === "TrendSignalAnalysisError" && "code" in error);
+}
+
 function errorResponse(error: unknown, requestId: string): Response {
-  if (error instanceof LiveSignalsError) {
+  if (isLiveSignalsError(error)) {
     const status = error.code === "DISPLAY_RIGHTS_UNVERIFIED" ? 403
       : error.code === "SNAPSHOT_NOT_FOUND" ? 404
         : error.code === "SOURCE_RATE_LIMITED" ? 429
-          : error.code === "SOURCE_RESPONSE_INVALID" ? 502 : 503;
+          : error.code === "SOURCE_RESPONSE_INVALID" ? 502
+            : error.code === "SOURCE_PROVIDER_TIMEOUT" ? 504 : 503;
     return json({ code: error.code, message: messageForLiveSignalsError(error.code) }, status, requestId, true);
   }
-  if (error instanceof TrendSignalAnalysisError) {
+  if (isTrendSignalAnalysisError(error)) {
     const status = error.code === "UNAUTHENTICATED" ? 401
       : error.code === "FORBIDDEN" || error.code === "SOURCE_PROCESSING_NOT_APPROVED" ? 403
         : error.code === "SNAPSHOT_NOT_FOUND" ? 404

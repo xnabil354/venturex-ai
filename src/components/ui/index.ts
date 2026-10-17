@@ -5,6 +5,7 @@ export { Input, Select } from "@/components/ui/form-controls";
 export { PageContainer } from "@/components/ui/page-container";
 export { RiskBadge, ScoreIndicator } from "@/components/ui/score";
 export { EmptyState, LoadingSkeleton } from "@/components/ui/states";
+export { StatusNotice } from "@/components/ui/status-notice";
 export { Tabs } from "@/components/ui/tabs";
 export type { InputProps, SelectOption, SelectProps } from "@/components/ui/form-controls";
 export type { TabItem } from "@/components/ui/tabs";

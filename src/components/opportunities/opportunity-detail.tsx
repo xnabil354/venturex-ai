@@ -61,21 +61,21 @@ export function OpportunityDetail({
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
         <Link
-          className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet transition-colors hover:text-midnight-wine hover:underline"
+          className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet transition-colors hover:text-midnight-wine hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
           href="/opportunities"
         >
           Kembali ke Opportunity Finder
         </Link>
 
-        <Card className="p-20 sm:p-24">
+        <Card className="border-[#ded8cb] bg-[#faf9f6] p-20 sm:p-24 shadow-2xs">
           <article aria-labelledby={titleId} className="grid gap-24">
             <header className="grid gap-12">
-              <p className="text-label-bold font-w460 text-royal-violet">Opportunity Intelligence</p>
+              <p className="text-label-bold font-w540 text-midnight-wine">Opportunity Intelligence</p>
               <div className="flex flex-wrap items-center gap-8">
                 <span className="wrap-anywhere text-label-bold font-w460 text-stone-gray">
                   {item.categoryName}
                 </span>
-                <span className="inline-flex min-h-28 items-center rounded-full border border-soft-mist bg-lilac-mist px-10 wrap-anywhere text-label-bold font-w460 text-ink-charcoal">
+                <span className="inline-flex min-h-28 items-center rounded-full border border-[#ded8cb] bg-warm-parchment px-10 wrap-anywhere text-label-bold font-w540 text-midnight-wine">
                   {item.opportunityType}
                 </span>
               </div>
@@ -116,7 +116,7 @@ export function OpportunityDetail({
             <DetailSection id={`${titleId}-trend`} title="Trend terkait">
               <p className="wrap-anywhere text-body-sm leading-body-sm text-stone-gray">
                 <Link
-                  className="font-w540 text-royal-violet underline-offset-2 hover:underline"
+                  className="font-w540 text-royal-violet underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
                   href={`/trends/${item.relatedTrend.id}`}
                 >
                   {item.relatedTrend.title}

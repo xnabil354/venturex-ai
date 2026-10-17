@@ -21,7 +21,11 @@ vi.mock("@/opportunity/private-hypothesis-repository", () => ({
     }
   },
 }));
-vi.mock("@/ai-analysis/ninerouter", () => ({ readNineRouterConfig: mocks.readNineRouterConfig }));
+vi.mock("@/ai-analysis/ninerouter", () => ({
+  readNineRouterConfig: mocks.readNineRouterConfig,
+  readLocalProfileNineRouterConfig: mocks.readNineRouterConfig,
+  isPublicHttpTransport: vi.fn(() => false),
+}));
 
 import { ONBOARDING_STATUSES, USER_TYPES, userIdSchema, type SafeUser } from "@/auth/user-types";
 import OpportunitiesPage from "./page";
@@ -46,7 +50,7 @@ describe("/opportunities private live-first page", () => {
     async (userType) => {
       const user: SafeUser = { ...completedUser, userType };
       mocks.currentUser.mockResolvedValue(user);
-      const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/s+/gu, " ");
+      const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/\s+/gu, " ");
 
       expect(markup).toContain("Opportunity Finder");
       expect(markup).toContain("Belum ada sinyal F&amp;B live");
@@ -68,7 +72,7 @@ describe("/opportunities private live-first page", () => {
     mocks.currentUser.mockResolvedValue(completedUser);
     mocks.listForUser.mockRejectedValue(new Error("database internals"));
 
-    const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/s+/gu, " ");
+    const markup = renderToStaticMarkup(await OpportunitiesPage()).replace(/\s+/gu, " ");
 
     expect(markup).toContain("Penyimpanan hipotesis belum siap");
     expect(markup).not.toContain("database internals");

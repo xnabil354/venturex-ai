@@ -34,7 +34,7 @@ export type EntrepreneurSummaryProps = {
 
 export function EntrepreneurSummary({ profile }: EntrepreneurSummaryProps) {
   return (
-    <dl className="grid gap-16 md:grid-cols-2">
+    <dl className="grid gap-px bg-[#ded8cb] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-[#faf9f6]">
       <SummaryField label="Lokasi">{profile.location.text}</SummaryField>
       <SummaryField label="Kisaran budget">
         {formatRange(profile.budget.min, profile.budget.max)}

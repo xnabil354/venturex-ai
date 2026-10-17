@@ -121,12 +121,37 @@
 
   ::selection {
     background: var(--color-lilac-mist);
-    color: var(--color-ink-charcoal);
+    color: var(--color-midnight-wine);
   }
 
   :focus-visible {
     outline: 2px solid var(--color-royal-violet);
     outline-offset: 3px;
+  }
+
+  /* Browser surface theming: custom scrollbars and caret */
+  input,
+  textarea {
+    caret-color: var(--color-midnight-wine);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-warm-parchment);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-soft-mist);
+    border-radius: 4px;
+    border: 2px solid var(--color-warm-parchment);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-royal-violet);
   }
 }
 

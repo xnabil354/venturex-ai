@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { Card, EmptyState, PageContainer } from "@/components/ui";
+import { Badge, Button, Card, EmptyState, PageContainer, StatusNotice } from "@/components/ui";
+import { cx } from "@/lib/cx";
 import {
   privateOpportunityIdeaResponseSchema,
   type PrivateOpportunityIdeaDto,
@@ -98,25 +99,23 @@ export function PrivateOpportunityFinder({
     setError(null);
     setNotice(null);
     try {
-      const response = await fetch("/api/v1/opportunities/ideas", {
+      const response = await fetch(`/api/v1/opportunities/ideas/${item.id}/saved`, {
         method: "PATCH",
         credentials: "same-origin",
         cache: "no-store",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: item.id, saved: !item.saved }),
+        body: JSON.stringify({ saved: !item.saved }),
       });
       const payload = await response.json() as unknown;
       if (!response.ok) {
-        setError(apiError(payload) ?? "Status simpan belum dapat diperbarui.");
+        setError(apiError(payload) ?? "Penyimpanan hipotesis gagal diperbarui.");
         return;
       }
-      if (typeof payload !== "object" || payload === null || !("data" in payload)) {
-        setError("Status simpan tidak dapat diverifikasi.");
-        return;
-      }
-      const parsed = privateOpportunityIdeaResponseSchema.safeParse(payload.data);
+      const parsed = privateOpportunityIdeaResponseSchema.safeParse(
+        typeof payload === "object" && payload !== null && "data" in payload ? payload.data : null,
+      );
       if (!parsed.success) {
-        setError("Status simpan tidak memenuhi kontrak tampilan.");
+        setError("Respons pembaruan penyimpanan tidak valid.");
         return;
       }
       setItems((current) => current
@@ -133,30 +132,53 @@ export function PrivateOpportunityFinder({
   return (
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
-        <header className="grid max-w-[760px] gap-12">
-          <p className="text-label-bold font-w460 text-royal-violet">Opportunity Intelligence</p>
-          <h1 className="text-heading-lg font-w460 leading-heading-lg text-ink-charcoal sm:text-display sm:leading-display">
-            {view === "saved" ? "Saved Opportunities" : "Opportunity Finder"}
-          </h1>
-          <p className="text-body leading-body text-stone-gray">
+        <header className="grid max-w-[760px] gap-12 border-b border-soft-mist pb-24">
+          <div className="flex items-center gap-12">
+            <h1 className="text-heading-lg font-w460 leading-heading-lg text-ink-charcoal sm:text-display sm:leading-display">
+              {view === "saved" ? "Saved Opportunities" : "Opportunity Finder"}
+            </h1>
+            <span className="rounded-pills border border-soft-mist bg-paper-white px-10 py-3 text-caption font-w540 uppercase tracking-wider text-royal-violet shadow-2xs">
+              {view === "saved" ? "Arsip Pribadi" : "Sintesis Hipotesis AI"}
+            </span>
+          </div>
+          <p className="text-body leading-relaxed text-stone-gray">
             Ide dibuat dari sinyal pencarian live dan konteks profil yang diizinkan. Ide adalah hipotesis pribadi, bukan Opportunity terbit atau bukti permintaan pasar.
           </p>
         </header>
 
         {view === "finder" ? (
-          <section aria-labelledby="generate-ideas-title" className="grid max-w-[860px] gap-14 border-y border-soft-mist py-20">
-            <h2 className="text-heading-sm font-w460 text-ink-charcoal" id="generate-ideas-title">Buat hipotesis dari sinyal terbaru</h2>
+          <Card aria-labelledby="generate-ideas-title" className="grid max-w-[860px] gap-20 p-20 sm:p-28 border-[#ded8cb] bg-[#faf9f6]">
+            <div className="flex flex-wrap items-baseline justify-between gap-8 border-b border-soft-mist pb-16">
+              <h2 className="text-heading-sm font-w460 text-ink-charcoal" id="generate-ideas-title">
+                Buat hipotesis dari sinyal terbaru
+              </h2>
+              <span className="text-caption text-stone-gray">Alur 3-Langkah Terpandu</span>
+            </div>
+
             {sourceOptions.length === 0 ? (
-              <div className="grid gap-8">
-                <p className="text-body-sm leading-body-sm text-stone-gray">Belum ada sinyal F&amp;B live pada rentang ini. Muat observasi Google Trends terlebih dahulu.</p>
-                <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href="/trends">Buka Trend Radar</Link>
+              <div className="grid gap-12">
+                <p className="text-body-sm leading-body-sm text-stone-gray">
+                  Belum ada sinyal F&amp;B live pada rentang ini. Muat observasi Google Trends terlebih dahulu.
+                </p>
+                <Link
+                  className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
+                  href="/trends"
+                >
+                  Buka Trend Radar
+                </Link>
               </div>
             ) : (
-              <>
-                <label className="grid gap-6 text-body-sm font-w540 text-ink-charcoal" htmlFor="opportunity-source-signal">
-                  Sinyal Google Trends
+              <div className="grid gap-20">
+                {/* Langkah 1: Pemilihan Sinyal */}
+                <div className="grid gap-8">
+                  <div className="flex items-center gap-8">
+                    <span className="flex size-28 items-center justify-center rounded-full border border-midnight-wine bg-midnight-wine text-caption font-w540 text-paper-white shadow-xs">1</span>
+                    <label className="text-body-sm font-w540 text-ink-charcoal" htmlFor="opportunity-source-signal">
+                      Pilih Sinyal Google Trends
+                    </label>
+                  </div>
                   <select
-                    className="min-h-button min-w-0 rounded-small-buttons border border-soft-mist bg-paper-white px-12 text-body-sm text-ink-charcoal"
+                    className="min-h-44 min-w-0 rounded-small-buttons border border-[#ded8cb] bg-paper-white px-12 text-body-sm text-ink-charcoal focus:border-royal-violet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
                     id="opportunity-source-signal"
                     onChange={(event) => setSelectedSourceId(event.target.value)}
                     value={selectedSourceId}
@@ -167,42 +189,94 @@ export function PrivateOpportunityFinder({
                       </option>
                     ))}
                   </select>
-                </label>
-                {selectedSource ? (
-                  <p className="text-caption leading-body-sm text-stone-gray">Sumber: Google Trends. Diambil {new Date(selectedSource.signal.source.retrievedAt).toLocaleString("id-ID")} WIB. Label F&amp;B berasal dari heuristic, bukan review faktual.</p>
-                ) : null}
-                {publicHttpTransport ? <p className="border-l-2 border-ink-charcoal bg-white px-12 py-10 text-body-sm leading-body-sm text-ink-charcoal" role="alert">Peringatan transport: koneksi ke 9Router memakai HTTP publik tanpa enkripsi. Kunci API dan konteks yang dikirim dapat terlihat di jalur jaringan. Gunakan hanya profil uji sintetis dan jangan lanjutkan dengan data sensitif.</p> : null}
-                <label className="flex items-start gap-10 text-body-sm leading-body-sm text-ink-charcoal">
-                  <input checked={consent} className="mt-3 size-16 accent-royal-violet" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
-                  <span>Saya setuju kategori produk/minat, jenis produk yang diminati bila diisi, segmen pelanggan, kanal penjualan, dan bila tersedia tingkat pengalaman/komitmen waktu dari profil server serta judul sinyal terpilih dikirim ke 9Router untuk membuat hipotesis. Nama akun, email, lokasi, catatan bebas, dan angka finansial tidak dikirim. Hasil disimpan privat pada akun saya. Retensi dan penggunaan lanjutan oleh 9Router belum diverifikasi.{publicHttpTransport ? " Saya memahami request ini memakai HTTP publik tanpa enkripsi dan hanya melanjutkan dengan profil uji sintetis." : ""}</span>
-                </label>
-                {!providerAvailable ? <p className="text-body-sm text-stone-gray" role="status">Konfigurasi 9Router belum siap atau tidak diizinkan pada lingkungan ini. Profil tidak dikirim dan inference belum dijalankan.</p> : null}
-                {initialLoadFailed ? <p className="text-body-sm text-stone-gray" role="status">Penyimpanan hipotesis belum siap. Tidak ada request AI yang akan dikirim sampai database siap.</p> : null}
-                <button
-                  className="min-h-44 w-fit rounded-full border border-ink-charcoal bg-lilac-mist px-18 py-10 text-body-sm font-w540 text-ink-charcoal transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!providerAvailable || initialLoadFailed || !consent || generating || !selectedSource || selectedSource.signal.classification !== "LIKELY_FNB"}
-                  onClick={() => void generate()}
-                  type="button"
-                >
-                  {generating ? "Meminta 9Router..." : "Buat hipotesis dengan 9Router"}
-                </button>
-              </>
+                  {selectedSource ? (
+                    <div className="rounded-small-buttons bg-warm-parchment p-12 text-caption leading-body-sm text-stone-gray border border-[#ded8cb]">
+                      Sumber: Google Trends · Diambil {new Date(selectedSource.signal.source.retrievedAt).toLocaleString("id-ID")} WIB · Label F&amp;B berasal dari heuristic, bukan review faktual.
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Langkah 2: Persetujuan Privasi & Batasan */}
+                <div className="grid gap-12 border-t border-soft-mist pt-16">
+                  <div className="flex items-center gap-8">
+                    <span className="flex size-28 items-center justify-center rounded-full border border-midnight-wine bg-midnight-wine text-caption font-w540 text-paper-white shadow-xs">2</span>
+                    <span className="text-body-sm font-w540 text-ink-charcoal">
+                      Persetujuan Pengiriman Data Profil Minimal
+                    </span>
+                  </div>
+
+                  {publicHttpTransport ? (
+                    <StatusNotice role="alert" tone="error">
+                      Peringatan transport: koneksi ke 9Router memakai HTTP publik tanpa enkripsi. Kunci API dan konteks yang dikirim dapat terlihat di jalur jaringan. Gunakan hanya profil uji sintetis dan jangan lanjutkan dengan data sensitif.
+                    </StatusNotice>
+                  ) : null}
+
+                  <label
+                    className={cx(
+                      "flex cursor-pointer items-start gap-12 rounded-cards border p-16 sm:p-20 text-body-sm leading-body-sm text-ink-charcoal transition-[background-color,border-color,transform] duration-200 active:translate-y-px focus-within:ring-2 focus-within:ring-royal-violet/40",
+                      consent
+                        ? "border-midnight-wine bg-lilac-mist/40"
+                        : "border-soft-mist bg-warm-parchment/60 hover:border-stone-gray",
+                    )}
+                  >
+                    <input
+                      checked={consent}
+                      className="mt-3 size-16 accent-midnight-wine"
+                      onChange={(event) => setConsent(event.target.checked)}
+                      type="checkbox"
+                    />
+                    <span>
+                      Saya setuju kategori produk/minat, jenis produk yang diminati bila diisi, segmen pelanggan, kanal penjualan, dan bila tersedia tingkat pengalaman/komitmen waktu dari profil server serta judul sinyal terpilih dikirim ke 9Router untuk membuat hipotesis. Nama akun, email, lokasi, catatan bebas, dan angka finansial tidak dikirim. Hasil disimpan privat pada akun saya. Retensi dan penggunaan lanjutan oleh 9Router belum diverifikasi.{publicHttpTransport ? " Saya memahami request ini memakai HTTP publik tanpa enkripsi dan hanya melanjutkan dengan profil uji sintetis." : ""}
+                    </span>
+                  </label>
+
+                  {!providerAvailable ? (
+                    <p className="text-body-sm text-stone-gray" role="status">
+                      Konfigurasi 9Router belum siap atau tidak diizinkan pada lingkungan ini. Profil tidak dikirim dan inference belum dijalankan.
+                    </p>
+                  ) : null}
+                  {initialLoadFailed ? (
+                    <p className="text-body-sm text-stone-gray" role="status">
+                      Penyimpanan hipotesis belum siap. Tidak ada request AI yang akan dikirim sampai database siap.
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Langkah 3: Eksekusi */}
+                <div className="grid gap-8 border-t border-soft-mist pt-16">
+                  <div className="flex items-center gap-8">
+                    <span className="flex size-28 items-center justify-center rounded-full border border-midnight-wine bg-midnight-wine text-caption font-w540 text-paper-white shadow-xs">3</span>
+                    <span className="text-body-sm font-w540 text-ink-charcoal">
+                      Eksekusi Hipotesis
+                    </span>
+                  </div>
+                  <Button
+                    disabled={!providerAvailable || initialLoadFailed || !consent || generating || !selectedSource || selectedSource.signal.classification !== "LIKELY_FNB"}
+                    loading={generating}
+                    onClick={() => void generate()}
+                    type="button"
+                    variant="primary"
+                  >
+                    {generating ? "Meminta 9Router..." : "Buat hipotesis dengan 9Router"}
+                  </Button>
+                </div>
+              </div>
             )}
-          </section>
+          </Card>
         ) : null}
 
-        {error ? <p aria-live="polite" className="border-l-2 border-ink-charcoal bg-white px-14 py-12 text-body-sm text-ink-charcoal" role="alert">{error}</p> : null}
-        {notice ? <p aria-live="polite" className="border-l-2 border-royal-violet bg-white px-14 py-12 text-body-sm text-ink-charcoal" role="status">{notice}</p> : null}
+        {error ? <StatusNotice aria-live="polite" role="alert" tone="error">{error}</StatusNotice> : null}
+        {notice ? <StatusNotice aria-live="polite" role="status" tone="success">{notice}</StatusNotice> : null}
 
         {items.length === 0 && initialLoadFailed ? (
           <EmptyState
-            action={<Link className="text-body-sm font-w540 text-royal-violet underline underline-offset-4" href="/opportunities">Coba kembali</Link>}
+            action={<Link className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet" href="/opportunities">Coba kembali</Link>}
             description="Penyimpanan hipotesis belum siap. Terapkan migrasi database 018 sebelum menggunakan daftar ini."
             title="Penyimpanan belum tersedia"
           />
         ) : items.length === 0 ? (
           <EmptyState
-            action={view === "saved" ? <Link className="text-body-sm font-w540 text-royal-violet underline underline-offset-4" href="/opportunities">Buka Opportunity Finder</Link> : null}
+            action={view === "saved" ? <Link className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet" href="/opportunities">Buka Opportunity Finder</Link> : null}
             description={view === "saved" ? "Belum ada hipotesis yang disimpan." : "Setelah memuat sinyal live, pilih sinyal dan minta hipotesis secara eksplisit."}
             title={view === "saved" ? "Belum ada simpanan" : "Belum ada hipotesis pribadi"}
           />
@@ -210,32 +284,64 @@ export function PrivateOpportunityFinder({
           <ul aria-label={view === "saved" ? "Hipotesis tersimpan pribadi" : "Hipotesis peluang pribadi"} className="grid gap-16">
             {items.map((item) => (
               <li data-hypothesis-id={item.id} key={item.id}>
-                <Card className="p-20 sm:p-24">
-                  <article className="grid gap-12">
-                    <p className="text-label-bold font-w540 text-royal-violet">Hipotesis Peluang | Perlu Validasi</p>
-                    <h2 className="wrap-anywhere text-heading-sm font-w460 text-ink-charcoal">{item.hypothesis.title}</h2>
-                    <p className="wrap-anywhere text-body-sm leading-body-sm text-ink-charcoal">{item.hypothesis.concept}</p>
-                    <div className="grid gap-6 text-body-sm text-stone-gray">
-                      <p><strong className="font-w540 text-ink-charcoal">Pelanggan yang perlu diuji:</strong> {item.hypothesis.targetCustomer}</p>
-                      <div>
+                <Card className="grid gap-16 p-20 sm:p-24 transition-all duration-300 border-[#ded8cb] bg-[#faf9f6] hover:border-midnight-wine/40 hover:-translate-y-1 hover:shadow-lg">
+                  <article className="grid gap-14">
+                    <div className="flex flex-wrap items-center justify-between gap-8">
+                      <Badge tone="wash">Hipotesis peluang · perlu validasi</Badge>
+                      <span className="text-caption font-w460 text-stone-gray">Privat untuk akun Anda</span>
+                    </div>
+
+                    <h2 className="wrap-anywhere text-heading-sm font-w460 text-ink-charcoal">
+                      {item.hypothesis.title}
+                    </h2>
+
+                    <p className="wrap-anywhere text-body leading-body text-ink-charcoal">
+                      {item.hypothesis.concept}
+                    </p>
+
+                    <div className="grid gap-12 rounded-small-buttons bg-warm-parchment p-16 sm:p-20 border border-[#ded8cb] text-body-sm transition-colors hover:border-midnight-wine/30">
+                      <p>
+                        <strong className="font-w540 text-ink-charcoal">Pelanggan yang perlu diuji:</strong>{" "}
+                        <span className="text-stone-gray">{item.hypothesis.targetCustomer}</span>
+                      </p>
+                      <div className="grid gap-6">
                         <p className="font-w540 text-ink-charcoal">Langkah validasi</p>
-                        <ol className="list-decimal pl-20">{item.hypothesis.validationSteps.map((step, index) => <li key={`${item.id}-step-${index}`}>{step}</li>)}</ol>
+                        <ol className="grid gap-4 list-decimal pl-20 text-stone-gray">
+                          {item.hypothesis.validationSteps.map((step, index) => (
+                            <li key={`${item.id}-step-${index}`}>{step}</li>
+                          ))}
+                        </ol>
                       </div>
-                      <div>
+                      <div className="grid gap-6">
                         <p className="font-w540 text-ink-charcoal">Asumsi yang belum terbukti</p>
-                        <ul className="list-disc pl-20">{item.hypothesis.assumptions.map((assumption, index) => <li key={`${item.id}-assumption-${index}`}>{assumption}</li>)}</ul>
+                        <ul className="grid gap-4 list-disc pl-20 text-stone-gray">
+                          {item.hypothesis.assumptions.map((assumption, index) => (
+                            <li key={`${item.id}-assumption-${index}`}>{assumption}</li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                    <p className="border-t border-soft-mist pt-10 text-caption text-stone-gray">Sumber: {item.source.publisher}, sinyal “{item.source.title}”, diambil {new Date(item.source.retrievedAt).toLocaleString("id-ID")} WIB. Screening {item.source.classification === "LIKELY_FNB" ? "heuristik F&B" : "memerlukan review"}. Tidak membuktikan permintaan, pembelian, pendapatan, kompetisi, atau keberhasilan.</p>
-                    <p className="text-caption text-stone-gray">Dihasilkan {new Date(item.generatedAt).toLocaleString("id-ID")} WIB oleh {item.provider}, model {item.model}. Hasil ini disimpan privat untuk akun Anda.</p>
-                    <button
-                      className="min-h-44 w-fit rounded-full border border-ink-charcoal px-16 py-10 text-body-sm font-w540 text-ink-charcoal hover:bg-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={savingId === item.id}
-                      onClick={() => void toggleSaved(item)}
-                      type="button"
-                    >
-                      {savingId === item.id ? "Menyimpan..." : item.saved ? "Hapus dari simpanan" : "Simpan hipotesis"}
-                    </button>
+
+                    <div className="grid gap-4 border-t border-soft-mist pt-12 text-caption text-stone-gray">
+                      <p>
+                        Sumber: {item.source.publisher}, sinyal “{item.source.title}”, diambil {new Date(item.source.retrievedAt).toLocaleString("id-ID")} WIB. Screening {item.source.classification === "LIKELY_FNB" ? "heuristik F&B" : "memerlukan review"}. Tidak membuktikan permintaan, pembelian, pendapatan, kompetisi, atau keberhasilan.
+                      </p>
+                      <p>
+                        Dihasilkan {new Date(item.generatedAt).toLocaleString("id-ID")} WIB oleh {item.provider}, model {item.model}. Hasil ini disimpan privat untuk akun Anda.
+                      </p>
+                    </div>
+
+                    <div className="pt-4">
+                      <Button
+                        disabled={savingId === item.id}
+                        loading={savingId === item.id}
+                        onClick={() => void toggleSaved(item)}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {savingId === item.id ? "Menyimpan..." : item.saved ? "Hapus dari simpanan" : "Simpan hipotesis"}
+                      </Button>
+                    </div>
                   </article>
                 </Card>
               </li>

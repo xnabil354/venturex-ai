@@ -64,8 +64,12 @@ function safeText(value: string, maxLength: number): string {
     .trim()).slice(0, maxLength).join("");
 }
 
+function isBrightDataProviderError(error: unknown): error is BrightDataProviderError {
+  return error instanceof BrightDataProviderError || (typeof error === "object" && error !== null && (error as Error).name === "BrightDataProviderError" && "code" in error);
+}
+
 function providerErrorCode(error: unknown): LiveSignalsErrorCode {
-  if (!(error instanceof BrightDataProviderError)) return "SOURCE_PROVIDER_UNAVAILABLE";
+  if (!isBrightDataProviderError(error)) return "SOURCE_PROVIDER_UNAVAILABLE";
   if (error.code === "TIMEOUT") return "SOURCE_PROVIDER_TIMEOUT";
   if (["INVALID_JSON", "INVALID_RESPONSE", "RESPONSE_TOO_LARGE"].includes(error.code)) return "SOURCE_RESPONSE_INVALID";
   return "SOURCE_PROVIDER_UNAVAILABLE";
@@ -287,7 +291,7 @@ export class LiveTrendSignalsService {
     if (cached && now - cached.storedAt <= LIVE_SIGNAL_STALE_MAX_AGE_MS) {
       return this.saveSnapshot(userId, cached, timeWindowHours, "STALE", "CACHE");
     }
-    if (error instanceof BrightDataProviderError && error.code === "DISABLED") throw new LiveSignalsError("PROVIDER_NOT_CONFIGURED");
+    if (isBrightDataProviderError(error) && error.code === "DISABLED") throw new LiveSignalsError("PROVIDER_NOT_CONFIGURED");
     throw new LiveSignalsError(providerErrorCode(error));
   }
 

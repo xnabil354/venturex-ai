@@ -135,7 +135,11 @@ export function IndonesiaRegionFields({
 
   useEffect(() => {
     const controller = new AbortController();
-    setProvinceStatus("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setProvinceStatus("loading");
+      }
+    });
 
     void fetchIndonesiaRegions({ level: "provinces" }, controller.signal)
       .then((result) => {
@@ -155,13 +159,19 @@ export function IndonesiaRegionFields({
 
   useEffect(() => {
     if (!values.provinceId) {
-      setRegencies([]);
-      setRegencyStatus("idle");
+      queueMicrotask(() => {
+        setRegencies([]);
+        setRegencyStatus("idle");
+      });
       return;
     }
 
     const controller = new AbortController();
-    setRegencyStatus("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setRegencyStatus("loading");
+      }
+    });
 
     void fetchIndonesiaRegions(
       { level: "regencies", parentId: values.provinceId },
@@ -184,13 +194,19 @@ export function IndonesiaRegionFields({
 
   useEffect(() => {
     if (!values.cityId) {
-      setDistricts([]);
-      setDistrictStatus("idle");
+      queueMicrotask(() => {
+        setDistricts([]);
+        setDistrictStatus("idle");
+      });
       return;
     }
 
     const controller = new AbortController();
-    setDistrictStatus("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setDistrictStatus("loading");
+      }
+    });
 
     void fetchIndonesiaRegions(
       { level: "districts", parentId: values.cityId },
@@ -213,13 +229,19 @@ export function IndonesiaRegionFields({
 
   useEffect(() => {
     if (!values.districtId) {
-      setVillages([]);
-      setVillageStatus("idle");
+      queueMicrotask(() => {
+        setVillages([]);
+        setVillageStatus("idle");
+      });
       return;
     }
 
     const controller = new AbortController();
-    setVillageStatus("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setVillageStatus("loading");
+      }
+    });
 
     void fetchIndonesiaRegions(
       { level: "villages", parentId: values.districtId },

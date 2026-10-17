@@ -18,7 +18,7 @@ export type BusinessSummaryProps = {
 
 export function BusinessSummary({ profile }: BusinessSummaryProps) {
   return (
-    <dl className="grid gap-16 md:grid-cols-2">
+    <dl className="grid gap-px bg-[#ded8cb] sm:grid-cols-2 lg:grid-cols-4 [&>*]:bg-[#faf9f6]">
       <SummaryField label="Nama bisnis">{profile.businessName}</SummaryField>
       <SummaryField label="Kategori bisnis">{profile.businessCategory.name}</SummaryField>
       <SummaryField label="Lokasi">{profile.location.text}</SummaryField>
