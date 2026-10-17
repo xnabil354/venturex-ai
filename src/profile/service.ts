@@ -28,17 +28,19 @@ import {
   InvalidReferenceDataError,
 } from "./errors";
 import {
+  entrepreneurProfileEditSchema,
   entrepreneurProfileSchema,
+  type EntrepreneurProfileEditValues as ProfileEditValues,
   type EntrepreneurProfileInput,
 } from "./validation";
 import { getSequelize } from "../db/sequelize";
+
+export type EntrepreneurProfileEditValues = ProfileEditValues;
 
 export type EntrepreneurProfileSaveResult = {
   readonly profileVersion: number;
   readonly profileComplete: true;
 };
-
-export type EntrepreneurProfileEditValues = EntrepreneurProfileInput;
 
 type EntrepreneurProfileServiceDependencies = {
   readonly sequelize?: Sequelize;
@@ -64,6 +66,8 @@ function hasPersonalizationChanged(
     existing.locationText !== input.location.text ||
     existing.city !== input.location.city ||
     existing.province !== input.location.province ||
+    existing.district !== (input.location.district ?? null) ||
+    existing.subdistrict !== (input.location.subdistrict ?? null) ||
     existing.countryCode !== input.location.countryCode ||
     existing.budgetMin !== input.budget.min ||
     existing.budgetMax !== input.budget.max ||
@@ -85,6 +89,8 @@ function toProfileValues(
     locationText: input.location.text,
     city: input.location.city,
     province: input.location.province,
+    district: input.location.district ?? null,
+    subdistrict: input.location.subdistrict ?? null,
     countryCode: "ID",
     budgetMin: input.budget.min,
     budgetMax: input.budget.max,
@@ -157,11 +163,13 @@ export class EntrepreneurProfileService {
       }
 
       const selections = await this.profileRepository.loadSelectionIds(profile.id, transaction);
-      return entrepreneurProfileSchema.parse({
+      return entrepreneurProfileEditSchema.parse({
         location: {
           text: profile.locationText,
           city: profile.city,
           province: profile.province,
+          district: profile.district,
+          subdistrict: profile.subdistrict,
           countryCode: profile.countryCode,
         },
         budget: { min: profile.budgetMin, max: profile.budgetMax },

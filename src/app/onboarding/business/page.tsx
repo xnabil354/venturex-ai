@@ -17,7 +17,7 @@ export default async function BusinessOnboardingPage() {
   }
 
   return (
-    <OnboardingLayout>
+    <OnboardingLayout showBackToSelection>
       <BusinessProfileForm />
     </OnboardingLayout>
   );

@@ -7,8 +7,10 @@ import {
   type TimeCommitment,
 } from "@/profile/validation";
 import { Button, Input, Select, type SelectOption } from "@/components/ui";
+import { OTHER_FNB_CATEGORY_CODE } from "@/reference/constants";
 
 import { CheckboxGroup, FormSection } from "./entrepreneur-profile-options";
+import { IndonesiaRegionFields } from "./indonesia-region-fields";
 import type { EntrepreneurFormState } from "./entrepreneur-profile-form.validation";
 import type { ReferenceData } from "./entrepreneur-profile-form.types";
 
@@ -42,51 +44,48 @@ export function EntrepreneurProfileStepOne({
   state,
   updateForm,
 }: StepProps) {
+  const otherCategory = references.categories.find(
+    ({ code }) => code === OTHER_FNB_CATEGORY_CODE,
+  );
+
   return (
-    <div className="grid gap-24">
+    <div className="grid gap-32">
       <FormSection
-        description="Gunakan lokasi yang ingin Anda jadikan konteks saat menilai peluang usaha."
+        description="Pilih provinsi, kota/kabupaten, kecamatan, lalu kelurahan. Masukkan alamat jalan setelahnya."
         title="Lokasi utama"
       >
-        <div className="grid gap-16 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Input
-              autoComplete="address-level2"
-              error={errors.locationText}
-              hint="Contoh: Jakarta Pusat. Tidak perlu alamat lengkap."
-              id="location-text"
-              label="Lokasi utama *"
-              maxLength={255}
-              onChange={(event) => updateForm({ locationText: event.target.value })}
-              placeholder="Jakarta Pusat"
-              value={state.locationText}
-            />
-          </div>
-          <Input
-            autoComplete="address-level2"
-            error={errors.city}
-            id="location-city"
-            label="Kota/Kabupaten"
-            maxLength={120}
-            onChange={(event) => updateForm({ city: event.target.value })}
-            placeholder="Jakarta Pusat"
-            value={state.city}
+        <div className="grid gap-24">
+          <IndonesiaRegionFields
+            errors={errors}
+            onChange={updateForm}
+            values={{
+              province: state.province,
+              provinceId: state.provinceId,
+              city: state.city,
+              cityId: state.cityId,
+              district: state.district,
+              districtId: state.districtId,
+              subdistrict: state.subdistrict,
+              subdistrictId: state.subdistrictId,
+            }}
           />
           <Input
-            autoComplete="address-level1"
-            error={errors.province}
-            id="location-province"
-            label="Provinsi"
-            maxLength={120}
-            onChange={(event) => updateForm({ province: event.target.value })}
-            placeholder="DKI Jakarta"
-            value={state.province}
+            autoComplete="street-address"
+            error={errors.locationText}
+            hint="Masukkan nama jalan, area, atau patokan agar lokasi usaha lebih spesifik."
+            id="location-text"
+            label="Alamat detail *"
+            maxLength={255}
+            onChange={(event) => updateForm({ locationText: event.target.value })}
+            placeholder="Jl. Melati No. 12, Menteng"
+            required
+            value={state.locationText}
           />
         </div>
       </FormSection>
 
       <FormSection
-        description="Pilih kategori yang ingin Anda pertimbangkan. Anda dapat memilih lebih dari satu."
+        description="Pilih satu atau lebih kategori yang ingin Anda pertimbangkan. Jika belum tersedia, pilih Lainnya dan tuliskan jenis usaha Anda."
         title="Minat F&B"
       >
         <CheckboxGroup
@@ -94,7 +93,26 @@ export function EntrepreneurProfileStepOne({
           id="interest-categories"
           legend="Kategori yang diminati *"
           onChange={(interestCategoryIds) => updateForm({ interestCategoryIds })}
-          options={references.categories.map(({ id, name }) => ({ id, label: name }))}
+          otherOption={
+            otherCategory
+              ? {
+                  checked: state.interestCategoryIds.includes(otherCategory.id),
+                  error: errors.preferredProductType,
+                  onCheckedChange: (checked) =>
+                    updateForm({
+                      interestCategoryIds: checked
+                        ? [...new Set([...state.interestCategoryIds, otherCategory.id])]
+                        : state.interestCategoryIds.filter((id) => id !== otherCategory.id),
+                    }),
+                  onValueChange: (preferredProductType) =>
+                    updateForm({ preferredProductType }),
+                  value: state.preferredProductType,
+                }
+              : undefined
+          }
+          options={references.categories
+            .filter(({ code }) => code !== OTHER_FNB_CATEGORY_CODE)
+            .map(({ id, name }) => ({ id, label: name }))}
           selectedIds={state.interestCategoryIds}
         />
       </FormSection>
@@ -109,7 +127,7 @@ export function EntrepreneurProfileStepTwo({
   updateForm,
 }: StepProps) {
   return (
-    <div className="grid gap-24">
+    <div className="grid gap-32">
       <FormSection
         description="Masukkan rentang dana yang ingin Anda siapkan dalam angka Rupiah."
         title="Budget awal"
@@ -167,8 +185,15 @@ export function EntrepreneurProfileStepThree({
   state,
   updateForm,
 }: StepProps) {
+  const otherCategory = references.categories.find(
+    ({ code }) => code === OTHER_FNB_CATEGORY_CODE,
+  );
+  const hasOtherCategory = Boolean(
+    otherCategory && state.interestCategoryIds.includes(otherCategory.id),
+  );
+
   return (
-    <div className="grid gap-24">
+    <div className="grid gap-32">
       <FormSection
         description="Pilih cara menjalankan usaha yang paling sesuai dengan kondisi Anda saat ini."
         title="Cara menjalankan usaha"
@@ -208,15 +233,17 @@ export function EntrepreneurProfileStepThree({
         title="Konteks tambahan"
       >
         <div className="grid gap-16">
-          <Input
-            error={errors.preferredProductType}
-            hint="Contoh: kopi susu, frozen dimsum, healthy snack."
-            id="preferred-product-type"
-            label="Jenis produk yang diminati"
-            maxLength={100}
-            onChange={(event) => updateForm({ preferredProductType: event.target.value })}
-            value={state.preferredProductType}
-          />
+          {hasOtherCategory ? null : (
+            <Input
+              error={errors.preferredProductType}
+              hint="Contoh: kopi susu, frozen dimsum, healthy snack."
+              id="preferred-product-type"
+              label="Jenis produk yang diminati"
+              maxLength={100}
+              onChange={(event) => updateForm({ preferredProductType: event.target.value })}
+              value={state.preferredProductType}
+            />
+          )}
           <TextareaField
             id="business-objective"
             label="Tujuan bisnis"
@@ -252,7 +279,7 @@ function TextareaField({
         {label}
       </label>
       <textarea
-        className="min-h-32 w-full resize-y rounded-small-buttons border border-stone-gray bg-paper-white px-12 py-12 text-body text-ink-charcoal transition-[border-color,box-shadow] duration-200 ease-out placeholder:text-stone-gray focus:border-royal-violet focus:shadow-subtle"
+        className="min-h-32 w-full resize-y rounded-small-buttons border border-stone-gray bg-paper-white px-12 py-12 text-body text-ink-charcoal transition-[border-color,border-width] duration-200 ease-out placeholder:text-stone-gray focus:border-2 focus:border-royal-violet focus-visible:outline-none"
         id={id}
         onChange={onChange}
         rows={4}

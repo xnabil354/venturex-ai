@@ -40,6 +40,8 @@ const validInput: EntrepreneurProfileInput = {
     text: "Jakarta Pusat",
     city: "Jakarta Pusat",
     province: "DKI Jakarta",
+    district: "Menteng",
+    subdistrict: "Pegangsaan",
     countryCode: "ID",
   },
   budget: { min: 5_000_000, max: 10_000_000 },

@@ -318,9 +318,11 @@ Menyimpan profile calon pengusaha.
 |---|---|---:|---|
 | `id` | UUID | No | PK |
 | `user_id` | UUID | No | FK, UNIQUE |
-| `location_text` | VARCHAR(255) | No | - |
-| `city` | VARCHAR(120) | Yes | - |
-| `province` | VARCHAR(120) | Yes | - |
+| `location_text` | VARCHAR(255) | No | Alamat detail untuk profile baru |
+| `city` | VARCHAR(120) | Yes | Wajib pada profile baru; nullable untuk profile lama |
+| `province` | VARCHAR(120) | Yes | Wajib pada profile baru; nullable untuk profile lama |
+| `district` | VARCHAR(120) | Yes | Kecamatan; wajib pada profile baru, nullable untuk profile lama |
+| `subdistrict` | VARCHAR(120) | Yes | Kelurahan; wajib pada profile baru, nullable untuk profile lama |
 | `country_code` | CHAR(2) | No | DEFAULT 'ID' |
 | `budget_min` | BIGINT | No | CHECK >= 0 |
 | `budget_max` | BIGINT | No | CHECK |
@@ -359,6 +361,8 @@ Menyimpan profile UMKM existing. Detail konfigurasi Business Profile MVP ditetap
 | `location_text` | VARCHAR(255) | No | - |
 | `city` | VARCHAR(120) | Yes | - |
 | `province` | VARCHAR(120) | Yes | - |
+| `district` | VARCHAR(120) | Yes | Kecamatan; nullable for existing profiles |
+| `subdistrict` | VARCHAR(120) | Yes | Kelurahan; nullable for existing profiles |
 | `country_code` | CHAR(2) | No | DEFAULT 'ID'; server-controlled |
 | `average_price_min` | BIGINT | No | CHECK >= 0 |
 | `average_price_max` | BIGINT | No | CHECK; `>= average_price_min` |
@@ -1364,6 +1368,9 @@ Repository migrations currently use the sequence below. Migration `008-create-tr
 015-create-opportunity-fit-inputs.ts
 016-create-roadmaps.ts
 017-create-trend-evidence-provenances.ts
+018-create-private-opportunity-hypotheses.ts
+019-add-entrepreneur-location-details.ts
+020-add-business-location-details.ts
 ```
 
 ---

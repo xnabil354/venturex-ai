@@ -40,14 +40,14 @@ export function BusinessProductEditor({
   }
 
   return (
-    <div className="grid gap-16">
+    <div className="grid gap-12">
       {products.map((product, index) => (
         <div
-          className="grid gap-12 border-t border-soft-mist pt-16 first:border-t-0 first:pt-0"
+          className="grid gap-16 rounded-cards border border-soft-mist p-16 sm:p-20"
           key={product.key}
         >
           <div className="flex items-center justify-between gap-8">
-            <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">
+            <p className="text-body font-w540 text-ink-charcoal">
               Produk {index + 1}
             </p>
             <Button
@@ -61,7 +61,7 @@ export function BusinessProductEditor({
               Hapus
             </Button>
           </div>
-          <div className="grid gap-12 sm:grid-cols-2">
+          <div className="grid gap-16 sm:grid-cols-2 sm:items-start">
             <Input
               error={errors[`products.${index}.name`]}
               id={`product-${product.key}-name`}
@@ -99,7 +99,12 @@ export function BusinessProductEditor({
         </div>
       ))}
       {products.length < 20 ? (
-        <Button className="w-full sm:w-auto" onClick={addProduct} type="button" variant="secondary">
+        <Button
+          className="w-fit justify-self-start px-24"
+          onClick={addProduct}
+          type="button"
+          variant="secondary"
+        >
           Tambah produk
         </Button>
       ) : null}

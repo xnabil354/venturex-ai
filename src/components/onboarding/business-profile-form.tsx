@@ -8,6 +8,10 @@ import { Button, EmptyState, LoadingSkeleton } from "@/components/ui";
 import type { BusinessProfileInput } from "@/profile/business-validation";
 
 import {
+  OnboardingProgressPublisher,
+  OnboardingProgressSlot,
+} from "./onboarding-progress-context";
+import {
   BusinessProfileStepOne,
   BusinessProfileStepThree,
   BusinessProfileStepTwo,
@@ -47,10 +51,11 @@ const profileSuccessSchema = z.object({
   success: z.literal(true),
 });
 const STEP_META = {
-  1: { label: "Identitas bisnis", title: "Mulai dari nama, kategori, dan lokasi usaha." },
-  2: { label: "Produk dan harga", title: "Tambahkan produk utama dan rentang harganya." },
-  3: { label: "Pelanggan dan cara menjual", title: "Pilih konteks pelanggan dan saluran penjualan." },
-} as const satisfies Record<BusinessFormStep, { label: string; title: string }>;
+  1: { label: "Identitas bisnis" },
+  2: { label: "Produk dan harga" },
+  3: { label: "Pelanggan dan cara menjual" },
+} as const satisfies Record<BusinessFormStep, { label: string }>;
+const PROFILE_STEPS = [STEP_META[1], STEP_META[2], STEP_META[3]];
 
 class ReferenceLoadError extends Error {
   override readonly name = "ReferenceLoadError";
@@ -229,32 +234,47 @@ export function BusinessProfileForm({
     void submitProfile();
   }
 
-  if (references.status === "loading") return <ReferenceLoadingState />;
+  const progressPublisher = (
+    <OnboardingProgressPublisher currentStep={step} steps={PROFILE_STEPS} />
+  );
+
+  if (references.status === "loading") {
+    return (
+      <>
+        {progressPublisher}
+        <ReferenceLoadingState />
+      </>
+    );
+  }
   if (references.status === "error") {
     return (
-      <EmptyState
-        action={<Button onClick={retryReferences} variant="secondary">Coba lagi</Button>}
-        description={references.message}
-        title="Pilihan profil belum tersedia"
-      />
+      <>
+        {progressPublisher}
+        <EmptyState
+          action={<Button onClick={retryReferences} variant="secondary">Coba lagi</Button>}
+          description={references.message}
+          title="Pilihan profil belum tersedia"
+        />
+      </>
     );
   }
   if (!references.data.categories.length || !references.data.segments.length || !references.data.channels.length) {
     return (
-      <EmptyState
-        action={<Button onClick={retryReferences} variant="secondary">Muat ulang pilihan</Button>}
-        description="Data pilihan profil belum tersedia. Coba muat ulang sebelum melanjutkan."
-        title="Pilihan profil belum lengkap"
-      />
+      <>
+        {progressPublisher}
+        <EmptyState
+          action={<Button onClick={retryReferences} variant="secondary">Muat ulang pilihan</Button>}
+          description="Data pilihan profil belum tersedia. Coba muat ulang sebelum melanjutkan."
+          title="Pilihan profil belum lengkap"
+        />
+      </>
     );
   }
 
-  const currentStep = STEP_META[step];
   return (
-    <section aria-labelledby={headingId} className="grid gap-24 border-t border-soft-mist pt-20 sm:pt-24">
+    <section aria-labelledby={headingId} className="grid gap-32 border-t border-soft-mist pt-20 sm:pt-24">
       <header className="grid gap-12">
-        <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">Profil bisnis</p>
-        <h1 className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg" id={headingId}>
+        <h1 className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:max-w-none" id={headingId}>
           {mode === "edit" ? "Edit profil bisnis" : "Lengkapi profil bisnis Anda"}
         </h1>
         <p className="max-w-[52ch] text-body-sm leading-body-sm text-stone-gray">
@@ -263,24 +283,23 @@ export function BusinessProfileForm({
             : "Beberapa detail singkat membantu VENTUREX memahami konteks usaha Anda."}
         </p>
       </header>
-      <div aria-live="polite" className="grid gap-4 border-y border-soft-mist py-12">
-        <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">Langkah {step} dari 3</p>
-        <p className="text-body font-w540 text-ink-charcoal">{currentStep.label}</p>
-        <p className="text-body-sm text-stone-gray">{currentStep.title}</p>
-      </div>
-      <form className="grid gap-24" noValidate onSubmit={handleSubmit}>
+      {progressPublisher}
+      {mode === "edit" ? (
+        <OnboardingProgressSlot currentStep={step} steps={PROFILE_STEPS} />
+      ) : null}
+      <form className="grid gap-32" noValidate onSubmit={handleSubmit}>
         {step === 1 ? <BusinessProfileStepOne errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {step === 2 ? <BusinessProfileStepTwo errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {step === 3 ? <BusinessProfileStepThree errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {formError ? (
-          <div aria-live="assertive" className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal" ref={errorSummaryRef} role="alert" tabIndex={-1}>
+          <div aria-live="assertive" className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal" ref={errorSummaryRef} role="alert" tabIndex={-1}>
             {formError}
           </div>
         ) : null}
-        <div className={`flex flex-col-reverse gap-12 border-t border-soft-mist pt-20 sm:flex-row sm:items-center ${step > 1 ? "sm:justify-between" : "sm:justify-end"}`}>
-          {step > 1 ? <Button className="w-full sm:w-auto" disabled={isSubmitting} onClick={handleBack} type="button" variant="ghost">Kembali</Button> : null}
+        <div className={`flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center ${step > 1 ? "sm:justify-between" : "sm:justify-end"}`}>
+          {step > 1 ? <Button className="w-full sm:w-auto" disabled={isSubmitting} onClick={handleBack} type="button" variant="ghost">Sebelumnya</Button> : null}
           <Button className="w-full sm:w-auto" loading={isSubmitting} type="submit">
-            {step < 3 ? "Lanjutkan" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
+            {step < 3 ? "Selanjutnya" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
           </Button>
         </div>
       </form>

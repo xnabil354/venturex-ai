@@ -560,7 +560,7 @@ Jika diaktifkan:
 
 | Field | Required | Proposed Control | Validation |
 |---|---:|---|---|
-| Location | Yes | Select/Text | Non-empty |
+| Location | Yes | Dependent selects + text | Province → city/regency → district (Kecamatan) → subdistrict (Kelurahan) and address detail are all required; region names have a 120-character maximum and address detail has a 255-character maximum. |
 | Interest / Category | Yes | Multi-select | ≥1 value |
 | Budget Range | Yes | Select/Range | Valid configured value |
 | Experience Level | Yes | Select | Valid enum |
@@ -568,11 +568,15 @@ Jika diaktifkan:
 | Preferred Sales Channel | Yes | Multi-select | ≥1 |
 | Time Commitment | Yes | Select | Valid enum |
 
+Location selectors depend on the preceding choice and are required along with the address detail. Region IDs are UI-only; the API receives the selected region names.
+
 ### Optional Input
 
 - preferred product type;
 - business objective;
 - notes.
+
+Jika kategori minat `Lainnya` dipilih, `preferredProductType` menjadi wajib dan menyimpan nama kategori kustom. Input teks ditampilkan di bawah pilihan `Lainnya`.
 
 ### Main Flow
 
@@ -650,7 +654,7 @@ The complete Business Profile MVP configuration is frozen in [Business Profile C
 |---|---:|---|---|
 | Business Name | Yes | Text | Valid scalar business name. |
 | Business Category | Yes | Single-select | Exactly one active `fnb_categories` reference. |
-| Location | Yes | Text | `location.text` required; city/province optional; country is server-controlled. |
+| Location | Yes | Dependent selects + text | `location.text` required; province, city/regency, district, and subdistrict are optional; country is server-controlled. |
 | Current Products | Yes | Repeating product rows | 1–20 products; normalized names unique. |
 | Average Price Range | Yes | Min/max numeric inputs | Integer Rupiah; `min >= 0`; `max >= min`. |
 | Customer Segments | Yes | Multi-select | At least one active reference; duplicate IDs normalized. |
@@ -660,7 +664,7 @@ The complete Business Profile MVP configuration is frozen in [Business Profile C
 
 - product category;
 - product price;
-- city and province;
+- province, city/regency, district (Kecamatan), and subdistrict (Kelurahan);
 - business description;
 - notes.
 

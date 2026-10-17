@@ -19,6 +19,8 @@ export type EntrepreneurProfileValues = {
   readonly locationText: string;
   readonly city: string | null;
   readonly province: string | null;
+  readonly district: string | null;
+  readonly subdistrict: string | null;
   readonly countryCode: "ID";
   readonly budgetMin: number;
   readonly budgetMax: number;
@@ -99,6 +101,8 @@ function toProfileRecord(profile: EntrepreneurProfile): EntrepreneurProfileRecor
     locationText: profile.locationText,
     city: profile.city,
     province: profile.province,
+    district: profile.district,
+    subdistrict: profile.subdistrict,
     countryCode: "ID",
     budgetMin: Number(profile.budgetMin),
     budgetMax: Number(profile.budgetMax),

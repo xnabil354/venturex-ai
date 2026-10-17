@@ -46,7 +46,7 @@ export function Input({
           aria-describedby={describedBy}
           aria-invalid={error ? true : undefined}
           className={cx(
-            "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,box-shadow] duration-200 ease-out focus:border-royal-violet focus:shadow-subtle",
+            "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
             Boolean(suffix) && "pr-44",
             error ? "border-midnight-wine" : "border-stone-gray",
             className,
@@ -112,7 +112,7 @@ export function Select({
         aria-describedby={describedBy}
         aria-invalid={error ? true : undefined}
         className={cx(
-          "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal transition-[border-color,box-shadow] duration-200 ease-out focus:border-royal-violet focus:shadow-subtle",
+          "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
           error ? "border-midnight-wine" : "border-stone-gray",
           className,
         )}

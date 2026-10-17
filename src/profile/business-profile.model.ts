@@ -24,6 +24,8 @@ export class BusinessProfile extends Model<
   declare locationText: string;
   declare city: string | null;
   declare province: string | null;
+  declare district: string | null;
+  declare subdistrict: string | null;
   declare countryCode: string;
   declare averagePriceMin: number;
   declare averagePriceMax: number;
@@ -53,6 +55,8 @@ export function getBusinessProfileModel(): typeof BusinessProfile {
       locationText: { type: DataTypes.STRING(255), allowNull: false, field: "location_text" },
       city: { type: DataTypes.STRING(120), allowNull: true },
       province: { type: DataTypes.STRING(120), allowNull: true },
+      district: { type: DataTypes.STRING(120), allowNull: true },
+      subdistrict: { type: DataTypes.STRING(120), allowNull: true },
       countryCode: {
         type: DataTypes.CHAR(2),
         allowNull: false,

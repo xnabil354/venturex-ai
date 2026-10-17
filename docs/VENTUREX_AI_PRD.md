@@ -208,7 +208,7 @@ Belum memiliki bisnis F&B aktif.
 
 ### Minimum Profile
 
-- location;
+- location: province, city/regency, district (Kecamatan), subdistrict (Kelurahan), and address detail;
 - interest/category;
 - budget range;
 - experience level;
@@ -232,7 +232,7 @@ Sudah memiliki bisnis aktif.
 
 - business name;
 - category;
-- location;
+- location: all four administrative dropdowns and address detail are required;
 - current products;
 - target consumer;
 - average price range;
@@ -559,7 +559,7 @@ Final Entrepreneur Profile configuration is frozen in [`Entrepreneur Profile Con
 
 | Field | Type |
 |---|---|
-| Location | text/select |
+| Location | Required province → city/regency → district (Kecamatan) → subdistrict (Kelurahan) dropdowns followed by required address detail |
 | Interest | multi-select |
 | Budget Range | range/select |
 | Experience Level | select |
@@ -568,6 +568,10 @@ Final Entrepreneur Profile configuration is frozen in [`Entrepreneur Profile Con
 | Time Commitment | select |
 
 Nilai enum dan master data final ditetapkan pada [`Entrepreneur Profile Configuration.md`](Entrepreneur%20Profile%20Configuration.md).
+
+Wilayah dipilih dari data Emsifa API Wilayah Indonesia v2 secara berurutan. ID digunakan untuk memuat daftar turunan, sedangkan nama wilayah disimpan pada profil.
+
+Pilihan minat F&B tetap multi-select. Jika user memilih kategori `Lainnya`, sistem meminta nama kategori melalui input teks sebelum user dapat melanjutkan.
 
 ---
 
@@ -607,9 +611,11 @@ Untuk user type `UMKM Existing`, sistem harus menyediakan form bisnis dengan:
 
 - product category;
 - product price;
-- city and province;
+- province, city/regency, district, and subdistrict from dependent region dropdowns;
 - business description;
 - notes.
+
+The business location dropdowns use Emsifa API Wilayah Indonesia v2 in province → city/regency → district → subdistrict order. Region names are stored when selected; the human-readable location text remains required.
 
 `operation_model` tetap nullable pada schema, tetapi tidak menjadi input atau tampilan Business onboarding MVP.
 

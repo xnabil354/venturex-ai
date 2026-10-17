@@ -10,7 +10,14 @@ import {
 describe("entrepreneur profile form validation", () => {
   it("prefills all editable fields from the persisted profile values", () => {
     expect(toEntrepreneurFormState({
-      location: { text: "Bandung", city: "Bandung", province: "Jawa Barat", countryCode: "ID" },
+      location: {
+        text: "Jl. Asia Afrika No. 10, Bandung",
+        city: "Bandung",
+        province: "Jawa Barat",
+        district: null,
+        subdistrict: null,
+        countryCode: "ID",
+      },
       budget: { min: 2_000_000, max: 8_000_000 },
       experienceLevel: "SOME_EXPERIENCE",
       timeCommitment: "FULL_TIME",
@@ -21,9 +28,15 @@ describe("entrepreneur profile form validation", () => {
       businessObjective: "Menguji usaha makanan.",
       notes: null,
     })).toEqual({
-      locationText: "Bandung",
+      locationText: "Jl. Asia Afrika No. 10, Bandung",
       city: "Bandung",
+      cityId: "",
       province: "Jawa Barat",
+      provinceId: "",
+      district: "",
+      districtId: "",
+      subdistrict: "",
+      subdistrictId: "",
       interestCategoryIds: ["10000000-0000-4000-8000-000000000001"],
       budgetMin: "2000000",
       budgetMax: "8000000",
@@ -47,6 +60,10 @@ describe("entrepreneur profile form validation", () => {
     // Then
     expect(errors).toMatchObject({
       locationText: expect.any(String),
+      province: expect.any(String),
+      city: expect.any(String),
+      district: expect.any(String),
+      subdistrict: expect.any(String),
       interestCategoryIds: expect.any(String),
     });
   });
@@ -69,12 +86,18 @@ describe("entrepreneur profile form validation", () => {
     expect(errors.budgetMax).toBe("Budget maksimum harus lebih besar atau sama dengan minimum.");
   });
 
-  it("validates optional city and province lengths to match the persisted contract", () => {
+  it("validates region name lengths to match the persisted contract", () => {
     const state = {
       ...createInitialEntrepreneurFormState(),
       locationText: "Jakarta",
       city: "Kota".repeat(41),
+      cityId: "city-id",
       province: "Provinsi".repeat(16),
+      provinceId: "province-id",
+      district: "Menteng",
+      districtId: "district-id",
+      subdistrict: "Pegangsaan",
+      subdistrictId: "subdistrict-id",
       interestCategoryIds: ["10000000-0000-4000-8000-000000000001"],
     };
 
@@ -88,9 +111,15 @@ describe("entrepreneur profile form validation", () => {
     // Given
     const state = {
       ...createInitialEntrepreneurFormState(),
-      locationText: "Jakarta Pusat",
+      locationText: "Jl. Menteng Raya No. 12, Jakarta Pusat",
       city: "Jakarta Pusat",
+      cityId: "city-id",
       province: "DKI Jakarta",
+      provinceId: "province-id",
+      district: "Menteng",
+      districtId: "district-id",
+      subdistrict: "Pegangsaan",
+      subdistrictId: "subdistrict-id",
       interestCategoryIds: ["10000000-0000-4000-8000-000000000001"],
       budgetMin: "5000000",
       budgetMax: "10000000",
@@ -111,9 +140,11 @@ describe("entrepreneur profile form validation", () => {
     if (result.success) {
       expect(result.data).toEqual({
         location: {
-          text: "Jakarta Pusat",
+          text: "Jl. Menteng Raya No. 12, Jakarta Pusat",
           city: "Jakarta Pusat",
           province: "DKI Jakarta",
+          district: "Menteng",
+          subdistrict: "Pegangsaan",
         },
         budget: { min: 5000000, max: 10000000 },
         experienceLevel: "BEGINNER",

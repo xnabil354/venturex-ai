@@ -11,6 +11,7 @@ const categories = [
   ["10000000-0000-4000-8000-000000000005", "FROZEN_READY_TO_COOK", "Frozen dan siap masak"],
   ["10000000-0000-4000-8000-000000000006", "HEALTHY_SPECIALTY", "Sehat dan kebutuhan khusus"],
   ["10000000-0000-4000-8000-000000000007", "CATERING_FOOD_SERVICE", "Katering dan layanan makanan"],
+  ["10000000-0000-4000-8000-000000000008", "OTHER", "Lainnya"],
 ];
 
 const customerSegments = [
@@ -86,7 +87,7 @@ async function main() {
       await insertSalesChannel(id, code, name, transaction);
     }
   });
-  console.info("Reference seed applied: 7 categories, 6 customer segments, 5 sales channels");
+  console.info("Reference seed applied: 8 categories, 6 customer segments, 5 sales channels");
 }
 
 // no-excuse-ok: catch — CLI boundary reports failure without exposing credentials.

@@ -72,6 +72,8 @@ function createRepository() {
       locationText: "Kota tersimpan",
       city: null,
       province: "Provinsi tersimpan",
+      district: null,
+      subdistrict: null,
       countryCode: "ID",
       budgetMin: 20000000,
       budgetMax: 50000000,

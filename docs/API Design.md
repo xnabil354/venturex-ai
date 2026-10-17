@@ -1102,9 +1102,11 @@ session.userType must equal ENTREPRENEUR
 ```json
 {
   "location": {
-    "text": "Jakarta Pusat",
+    "text": "Jl. Menteng Raya No. 12, Jakarta Pusat",
     "city": "Jakarta Pusat",
     "province": "DKI Jakarta",
+    "district": "Menteng",
+    "subdistrict": "Pegangsaan",
     "countryCode": "ID"
   },
   "budget": {
@@ -1134,6 +1136,7 @@ session.userType must equal ENTREPRENEUR
 - `max >= min`;
 - reference UUID exists;
 - minimum satu interest;
+- jika `interestCategoryIds` memuat kategori `OTHER`, `preferredProductType` wajib diisi;
 - minimum satu customer segment;
 - minimum satu sales channel;
 - enum valid.
@@ -1201,9 +1204,11 @@ An authenticated user whose `user_type` is still `null` follows the existing API
   "businessName": "Kopi Nusantara",
   "businessCategoryId": "uuid-category",
   "location": {
-    "text": "Jakarta Pusat",
+    "text": "Jl. Menteng Raya No. 12, Menteng",
     "city": "Jakarta Pusat",
-    "province": "DKI Jakarta"
+    "province": "DKI Jakarta",
+    "district": "Menteng",
+    "subdistrict": "Pegangsaan"
   },
   "averagePrice": {
     "min": 20000,
@@ -2418,13 +2423,15 @@ RoadmapRepository
 
 Gunakan Zod.
 
-Location schema example:
+Entrepreneur Profile location validation (Business Profile keeps its separate location schema):
 
 ```typescript
 const locationSchema = z.object({
-  text: z.string().min(1).max(255),
-  city: z.string().max(120).nullable().optional(),
-  province: z.string().max(120).nullable().optional(),
+  text: z.string().trim().min(1).max(255), // Alamat detail
+  city: z.string().trim().min(1).max(120),
+  province: z.string().trim().min(1).max(120),
+  district: z.string().trim().min(1).max(120), // Kecamatan
+  subdistrict: z.string().trim().min(1).max(120), // Kelurahan
   countryCode: z.string().length(2).default("ID"),
 });
 ```

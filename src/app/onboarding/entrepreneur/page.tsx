@@ -17,7 +17,7 @@ export default async function EntrepreneurOnboardingPage() {
   }
 
   return (
-    <OnboardingLayout>
+    <OnboardingLayout showBackToSelection>
       <EntrepreneurProfileForm />
     </OnboardingLayout>
   );

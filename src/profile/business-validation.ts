@@ -29,6 +29,8 @@ const locationSchema = z
     text: z.string().trim().min(1).max(255),
     city: optionalTextSchema(120),
     province: optionalTextSchema(120),
+    district: z.string().trim().max(120).nullable().optional(),
+    subdistrict: z.string().trim().max(120).nullable().optional(),
   })
   .strict();
 

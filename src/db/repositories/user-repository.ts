@@ -1,4 +1,4 @@
-import type { Transaction } from "sequelize";
+import { Op, type Transaction } from "sequelize";
 
 import type {
   OnboardingStatus,
@@ -78,7 +78,10 @@ export class UserRepository implements UserRepositoryPort, UserProfileRepository
       },
       {
         returning: true,
-        where: { id, userType: null },
+        where: {
+          id,
+          onboardingStatus: { [Op.ne]: ONBOARDING_STATUSES.COMPLETED },
+        },
       },
     );
 

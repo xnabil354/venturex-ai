@@ -29,6 +29,8 @@ export type BusinessProfileValues = {
   readonly locationText: string;
   readonly city: string | null;
   readonly province: string | null;
+  readonly district: string | null;
+  readonly subdistrict: string | null;
   readonly countryCode: "ID";
   readonly averagePriceMin: number;
   readonly averagePriceMax: number;
@@ -129,6 +131,8 @@ function toProfileRecord(profile: BusinessProfile): BusinessProfileRecord {
     locationText: profile.locationText,
     city: profile.city,
     province: profile.province,
+    district: profile.district,
+    subdistrict: profile.subdistrict,
     countryCode: "ID",
     averagePriceMin: Number(profile.averagePriceMin),
     averagePriceMax: Number(profile.averagePriceMax),
