@@ -134,7 +134,7 @@ describe("/profile page", () => {
     const markup = renderToStaticMarkup(await ProfilePage()).replace(/\s+/gu, " ");
 
     expect(markup).toContain("data-mode=\"edit\"");
-    expect(markup).toContain("data-location=\"Bandung\"");
+    expect(markup).toContain(`data-location="${storedProfile.location.text}"`);
     expect(mocks.userIds).toEqual([user.id]);
   });
 
