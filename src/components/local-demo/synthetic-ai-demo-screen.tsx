@@ -28,13 +28,13 @@ function messageForDemoError(code: string): string {
   switch (code) {
     case "DEMO_RESPONSE_INVALID": return "Contoh analisis tidak memenuhi format yang diharapkan. Tidak ada hasil yang ditampilkan.";
     case "DEMO_TIMEOUT": return "Pembuatan analisis melewati batas waktu. Tidak ada hasil yang ditampilkan; tidak ada retry otomatis.";
-    case "DEMO_UPSTREAM_UNAVAILABLE": return "9Router melaporkan layanan sementara tidak tersedia (HTTP 503). Tidak ada retry otomatis; batas satu request live per proses tetap berlaku.";
-    case "DEMO_PROVIDER_CONFIGURATION_UNAVAILABLE": return "Konfigurasi 9Router untuk demo sintetis belum lengkap atau tidak valid. Tidak ada request live yang dapat dipastikan telah dikirim.";
-    case "DEMO_PROVIDER_AUTH_FAILED": return "9Router menolak autentikasi provider. Periksa konfigurasi melalui pengelola rahasia; jangan kirim key ke browser.";
-    case "DEMO_PROVIDER_CONNECTION_FAILED": return "Koneksi ke 9Router gagal sebelum respons diterima. Tidak ada hasil simulasi yang ditampilkan sebagai live.";
+    case "DEMO_UPSTREAM_UNAVAILABLE": return "Layanan sementara tidak tersedia. Coba lagi nanti.";
+    case "DEMO_PROVIDER_CONFIGURATION_UNAVAILABLE": return "Fitur belum siap digunakan.";
+    case "DEMO_PROVIDER_AUTH_FAILED": return "Autentikasi gagal. Hubungi pengelola.";
+    case "DEMO_PROVIDER_CONNECTION_FAILED": return "Koneksi gagal. Coba lagi.";
     case "RATE_LIMITED":
     case "BUSY": return "Demo sedang sibuk. Tunggu sebelum mencoba lagi.";
-    default: return "Mode provider tidak tersedia atau belum diotorisasi. Tidak ada analisis yang disimpan.";
+    default: return "Analisis belum tersedia. Coba lagi nanti.";
   }
 }
 
@@ -93,7 +93,7 @@ export function SyntheticAIDemoScreen() {
       <section aria-labelledby="demo-warning" className="mb-28 rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24">
         <h2 className="text-label-bold font-w540" id="demo-warning">Analisis demo — profil sintetis</h2>
         <p className="mt-8 text-body-sm text-stone-gray">
-          Mode default adalah mock lokal. 9Router hanya dapat dipakai melalui otorisasi server-side terpisah dan tetap menerima fixture sintetis ini saja. Mode aktual selalu dicantumkan pada hasil.
+          Demo menggunakan profil dan data contoh. Hasilnya bukan data usaha nyata.
         </p>
       </section>
 
@@ -131,7 +131,7 @@ export function SyntheticAIDemoScreen() {
           {loading ? (
             <div className="rounded-cards border border-soft-mist bg-paper-white p-24" role="status">
               <h2 className="text-subheading font-w460">Menyiapkan contoh simulasi</h2>
-              <p className="mt-8 text-body-sm text-stone-gray">Permintaan hanya membawa fixture sintetis tetap. Mode provider akan ditampilkan pada hasil.</p>
+              <p className="mt-8 text-body-sm text-stone-gray">Menyiapkan hasil contoh…</p>
             </div>
           ) : null}
           {error ? (
@@ -159,12 +159,8 @@ function ResultPanel({ result }: { readonly result: SyntheticDemoResult }) {
   return (
     <article aria-labelledby="result-heading" className="space-y-16">
       <section className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24">
-        <p className="text-caption font-w540 text-royal-violet">{result.execution.displayLabel}</p>
-        <p className="mt-4 text-caption text-stone-gray">
-          {result.execution.mode === "MOCK"
-            ? "Mode MOCK · tidak ada request ke 9Router."
-          : `REAL_NINEROUTER · Mode LIVE_SYNTHETIC · ${result.execution.provider} · ${result.execution.model} · fixture sintetis.`}
-        </p>
+        <p className="text-caption font-w540 text-royal-violet">Contoh analisis</p>
+
         <h2 className="mt-8 text-subheading font-w460" id="result-heading">{result.personaLabel}</h2>
         <p className="mt-8 text-body-sm text-stone-gray">{result.profile.summary}</p>
         <div className="mt-18 border-t border-soft-mist pt-16">
@@ -172,23 +168,7 @@ function ResultPanel({ result }: { readonly result: SyntheticDemoResult }) {
           <h3 className="mt-4 font-w540">{result.opportunity.name}</h3>
           <p className="mt-6 text-body-sm text-stone-gray">{result.opportunity.description}</p>
         </div>
-        <details className="mt-16 border-t border-soft-mist pt-12">
-          <summary className="cursor-pointer text-body-sm font-w540">Identitas fixture simulasi</summary>
-          <dl className="mt-10 grid gap-10 text-body-sm">
-            <div>
-              <dt className="font-w540">Fixture ID</dt>
-              <dd className="mt-4 text-stone-gray">{result.fixtureId}</dd>
-            </div>
-            <div>
-              <dt className="font-w540">Versi</dt>
-              <dd className="mt-4 text-stone-gray">{result.fixtureVersion}</dd>
-            </div>
-            <div>
-              <dt className="font-w540">SHA-256 konten</dt>
-              <dd className="mt-4 break-all font-mono text-caption text-stone-gray">{result.fixtureContentHash}</dd>
-            </div>
-          </dl>
-        </details>
+
       </section>
 
       <section className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24">

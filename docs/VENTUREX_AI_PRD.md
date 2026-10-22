@@ -1,4 +1,8 @@
 # PRODUCT REQUIREMENT DOCUMENT (PRD)
+
+Product Owner implementation amendment, 21 October 2026: `Entrepreneur MVP Completion.md` specifies mandatory exploration product, risk-v1, 12-item archives, private Compare and six-stage Startup Roadmap. Roadmap requires a reviewed saved hypothesis and is created without paid inference; existing analysis is immutable.
+
+Product Owner amendment, 21 October 2026 — Entrepreneur Analyze v2: private hypothesis detail supports an explicit second-stage analysis from full profile, bounded market evidence and model-proposed concept requirements. Display deterministic preliminary Opportunity/Fit scores with factor provenance, coverage, unknown-data states and persisted snapshots. AI must not supply core numeric scores or invented market/financial facts. The versioned preliminary-score policy and API behavior are specified in `Entrepreneur Deep Analysis.md`; it does not replace the curated public Opportunity scoring model or implement Compare/roadmap.
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
 **Dokumen:** Product Requirement Document (PRD)
@@ -702,6 +706,8 @@ Minimal menampilkan:
 - CTA ke opportunity detail tersedia.
 
 ### Dashboard Foundation implementation configuration
+
+Product Owner amendment, 21 October 2026: the exploration previews now display actual private hypotheses, saved private hypotheses, saved-roadmap availability, and the account's last observed Google Trends queries. These replace the historical always-unavailable placeholders, without presenting private hypotheses as scored or verified catalog recommendations. Dashboard reads existing records and a validated browser observation snapshot; opening it does not initiate paid SearchApi or LLM generation. Exact source/fallback, account isolation, metadata, and responsive-display behavior are defined in the exploration amendment under FSD section 14.
 
 The final MVP implementation configuration is frozen in `docs/Dashboard Foundation Configuration.md`. It preserves the requirement intent in this document while defining strict completed-user access, server-side role-aware rendering, real profile summaries, and truthful unavailable states for modules not implemented yet.
 
@@ -2390,4 +2396,64 @@ Apabila terdapat konflik antara PRD dan BRD terkait tujuan bisnis, target penggu
 
 ## Product Owner decision amendment, 14 October 2026
 
-The previous published-catalog-only Trend List decision is superseded for the local hackathon user flow. Dashboard, Trend Radar, and Opportunity Finder must not display the historical 2025 catalog as current or as a fallback. The records and manifest remain archived and unchanged. Trend Radar may display only observations fetched on an explicit authenticated request from Bright Data. AI-generated Opportunities are private, per-user hypotheses linked to a live source observation; they are not catalog Opportunities and receive no Opportunity Score, Fit Score, Risk Indicator, or automatic publication. Generation requires explicit disclosure/consent and a secure 9Router connection. Public plaintext HTTP must never carry real profile context.
+The previous published-catalog-only Trend List decision is superseded for the local hackathon user flow. Dashboard, Trend Radar, and Opportunity Finder must not display the historical 2025 catalog as current or as a fallback. The records and manifest remain archived and unchanged. At that time, Trend Radar was approved to display only observations fetched on an explicit authenticated request from Bright Data.
+
+## Product Owner decision amendment, 18 October 2026: SearchApi Google Trends Explore
+
+For /trends, SearchApi.io Google Trends Explore replaces the Bright Data Trending Now display. A user action retrieves only Top Queries and Rising Queries using the authenticated user's persisted profile query: preferredProductType for ENTREPRENEUR and businessName for UMKM_EXISTING. The query is read-only in Trend Radar. Results are attributed to SearchApi.io and Google Trends and are provider observations, not human-reviewed or published VENTUREX Trend records. No provider fallback, profile selector, query input, or database persistence is part of this replacement. This amendment supersedes the 14 October Bright Data-only Trend Radar source decision for this UI. The existing AI-generated Opportunity rules remain unchanged: hypotheses are private, per-user, require consent and a secure 9Router connection, and are not catalog Opportunities or automatically published.
+
+## Product Owner decision amendment, 18 October 2026: Trend Radar interest views
+
+Extend the SearchApi Google Trends Explore Trend Radar to show four sections after the user explicitly selects **Tren Saat Ini**: Minat Seiring Waktu, Minat Menurut Wilayah, Kueri Terpopuler, and Kueri yang Makin Populer. All four use the same read-only authenticated profile query and selected period/property filters. The server owns the query; no manual query input, product selector, new profile field, result persistence, or database migration is introduced. Timeseries indices are relative 0-100 observations; regional indices are source-supplied relative values and are not market volume. Missing data remains missing. A failure for one dataset must not erase successful data in another section. The regional map uses explicitly matched provider region codes and a cited 2017/34-feature boundary set; unmapped values remain available in the table.
+
+## Product Owner decision amendment, 18 October 2026: SearchApi evidence in Opportunity Finder
+
+Opportunity Finder may use the existing SearchApi Google Trends Explore Top and Rising observations as evidence for a private, consented AI hypothesis. The user explicitly loads signals and selects one; opening or refreshing Opportunity Finder does not call SearchApi. The server uses the same authenticated profile query, provider adapter, filters, in-process cache, timeout, budget, and no-retry behavior as Trend Radar. Top interest indices and Rising growth labels/percentages retain their separate meanings. Search observations are not F&B classifications, evidence of sales, published Trends, or published Opportunities.
+
+The source selection is a short-lived, encrypted, owner-bound reference verified by the server. SearchApi result sets are not stored. A successfully validated hypothesis remains private and may store the selected source provenance in the existing `user_generated_opportunities` JSONB reference. Historical Bright Data hypotheses remain readable and unchanged. No migration is required. SearchApi-to-9Router processing has its own server gate, `NINEROUTER_SEARCHAPI_PROCESSING_CONFIRMED`, default `false`, in addition to explicit per-user consent and transport validation. Public plaintext HTTP may not carry real profile context for this flow. Direct loopback HTTP is accepted only in development for the validated local gateway and explicit `NINEROUTER_ALLOW_LOOPBACK_HTTP_DEV_ONLY` opt-in; the tunnel-confirmation flag is reserved for a real encrypted tunnel.
+
+The SearchApi Finder uses an explicit v2 disclosure and a fresh server-side profile projection for each generation. Entrepreneur context can include the user’s saved product interests, budget, location, experience, availability, objective, and notes. UMKM context can include business identity and description, current products and prices, location, customer segments, channels, and notes. The UI discloses applicable categories before consent; identifiers, credentials, session data, and client-authored profile values are excluded. Search terms and profile text are treated as untrusted input. Results must distinguish evidence from inference, cite the selected evidence and profile fields, avoid unsupported numeric or financial claims, and may return insufficient evidence without persisting a hypothesis. A keyed context fingerprint records provenance without storing raw profile context. Provider retention and downstream processing remain unverified; consent does not authorize model training or fine-tuning.
+
+## Product Owner decision amendment, 20 October 2026: user-selected geography and compact Opportunity Finder
+
+Trend Radar and Opportunity Finder use a geography selected by the user from the supported Google Trends locations. The initial selection is Worldwide (`geo=""`), not Indonesia. The same selected geography applies to every Trend Radar dataset and to the SearchApi evidence used by Opportunity Finder. A user must explicitly load provider data; changing a filter clears results from the prior filter. Search interest remains a relative index, not evidence of sales or market size.
+
+Geography metadata is read from the provider's supported locations list. SearchApi observations remain transient, owner-scoped, and unpersisted; the selected code is included in cache keys and private evidence provenance. The existing Indonesia map is shown only for Indonesia; other geographies retain a ranked table. No profile, database, or saved-hypothesis contract changes are introduced.
+
+Opportunity Finder keeps its signal filters compact and uses the same content width for the filter panel and generated hypotheses. Form controls remain accessible and responsive. UI copy is concise while retaining the consent categories and material data-processing disclosures.
+
+## Product Owner decision amendment, 20 October 2026: delete a private hypothesis
+
+Users can permanently remove an individual generated hypothesis from Opportunity Finder. The action requires confirmation and removes only that user's private generated record; if it was saved, it also disappears from Saved Opportunities. Deletion never changes the published Opportunity or Trend catalog and requires no database migration.
+
+
+### Trend Radar history and exploration journey (2026-10-21)
+
+Trend Radar retains up to 20 successful, schema-validated observations per authenticated account in this browser, subject to a bounded storage budget. Entries include product, geography, period, search property, observation time, original request options and available interest datasets. Failed requests do not replace history. Opening an entry restores its results and filters without calling SearchApi; the active observation is restored on returning to the page and supplies the Dashboard preview, including earlier products. Retrieval timestamps identify historical data. Previous single-result snapshots remain readable. Browser storage denial leaves current results usable; history is not synchronized across devices and can be lost when browser data is cleared.
+
+Dashboard exploration follows an ordered, responsive journey: Trend Radar, Opportunity Finder, saved opportunities, then the existing persona-specific roadmap. Numbers show navigation order only; they do not claim completed tasks or lock later steps. Existing private hypothesis previews remain owner-scoped. This amendment introduces no API endpoint, database table or migration, and adds no saved-detail or roadmap capability.
+
+
+## Entrepreneur review and permanent save amendment (21 October 2026)
+
+For private ENTREPRENEUR hypotheses, saving moves from Finder cards to the bottom of the score-detail page after Opportunity Score, Fit Score, target consumers, competition, risks, initial needs and evidence. Profile fields are loaded from the authenticated account; opening a detail page makes no paid inference request. Explicit consent and an analysis action remain required. The only optional financial input here is the concept's estimated minimum capital, displayed as Rp with Indonesian thousands separators and submitted as a whole numeric rupiah amount. It is separate from the account's available budget.
+
+PATCH /api/v1/opportunities/ideas keeps the existing {id, saved} fields and adds optional reviewed:true and analysisFingerprint (64 lowercase hexadecimal characters). Entrepreneur saves require reviewed:true, both numeric scores, structured concept requirements, and a current profile-bound analysis. The server compares the supplied fingerprint to the stored snapshot under a transaction row lock. Unknown/missing data is never replaced with invented scores to unlock saving. Conflicting or incomplete saves return 409 ANALYSIS_CHANGED or ANALYSIS_REQUIRED. Repeat saves are idempotent.
+
+Once an entrepreneur hypothesis is saved, isSaved cannot return to false, DELETE is rejected with 409 SAVED_PERMANENT, and its analysis snapshot is immutable. Existing saved entrepreneur records are preserved and protected. Unsubmitted hypotheses remain deletable. UMKM behavior is outside this change. Data stays in existing user_generated_opportunities JSONB and saved fields, with no migration or TTL added; no provider call is needed to reopen stored scores. This amendment supersedes earlier unsave/delete instructions for private entrepreneur hypotheses only.
+
+## Existing Pengusaha completion amendment (22 October 2026)
+
+The authorized UMKM_EXISTING improvement is specified in [Existing Business Completion.md](Existing%20Business%20Completion.md). This adds business-specific private hypothesis analysis, deterministic preliminary Opportunity Score and Business Fit, reasoned execution risk, owner-scoped Compare, five-stage private Growth Roadmap and 12-item paginated archives. It does not alter Entrepreneur behavior or provider configuration. Optional businessAnalysis and growthRoadmap snapshots use existing hypothesis JSONB; no catalog foreign key or migration is introduced. POST /api/v1/opportunities/ideas/{id}/analysis dispatches by authenticated persona; Existing accepts strict {consent:true,refresh?:boolean,proposedPrice?:{min:integer,max:integer}|null}. POST /api/v1/opportunities/ideas/{id}/roadmap creates or reopens the owner's Growth snapshot; a new snapshot requires saved state, complete and fresh business analysis. Existing saves remain reversible, and stored roadmaps remain readable after unsave.
+
+For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
+
+
+## Approved daily trend notification extension ? 22 October 2026
+
+The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+
+
+## Amendment: journey reports and roadmap completion (22 October 2026)
+
+See [Journey Reports](Journey%20Reports.md) for the authorized two-persona PDF/XLSX export, explicit stage completion gate, owner-scoped progress persistence/API, and device support acceptance contract.

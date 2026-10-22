@@ -30,7 +30,17 @@ describe("9Router server configuration and context projection", () => {
     expect(readAIAnalysisProviderConfig(local)).toBeNull();
     expect(readAIAnalysisProviderConfig({ ...local, [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true" }))
       .toMatchObject({ baseURL: "http://127.0.0.1:20128/v1" });
-    expect(readAIAnalysisProviderConfig({ ...local, [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true", NINEROUTER_BASE_URL: "http://localhost:20128/v1" })).toBeNull();
+    expect(readAIAnalysisProviderConfig({ ...local, NINEROUTER_BASE_URL: "http://localhost:20128/v1" })).toBeNull();
+    expect(readAIAnalysisProviderConfig({
+      ...local,
+      [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true",
+      NINEROUTER_BASE_URL: "http://localhost:20128/v1",
+    })).toMatchObject({ baseURL: "http://localhost:20128/v1" });
+    expect(readAIAnalysisProviderConfig({
+      ...local,
+      [NINEROUTER_LOOPBACK_TUNNEL_FLAG]: "true",
+      NINEROUTER_BASE_URL: "http://72.62.247.63:20128/v1",
+    })).toBeNull();
   });
 
   it.each(["ENTREPRENEUR", "UMKM_EXISTING"] as const)("sends only approved profile fields for %s", (userType) => {

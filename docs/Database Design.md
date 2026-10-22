@@ -1,4 +1,13 @@
 # DATABASE DESIGN
+
+21 October recovery refinement: optional analysis.planningContext.timeCommitment preserves historical capacity; roadmap generatorVersion also accepts personalized-v3 and personalized-v4 (22 October text correction). Compare recovers from unavailable owner-scoped choices with a neutral notice. See Entrepreneur MVP Completion.md.
+21 October refinement: optional hypothesis.analysis.referenceLabels retains category/channel display names for new snapshots; optional startupRoadmap.generatorVersion identifies personalized-v2. Legacy JSON remains readable; no migration or historic rewrite. See Entrepreneur MVP Completion.md.
+
+Entrepreneur MVP completion (21 October 2026): optional validated hypothesis.startupRoadmap stores private-startup-v1, server createdAt, analysis sourceFingerprint and six bounded steps. Creation locks the compound owner/id/ENTREPRENEUR row, requires is_saved and valid numeric analyzed scores, returns an existing roadmap idempotently, and updates only additive roadmap metadata. Archived hypothesis.analysis is unchanged. Existing JSONB supports this extension without schema migration. No private hypothesis is promoted into global opportunities/roadmaps foreign keys. Archive queries page 12 rows plus lookahead by created_at DESC,id ASC; roadmap library filters the JSONB version. Legacy rows without metadata remain valid.
+
+Entrepreneur Analyze v2 amendment (21 October 2026): no table/column migration. Persist a bounded versioned decision snapshot at `user_generated_opportunities.hypothesis.analysis` within existing JSONB: derived requirements/reference IDs, score factors/provenance, summary trend statistics, bounded listing examples, risks, warnings, model, generated time and input HMAC. Read/update only by compound `{ id, userId, userType: ENTREPRENEUR }`; saved state and original hypothesis fields remain intact. No raw profile, prompt, full trend history or public catalog score snapshot is persisted. Invalid/unrecognized analysis snapshots fall back to reading the base hypothesis. See `Entrepreneur Deep Analysis.md`.
+
+Dashboard exploration amendment (21 October 2026): no schema or migration change. Previews read existing `user_generated_opportunities` rows using authenticated `user_id`; saved previews use the existing saved-only repository filter independently of the latest unsaved rows. Saved-roadmap availability uses the existing user-scoped roadmap repository. A single last related-query result per account may be retained in browser localStorage for preview only, including query metrics and retrieval/filter metadata; it contains no profile notes, financial profile values, credentials, or signed generation-source tokens. This browser snapshot is not stored in PostgreSQL or used as authoritative generation evidence.
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
 **Dokumen:** Database Design
@@ -2003,3 +2012,54 @@ Discover → Analyze → Grow
 ## Product Owner decision amendment, 14 October 2026: private generated hypotheses
 
 Additive migration 018 introduces `user_generated_opportunities`, separate from the global `opportunities` catalog and `saved_opportunities` relation. Each row is owned by `user_id`, records the supported `user_type`, validated hypothesis JSON, a bounded source reference (Google Trends title, publisher, transport, source URL, retrieval time, and heuristic classification), provider/model metadata, generation time, and `is_saved`/`saved_at`. It stores no prompt, full profile, email, location, notes, raw Bright Data payload, business metrics, score, or risk result. Reads and save updates must filter by both row ID and authenticated `user_id`. Rows are generated only by an explicit, consented provider action and never enter the global Trend/Opportunity lifecycle.
+
+## Product Owner decision amendment, 18 October 2026: SearchApi hypothesis provenance
+
+The existing `source_reference` JSONB also accepts a bounded SearchApi Google Trends Explore variant containing the selected Top or Rising query, its source-specific metrics, profile query used for retrieval, geo, period, search property, retrieval time, Google Trends Explore URL, SearchApi transport, publisher attribution, and optional source ID, analysis-context version, prompt version, and keyed context fingerprint. This is a backward-compatible JSONB value and requires no migration or new column. The fingerprint is an HMAC of canonical server-built context; raw profile context and prompts are never stored. The full SearchApi result set and encrypted source-selection token are never stored. Historical Bright Data references remain valid and readable; the SearchApi variant does not enter the published Opportunity or Trend catalog.
+
+The `hypothesis` JSONB retains the original required fields for historical-row compatibility and accepts optional enrichment fields for opportunity type, profile alignment/references, evidence interpretation/references, evidence gaps, and limitations. New SearchApi-generated hypotheses require the complete enrichment contract before persistence. The `profileVersion` columns and onboarding version calculations are unchanged; the Finder’s context fingerprint separately covers consented profile values, including notes.
+
+
+### Trend Radar history and exploration journey (2026-10-21)
+
+Trend Radar retains up to 20 successful, schema-validated observations per authenticated account in this browser, subject to a bounded storage budget. Entries include product, geography, period, search property, observation time, original request options and available interest datasets. Failed requests do not replace history. Opening an entry restores its results and filters without calling SearchApi; the active observation is restored on returning to the page and supplies the Dashboard preview, including earlier products. Retrieval timestamps identify historical data. Previous single-result snapshots remain readable. Browser storage denial leaves current results usable; history is not synchronized across devices and can be lost when browser data is cleared.
+
+Dashboard exploration follows an ordered, responsive journey: Trend Radar, Opportunity Finder, saved opportunities, then the existing persona-specific roadmap. Numbers show navigation order only; they do not claim completed tasks or lock later steps. Existing private hypothesis previews remain owner-scoped. This amendment introduces no API endpoint, database table or migration, and adds no saved-detail or roadmap capability.
+
+
+## Entrepreneur review and permanent save amendment (21 October 2026)
+
+For private ENTREPRENEUR hypotheses, saving moves from Finder cards to the bottom of the score-detail page after Opportunity Score, Fit Score, target consumers, competition, risks, initial needs and evidence. Profile fields are loaded from the authenticated account; opening a detail page makes no paid inference request. Explicit consent and an analysis action remain required. The only optional financial input here is the concept's estimated minimum capital, displayed as Rp with Indonesian thousands separators and submitted as a whole numeric rupiah amount. It is separate from the account's available budget.
+
+PATCH /api/v1/opportunities/ideas keeps the existing {id, saved} fields and adds optional reviewed:true and analysisFingerprint (64 lowercase hexadecimal characters). Entrepreneur saves require reviewed:true, both numeric scores, structured concept requirements, and a current profile-bound analysis. The server compares the supplied fingerprint to the stored snapshot under a transaction row lock. Unknown/missing data is never replaced with invented scores to unlock saving. Conflicting or incomplete saves return 409 ANALYSIS_CHANGED or ANALYSIS_REQUIRED. Repeat saves are idempotent.
+
+Once an entrepreneur hypothesis is saved, isSaved cannot return to false, DELETE is rejected with 409 SAVED_PERMANENT, and its analysis snapshot is immutable. Existing saved entrepreneur records are preserved and protected. Unsubmitted hypotheses remain deletable. UMKM behavior is outside this change. Data stays in existing user_generated_opportunities JSONB and saved fields, with no migration or TTL added; no provider call is needed to reopen stored scores. This amendment supersedes earlier unsave/delete instructions for private entrepreneur hypotheses only.
+
+
+## Local competitor matching v2 (21 October 2026)
+
+Normalize administrative locality prefixes (including Kota/Kabupaten Administrasi), Jkt. aliases and directional Jakarta names before matching. Match complete locality names rather than arbitrary substrings, preserve Jakarta Utara/Selatan/Timur/Barat/Pusat distinctions, and reject street-only occurrences. Google Maps queries combine product, canonical city, profile province when present, and Indonesia. No guessed coordinates or automatic paid retries are added.
+
+Retain optional competitors.diagnostics in existing analysis JSONB: receivedCount, inspectedCount (maximum 20), invalidCount, outsideCityCount and duplicateCount. sampleCount is the unique locally matching count; at most five example places remain stored. Counters contain no extra raw addresses. The Competition disclosure shows these counters, distinguishes empty provider results from filtered results and keeps zero samples unknown. Old snapshots without diagnostics remain readable. Provider error envelopes are not treated as empty search evidence.
+
+The local Maps cache key moves to LOCAL_COMPETITOR_SAMPLE_V2, and input fingerprints include competitor matching version 2, preventing reuse of old empty samples for new analyses. Saved permanent snapshots stay immutable. Reanalysis applies only to unsaved hypotheses using existing consent and owner checks; the scoring formula and weights do not change.
+
+## Existing Pengusaha completion amendment (22 October 2026)
+
+The authorized UMKM_EXISTING improvement is specified in [Existing Business Completion.md](Existing%20Business%20Completion.md). This adds business-specific private hypothesis analysis, deterministic preliminary Opportunity Score and Business Fit, reasoned execution risk, owner-scoped Compare, five-stage private Growth Roadmap and 12-item paginated archives. It does not alter Entrepreneur behavior or provider configuration. Optional businessAnalysis and growthRoadmap snapshots use existing hypothesis JSONB; no catalog foreign key or migration is introduced. POST /api/v1/opportunities/ideas/{id}/analysis dispatches by authenticated persona; Existing accepts strict {consent:true,refresh?:boolean,proposedPrice?:{min:integer,max:integer}|null}. POST /api/v1/opportunities/ideas/{id}/roadmap creates or reopens the owner's Growth snapshot; a new snapshot requires saved state, complete and fresh business analysis. Existing saves remain reversible, and stored roadmaps remain readable after unsave.
+
+For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
+
+## Existing concept alignment guard (22 October 2026)
+
+The existing optional businessAnalysis JSONB snapshot may include conceptAlignmentVersion: business-concept-alignment-v1 after a successful independent semantic review. Existing request shapes and database columns are unchanged. Legacy snapshots remain stored but require reanalysis before new Compare/Growth use. See [Existing Business Completion.md](Existing%20Business%20Completion.md) for fail-closed, retry and compatibility rules.
+
+
+## Approved daily trend notification extension ? 22 October 2026
+
+The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+
+
+## Amendment: journey reports and roadmap completion (22 October 2026)
+
+See [Journey Reports](Journey%20Reports.md) for the authorized two-persona PDF/XLSX export, explicit stage completion gate, owner-scoped progress persistence/API, and device support acceptance contract.

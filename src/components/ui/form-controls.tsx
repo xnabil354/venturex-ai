@@ -1,6 +1,7 @@
 import type {
   InputHTMLAttributes,
   ReactNode,
+  Ref,
   SelectHTMLAttributes,
 } from "react";
 
@@ -12,9 +13,11 @@ type FieldProps = {
   label: string;
 };
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement> &
+export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "prefix"> &
   FieldProps & {
     id: string;
+    inputRef?: Ref<HTMLInputElement>;
+    prefix?: ReactNode;
     suffix?: ReactNode;
   };
 
@@ -23,6 +26,8 @@ export function Input({
   error,
   hint,
   id,
+  inputRef,
+  prefix,
   label,
   suffix,
   ...props
@@ -45,14 +50,21 @@ export function Input({
           {...props}
           aria-describedby={describedBy}
           aria-invalid={error ? true : undefined}
+          ref={inputRef}
           className={cx(
             "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
+            Boolean(prefix) && "pl-40",
             Boolean(suffix) && "pr-44",
             error ? "border-midnight-wine" : "border-stone-gray",
             className,
           )}
           id={id}
         />
+        {prefix ? (
+          <div aria-hidden="true" className="absolute left-12 flex items-center text-stone-gray">
+            {prefix}
+          </div>
+        ) : null}
         {suffix ? (
           <div className="absolute right-8 flex items-center text-stone-gray">
             {suffix}

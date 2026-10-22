@@ -1,8 +1,7 @@
-import { Button, Input, Select, type SelectOption } from "@/components/ui";
+import { Button, Input, RupiahInput, Select, type SelectOption } from "@/components/ui";
 import type { ReferenceData } from "./business-profile-form.types";
 import {
   createInitialBusinessProduct,
-  digitsOnly,
   type BusinessProductForm,
 } from "./business-profile-form.validation";
 import type { BusinessFormErrors } from "./business-profile-form.types";
@@ -71,15 +70,13 @@ export function BusinessProductEditor({
               placeholder="Kopi Susu"
               value={product.name}
             />
-            <Input
+            <RupiahInput
               error={errors[`products.${index}.price`]}
               hint="Boleh dikosongkan."
               id={`product-${product.key}-price`}
-              inputMode="numeric"
               label="Harga (Rupiah)"
-              onChange={(event) => updateProduct(index, { price: digitsOnly(event.target.value) })}
-              placeholder="25000"
-              type="text"
+              onValueChange={(price) => updateProduct(index, { price })}
+              placeholder="25.000"
               value={product.price}
             />
           </div>

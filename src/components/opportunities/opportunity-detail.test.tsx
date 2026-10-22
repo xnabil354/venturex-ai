@@ -163,7 +163,7 @@ describe("OpportunityDetail", () => {
 
     expect(markup).toContain("Sedang (MEDIUM)");
     expect(markup).toContain("Kompleksitas eksekusi dinilai Sedang");
-    expect(markup).toContain("Versi model: approved-risk-v2");
+    expect(markup).not.toContain("Versi model: approved-risk-v2");
     expect(markup).toContain("Data belum cukup untuk menghitung skor secara layak.");
     expect(markup).toContain("Memuat Fit Score");
   });

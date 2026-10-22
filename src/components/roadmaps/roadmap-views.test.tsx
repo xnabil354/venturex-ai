@@ -53,10 +53,14 @@ describe("Roadmap views", () => {
   it("shows a useful empty list and links saved records", () => {
     const empty = renderToStaticMarkup(<RoadmapList page={page} roadmapType="STARTUP" />);
     const saved = renderToStaticMarkup(<RoadmapList page={{ ...page, totalCount: 1, items: [{ id: detail.id, roadmapType: "STARTUP", createdAt: detail.createdAt, opportunity: detail.opportunity }] }} roadmapType="STARTUP" />);
-    expect(empty).toContain("Belum ada Startup Roadmap");
+    const savedGrowth = renderToStaticMarkup(<RoadmapList page={{ ...page, totalCount: 1, items: [{ id: growth.id, roadmapType: "GROWTH", createdAt: growth.createdAt, opportunity: growth.opportunity }] }} roadmapType="GROWTH" />);
+    expect(empty).toContain("Belum ada roadmap tersimpan");
     expect(empty).toContain('href="/opportunities"');
+    expect(empty).not.toContain("Growth Roadmap");
     expect(saved).toContain("Menu minuman");
     expect(saved).toContain(`href="/roadmaps/${detail.id}"`);
+    expect(saved).not.toContain("Startup Roadmap");
+    expect(savedGrowth).not.toContain("Growth Roadmap");
   });
 
   it("provides accessible previous and next links for paged results", () => {

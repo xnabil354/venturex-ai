@@ -13,10 +13,10 @@ const statusCopy = {
 } as const;
 
 const descriptionCopy = {
-  AVAILABLE: "Trend terbit untuk tipe akun Anda.",
-  EMPTY: "Belum ada Trend terbit untuk tipe akun Anda.",
-  UNAVAILABLE: "Data tren belum tersedia di aplikasi.",
-  ERROR: "Trend belum dapat dimuat saat ini. Ringkasan Dashboard tetap tersedia.",
+  AVAILABLE: "Cuplikan hasil pencarian terakhir Anda.",
+  EMPTY: "Muat data di Trend Radar untuk melihat preview di sini.",
+  UNAVAILABLE: "Pantau minat pencarian untuk produk usaha Anda.",
+  ERROR: "Trend belum dapat dimuat saat ini. Bagian lain di Dashboard tetap tersedia.",
 } as const;
 
 export type TrendPreviewSectionProps = {
@@ -28,12 +28,12 @@ export function TrendPreviewSection({ state, title }: TrendPreviewSectionProps) 
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="h-full">
-      <Card className="flex h-full flex-col justify-between gap-16 p-20 sm:p-28 transition-all duration-300 border-[#ded8cb] bg-[#faf9f6] hover:border-deep-lagoon/40 hover:shadow-xs">
+    <section aria-labelledby={headingId}>
+      <Card className="flex flex-col gap-16 border-[#ded8cb] bg-paper-white p-20 transition-colors duration-200 hover:border-deep-lagoon/40 sm:p-24">
         <div className="grid gap-14">
-          <div className="flex flex-wrap items-baseline justify-between gap-8">
+          <div className="flex flex-wrap items-center justify-between gap-10">
             <div className="flex items-center gap-10">
-              <span className="flex size-36 shrink-0 items-center justify-center rounded-small-buttons bg-deep-lagoon/15 text-deep-lagoon border border-deep-lagoon/25">
+              <span className="flex size-36 shrink-0 items-center justify-center rounded-small-buttons border border-deep-lagoon/25 bg-deep-lagoon/10 text-deep-lagoon">
                 <TrendingUpIcon className="size-18" />
               </span>
               <h2
@@ -43,22 +43,23 @@ export function TrendPreviewSection({ state, title }: TrendPreviewSectionProps) 
                 {title}
               </h2>
             </div>
-            <Badge tone={state.status === "AVAILABLE" ? "wash" : "neutral"}>{statusCopy[state.status]}</Badge>
+            <Badge tone={state.status === "AVAILABLE" ? "wash" : "neutral"}>{state.status === "AVAILABLE" ? `${state.preview.length} sinyal` : statusCopy[state.status]}</Badge>
           </div>
 
           <p className="text-body-sm leading-relaxed text-stone-gray">
             {descriptionCopy[state.status]}
           </p>
+          {state.context ? <p className="break-words rounded-small-buttons bg-warm-parchment px-12 py-10 text-caption leading-relaxed text-stone-gray">{state.context}</p> : null}
 
           {state.status === "AVAILABLE" ? (
-            <ul className="divide-y divide-soft-mist/70 border-y border-soft-mist/70">
+            <ul className="grid gap-x-24 divide-y divide-soft-mist/70 border-y border-soft-mist/70 md:grid-cols-2 xl:grid-cols-3 md:divide-y-0">
               {state.preview.map((trend) => (
-                <li className="py-14 first:pt-0 last:pb-0" key={trend.id}>
+                <li className="py-14" key={trend.id}>
                   <span className="text-caption font-w540 uppercase tracking-wider text-deep-lagoon">{trend.categoryName}</span>
-                  <h3 className="text-body font-w540 text-ink-charcoal mt-4">
+                  <h3 className="mt-4 break-words text-body font-w540 text-ink-charcoal">
                     <Link
                       className="transition-colors hover:text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
-                      href={`/trends/${trend.id}`}
+                      href={trend.href ?? `/trends/${trend.id}`}
                     >
                       {trend.title}
                     </Link>
@@ -67,20 +68,16 @@ export function TrendPreviewSection({ state, title }: TrendPreviewSectionProps) 
                 </li>
               ))}
             </ul>
-          ) : (
-            <div className="rounded-small-buttons border border-soft-mist/60 bg-warm-parchment/60 p-14 text-caption leading-relaxed text-stone-gray">
-              Pantau pergeseran preferensi konsumen F&amp;B secara objektif dari data penelusuran digital Google Trends Indonesia.
-            </div>
-          )}
+          ) : null}
         </div>
 
-        <div className="pt-4 border-t border-soft-mist/60">
+        <div className="mt-auto border-t border-soft-mist/70 pt-10">
           <Link
-            className="group inline-flex min-h-button w-fit items-center gap-8 rounded-small-buttons border border-ink-charcoal bg-lilac-mist px-16 py-8 text-body-sm font-w540 text-ink-charcoal transition-all duration-200 hover:bg-paper-white focus-visible:outline-2 focus-visible:outline-royal-violet"
+            className="group inline-flex min-h-button w-fit items-center gap-8 rounded-small-buttons px-10 text-body-sm font-w540 text-deep-lagoon transition-colors hover:text-midnight-wine focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
             href="/trends"
           >
             <span>Lihat semua Trend</span>
-            <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1" />
+            <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
           </Link>
         </div>
       </Card>

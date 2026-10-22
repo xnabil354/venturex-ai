@@ -1,5 +1,11 @@
 # Dashboard Foundation Configuration
 
+## Product Owner amendment: exploration previews, 21 October 2026
+
+The historical freeze below remains the profile foundation baseline. Its always-`UNAVAILABLE` module placeholders are superseded on `/dashboard` by the explicitly requested exploration previews. The server route binds one authenticated user to `DashboardQueryService` and `loadDashboardExploration`, then combines the safe profile DTO with latest private hypotheses, an independent saved-only hypothesis query, and saved-roadmap availability. No internal HTTP call or public Dashboard API is introduced. Reads remain account-scoped, bounded, and independent on error; private ideas do not receive invented catalog scores, fit or risk values.
+
+Trend Radar uses the current account's last validated browser result for the matching profile query, or the most recent matching SearchApi source observation already persisted with a private hypothesis. Mixed filter contexts and retrievals are not combined. Snapshot data is presentation-only and never replaces server-verified generation evidence. Browser storage failures leave server preview/empty states usable. Metadata makes retrieval time and historical context visible. The detailed amendment in FSD section 14 governs this module behavior for both personas.
+
 Status: Frozen MVP configuration
 Scope: Dashboard Foundation only
 
@@ -523,3 +529,10 @@ This freeze is documentation-only. It does not add or authorize:
 - seeds;
 - package dependencies;
 - fake, mock, or fabricated intelligence data.
+
+
+### Trend Radar history and exploration journey (2026-10-21)
+
+Trend Radar retains up to 20 successful, schema-validated observations per authenticated account in this browser, subject to a bounded storage budget. Entries include product, geography, period, search property, observation time, original request options and available interest datasets. Failed requests do not replace history. Opening an entry restores its results and filters without calling SearchApi; the active observation is restored on returning to the page and supplies the Dashboard preview, including earlier products. Retrieval timestamps identify historical data. Previous single-result snapshots remain readable. Browser storage denial leaves current results usable; history is not synchronized across devices and can be lost when browser data is cleared.
+
+Dashboard exploration follows an ordered, responsive journey: Trend Radar, Opportunity Finder, saved opportunities, then the existing persona-specific roadmap. Numbers show navigation order only; they do not claim completed tasks or lock later steps. Existing private hypothesis previews remain owner-scoped. This amendment introduces no API endpoint, database table or migration, and adds no saved-detail or roadmap capability.

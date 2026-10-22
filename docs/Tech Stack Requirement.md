@@ -3462,3 +3462,8 @@ Versi patch harus diperiksa kembali sebelum final production deployment.
 ---
 
 **END OF DOCUMENT**
+
+
+## User journey exports (22 October 2026)
+
+Server-side PDFKit 0.20 and ExcelJS 4.4 produce PDF/XLSX from validated owner-scoped snapshots. Noto Sans regular/bold is bundled under its OFL license for PDF text; Excel uses Arial with wrapping and print settings. Font assets are included in standalone tracing. No external rendering service or additional model call is required. See [Journey Reports](Journey%20Reports.md).

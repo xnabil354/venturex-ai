@@ -142,7 +142,7 @@ The schema may retain `PROFILE_IN_PROGRESS` for compatibility with the broader u
 - trim whitespace;
 - empty becomes `null`;
 - maximum 2,000 characters;
-- stored but not used as personalization/recommendation context in the MVP;
+- not used by the published MVP personalization/recommendation flow; the separately consented SearchApi Opportunity Finder may use it as generation context and records a keyed per-analysis fingerprint;
 - notes-only changes do not increment `profile_version`.
 
 ## 10. Profile version semantics

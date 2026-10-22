@@ -14,6 +14,7 @@ vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
 vi.mock("@/opportunity/private-hypothesis-repository", () => ({
   PrivateOpportunityHypothesisRepository: class MockPrivateOpportunityHypothesisRepository {
+    async listPageForUser(userId: string, page: number, saved: boolean) { return { items: await mocks.list(userId, saved), page, hasMore: false }; }
     constructor() {
       mocks.constructorCalls += 1;
     }
@@ -55,10 +56,11 @@ describe("/saved page", () => {
       id: "60000000-0000-4000-8000-000000000001",
       hypothesis: {
         title: "Menu minuman tersimpan",
-        concept: "Ringkasan peluang tersimpan.",
+        concept: "Uji dua varian soto kemasan yang praktis untuk dibawa.",
         targetCustomer: "Segmen keluarga",
-        validationSteps: ["Langkah 1"],
+        validationSteps: ["Wawancarai 10 calon pelanggan tentang kemasan.", "Lakukan pengujian selama 7 hari dan catat tanggapan."],
         assumptions: ["Asumsi 1"],
+        evidenceGaps: ["Data transaksi 30 hari masih perlu dikumpulkan."],
       },
       source: {
         publisher: "Google Trends",
@@ -72,9 +74,11 @@ describe("/saved page", () => {
       saved: true,
     }]);
 
-    const markup = renderToStaticMarkup(await SavedPage());
+    const markup = renderToStaticMarkup(await SavedPage({}));
 
-    expect(markup).toContain("Menu minuman tersimpan");
+    expect(markup).toContain("Uji dua varian soto kemasan yang praktis untuk dibawa.");
+    expect(markup).toContain("Wawancarai 10 calon pelanggan tentang kemasan.");
+    expect(markup).toContain("Data transaksi 30 hari masih perlu dikumpulkan.");
     expect(markup).toContain("Trend terpublikasi");
     expect(mocks.constructorCalls).toBe(1);
     expect(mocks.list).toHaveBeenCalledWith(persistedUser.id, true);
@@ -91,7 +95,7 @@ describe("/saved page", () => {
   ])("denies a %s before creating the list service", async (_case, user) => {
     mocks.currentUser.mockResolvedValue(user);
 
-    await expect(SavedPage()).rejects.toThrow("NOT_FOUND");
+    await expect(SavedPage({})).rejects.toThrow("NOT_FOUND");
 
     expect(mocks.notFound).toHaveBeenCalledOnce();
     expect(mocks.constructorCalls).toBe(0);
@@ -102,7 +106,7 @@ describe("/saved page", () => {
     mocks.currentUser.mockResolvedValue(persistedUser);
     mocks.list.mockRejectedValue(new Error("database internals"));
 
-    const markup = renderToStaticMarkup(await SavedPage());
+    const markup = renderToStaticMarkup(await SavedPage({}));
 
     expect(markup).toContain("Penyimpanan belum tersedia");
     expect(markup).toContain('href="/opportunities"');

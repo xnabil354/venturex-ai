@@ -1,12 +1,12 @@
 import type { ChangeEvent } from "react";
 
-import { Button, Input, Select, type SelectOption } from "@/components/ui";
+import { Button, Input, RupiahInput, Select, type SelectOption } from "@/components/ui";
 import { cx } from "@/lib/cx";
 
 import { CheckboxGroup, FormSection } from "./entrepreneur-profile-options";
 import { BusinessProductEditor } from "./business-product-editor";
 import type { BusinessFormErrors, ReferenceData } from "./business-profile-form.types";
-import { digitsOnly, type BusinessFormState } from "./business-profile-form.validation";
+import { type BusinessFormState } from "./business-profile-form.validation";
 import { IndonesiaRegionFields } from "./indonesia-region-fields";
 
 type UpdateForm = (patch: Partial<BusinessFormState>) => void;
@@ -150,26 +150,22 @@ export function BusinessProfileStepTwo({ errors, references, state, updateForm }
               </p>
             </div>
             <div className="grid gap-16 sm:grid-cols-2 sm:items-start">
-              <Input
+              <RupiahInput
                 error={errors.averagePriceMin}
-                hint="Masukkan angka tanpa titik atau koma."
+                hint="Pemisah ribuan ditambahkan otomatis."
                 id="average-price-min"
-                inputMode="numeric"
                 label="Harga minimum (Rupiah) *"
-                onChange={(event) => updateForm({ averagePriceMin: digitsOnly(event.target.value) })}
-                placeholder="20000"
-                type="text"
+                onValueChange={(averagePriceMin) => updateForm({ averagePriceMin })}
+                placeholder="20.000"
                 value={state.averagePriceMin}
               />
-              <Input
+              <RupiahInput
                 error={errors.averagePriceMax}
                 hint="Tidak boleh lebih kecil dari harga minimum."
                 id="average-price-max"
-                inputMode="numeric"
                 label="Harga maksimum (Rupiah) *"
-                onChange={(event) => updateForm({ averagePriceMax: digitsOnly(event.target.value) })}
-                placeholder="40000"
-                type="text"
+                onValueChange={(averagePriceMax) => updateForm({ averagePriceMax })}
+                placeholder="40.000"
                 value={state.averagePriceMax}
               />
             </div>

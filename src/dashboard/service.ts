@@ -387,15 +387,7 @@ export class DashboardQueryService {
       return buildBusinessDto(profile, state, { categories, segments, channels });
     });
 
-    const roadmapState = await this.loadRoadmapState(currentUser);
-
-    return {
-      ...dashboard,
-      modules: {
-        ...dashboard.modules,
-        roadmap: roadmapState,
-      },
-    };
+    return dashboard;
   }
 
   private async loadRoadmapState(currentUser: SafeUser): Promise<{ readonly status: "AVAILABLE" | "EMPTY" | "ERROR" }> {

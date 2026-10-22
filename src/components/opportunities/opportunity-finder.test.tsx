@@ -127,7 +127,7 @@ describe("OpportunityFinder", () => {
 
     expect(markup).toContain("Tinggi (HIGH)");
     expect(markup).toContain("Kebutuhan modal dinilai Tinggi");
-    expect(markup).toContain("Versi policy: approved-risk-v1");
+    expect(markup).not.toContain("Versi policy: approved-risk-v1");
   });
 
   it("preserves an encoded active category while navigating pages", () => {

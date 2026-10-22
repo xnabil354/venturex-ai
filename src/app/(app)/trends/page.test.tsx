@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/reference/repository", () => ({ ReferenceRepository: class { async listActiveFnbCategories() { return []; } } }));
+vi.mock("@/components/trends/business-query-select", () => ({ BusinessQuerySelect: () => null }));
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
 vi.mock("@/profile/service", () => ({
@@ -36,24 +38,26 @@ describe("/trends live-first page", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it.each([USER_TYPES.ENTREPRENEUR, USER_TYPES.UMKM_EXISTING])(
-    "renders the live observation flow for %s without archived catalog data",
+    "renders the SearchApi Explore flow for %s without archived catalog data",
     async (userType) => {
       mocks.currentUser.mockResolvedValue({ ...completedUser, userType });
-      mocks.entrepreneurProfile.mockResolvedValue({ preferredProductType: "Bakso" });
-      mocks.businessProfile.mockResolvedValue({ products: [{ name: "Bakso" }] });
-      const markup = renderToStaticMarkup(await TrendsPage()).replace(/\s+/gu, " ");
+      mocks.entrepreneurProfile.mockResolvedValue({ preferredProductType: "Soto Ayam" });
+      mocks.businessProfile.mockResolvedValue({ businessName: "Kopi", products: [{ name: "Matcha" }] });
+      const markup = renderToStaticMarkup(await TrendsPage({})).replace(/\s+/gu, " ");
 
-      expect(markup).toContain("Observasi Google Trends Indonesia");
-      expect(markup).toContain("Muat sinyal terbaru");
-      expect(markup).toContain('value="Bakso"');
-      expect(markup).not.toContain("Matcha");
+      expect(markup).not.toContain("Google Trends Explore");
+      expect(markup).toContain("Tren Saat Ini");
+      expect(markup).toContain(userType === USER_TYPES.ENTREPRENEUR ? "Soto Ayam" : "Kopi");
+      expect(markup).not.toContain("value=\"Matcha\"");
+      expect(markup).not.toContain("Trending Now");
+      expect(markup).not.toContain("Kata kunci produk dari profil");
       expect(markup).not.toContain("Rempeyek");
     },
   );
 
   it("rejects an unauthenticated page", async () => {
     mocks.currentUser.mockResolvedValue(null);
-    await expect(TrendsPage()).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(TrendsPage({})).rejects.toThrow("NEXT_NOT_FOUND");
     expect(mocks.notFound).toHaveBeenCalledOnce();
   });
 });

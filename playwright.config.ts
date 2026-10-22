@@ -33,6 +33,11 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "tablet-chromium",
+      testMatch: "**/existing-business.spec.ts",
+      use: { browserName: "chromium", viewport: { width: 820, height: 1180 }, hasTouch: true },
+    },
+    {
       name: "desktop-chromium",
       use: {
         browserName: "chromium",

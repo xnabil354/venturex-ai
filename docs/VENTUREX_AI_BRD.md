@@ -1,4 +1,6 @@
 # BUSINESS REQUIREMENT DOCUMENT (BRD)
+
+Product Owner implementation amendment, 21 October 2026: complete the private entrepreneur journey with mandatory exploration product, preliminary risk indicator, paginated archives, owner-scoped Compare and Startup Roadmap from reviewed saved hypotheses. See `Entrepreneur MVP Completion.md` for policy, contracts and acceptance. This connects the active private flow without publishing hypotheses into the archived catalog.
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
 **Dokumen:** Business Requirement Document (BRD)
@@ -1786,3 +1788,28 @@ BRD versi 2.0 merupakan pengembangan dari BRD VENTUREX sebelumnya dengan perubah
 ## Product Owner decision amendment, 14 October 2026
 
 For the local hackathon flow, Trend Radar uses manually requested live Google Trends observations through the configured Bright Data adapter. The 2025 curated catalog is retained as an archive and is not used as fallback or displayed in Dashboard, Trend Radar, or Opportunity Finder. AI-generated ideas are private, user-owned hypotheses, not globally published Opportunities. No automated publication is authorized.
+
+
+## Entrepreneur review and permanent save amendment (21 October 2026)
+
+For private ENTREPRENEUR hypotheses, saving moves from Finder cards to the bottom of the score-detail page after Opportunity Score, Fit Score, target consumers, competition, risks, initial needs and evidence. Profile fields are loaded from the authenticated account; opening a detail page makes no paid inference request. Explicit consent and an analysis action remain required. The only optional financial input here is the concept's estimated minimum capital, displayed as Rp with Indonesian thousands separators and submitted as a whole numeric rupiah amount. It is separate from the account's available budget.
+
+PATCH /api/v1/opportunities/ideas keeps the existing {id, saved} fields and adds optional reviewed:true and analysisFingerprint (64 lowercase hexadecimal characters). Entrepreneur saves require reviewed:true, both numeric scores, structured concept requirements, and a current profile-bound analysis. The server compares the supplied fingerprint to the stored snapshot under a transaction row lock. Unknown/missing data is never replaced with invented scores to unlock saving. Conflicting or incomplete saves return 409 ANALYSIS_CHANGED or ANALYSIS_REQUIRED. Repeat saves are idempotent.
+
+Once an entrepreneur hypothesis is saved, isSaved cannot return to false, DELETE is rejected with 409 SAVED_PERMANENT, and its analysis snapshot is immutable. Existing saved entrepreneur records are preserved and protected. Unsubmitted hypotheses remain deletable. UMKM behavior is outside this change. Data stays in existing user_generated_opportunities JSONB and saved fields, with no migration or TTL added; no provider call is needed to reopen stored scores. This amendment supersedes earlier unsave/delete instructions for private entrepreneur hypotheses only.
+
+## Existing Pengusaha completion amendment (22 October 2026)
+
+The authorized UMKM_EXISTING improvement is specified in [Existing Business Completion.md](Existing%20Business%20Completion.md). This adds business-specific private hypothesis analysis, deterministic preliminary Opportunity Score and Business Fit, reasoned execution risk, owner-scoped Compare, five-stage private Growth Roadmap and 12-item paginated archives. It does not alter Entrepreneur behavior or provider configuration. Optional businessAnalysis and growthRoadmap snapshots use existing hypothesis JSONB; no catalog foreign key or migration is introduced. POST /api/v1/opportunities/ideas/{id}/analysis dispatches by authenticated persona; Existing accepts strict {consent:true,refresh?:boolean,proposedPrice?:{min:integer,max:integer}|null}. POST /api/v1/opportunities/ideas/{id}/roadmap creates or reopens the owner's Growth snapshot; a new snapshot requires saved state, complete and fresh business analysis. Existing saves remain reversible, and stored roadmaps remain readable after unsave.
+
+For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
+
+
+## Approved daily trend notification extension ? 22 October 2026
+
+The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+
+
+## Amendment: journey reports and roadmap completion (22 October 2026)
+
+See [Journey Reports](Journey%20Reports.md) for the authorized two-persona PDF/XLSX export, explicit stage completion gate, owner-scoped progress persistence/API, and device support acceptance contract.

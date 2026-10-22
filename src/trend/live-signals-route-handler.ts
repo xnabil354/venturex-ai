@@ -107,17 +107,17 @@ function messageForAnalysisError(code: TrendSignalAnalysisError["code"]): string
     case "INSUFFICIENT_DATA": return "Konteks profil atau observasi belum cukup untuk analisis.";
     case "SNAPSHOT_NOT_FOUND": return "Observasi telah kedaluwarsa atau bukan milik sesi ini.";
     case "CONSENT_REQUIRED": return "Persetujuan pemrosesan AI belum diberikan.";
-    case "SOURCE_PROCESSING_NOT_APPROVED": return "Pemrosesan observasi Google Trends oleh 9Router belum diizinkan.";
-    case "AI_SERVICE_UNAVAILABLE": return "9Router belum tersedia untuk analisis profil pada lingkungan ini.";
-    case "AI_FEATURE_DISABLED": return "Analisis 9Router untuk profil belum diaktifkan pada lingkungan ini.";
-    case "AI_PROVIDER_CONFIGURATION_UNAVAILABLE": return "Endpoint aman, kunci server, atau model 9Router belum dikonfigurasi dengan benar.";
+    case "SOURCE_PROCESSING_NOT_APPROVED": return "Analisis belum tersedia saat ini.";
+    case "AI_SERVICE_UNAVAILABLE": return "Analisis belum tersedia saat ini.";
+    case "AI_FEATURE_DISABLED": return "Analisis belum tersedia saat ini.";
+    case "AI_PROVIDER_CONFIGURATION_UNAVAILABLE": return "Analisis belum siap digunakan.";
     case "RATE_LIMITED": return "Analisis baru saja diminta. Tunggu sebelum mencoba kembali.";
-    case "AI_RESPONSE_INVALID": return "Respons 9Router tidak memenuhi validasi analisis.";
-    case "AI_UPSTREAM_FAILED": return "Permintaan ke 9Router gagal atau tidak dapat diverifikasi.";
-    case "AI_UPSTREAM_UNAVAILABLE": return "9Router melaporkan layanan sementara tidak tersedia. Tidak ada retry otomatis; Anda dapat mencoba lagi setelah jeda yang ditentukan.";
-    case "AI_UPSTREAM_TIMEOUT": return "9Router melewati batas waktu. Tidak ada retry otomatis; Anda dapat mencoba lagi setelah jeda yang ditentukan.";
-    case "AI_UPSTREAM_NETWORK_FAILED": return "Koneksi ke 9Router gagal sebelum respons diterima. Tidak ada retry otomatis; Anda dapat mencoba lagi setelah jeda yang ditentukan.";
-    case "AI_UPSTREAM_AUTH_FAILED": return "Layanan 9Router menolak konfigurasi autentikasi provider.";
+    case "AI_RESPONSE_INVALID": return "Hasil analisis tidak dapat ditampilkan. Coba lagi.";
+    case "AI_UPSTREAM_FAILED": return "Analisis gagal dimuat. Coba lagi.";
+    case "AI_UPSTREAM_UNAVAILABLE": return "Analisis belum tersedia saat ini. Coba lagi nanti.";
+    case "AI_UPSTREAM_TIMEOUT": return "Analisis terlalu lama. Coba lagi nanti.";
+    case "AI_UPSTREAM_NETWORK_FAILED": return "Analisis gagal dimuat. Coba lagi.";
+    case "AI_UPSTREAM_AUTH_FAILED": return "Analisis belum siap digunakan.";
   }
 }
 

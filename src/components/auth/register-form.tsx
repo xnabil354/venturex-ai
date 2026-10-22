@@ -7,6 +7,7 @@ import { z, ZodError } from "zod";
 import { registrationSchema } from "@/auth/validation";
 import { Button, Input } from "@/components/ui";
 import { EyeIcon, EyeOffIcon } from "./auth-icons";
+import { rememberRegisteredEmail } from "./registered-email";
 
 type RegisterValues = {
   email: string;
@@ -136,6 +137,7 @@ export function RegisterForm() {
       );
 
       if (response.status === 201 && payload.success) {
+        rememberRegisteredEmail(payload.data.email);
         router.replace("/login?registered=1");
         return;
       }

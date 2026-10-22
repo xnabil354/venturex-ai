@@ -90,14 +90,12 @@ export function OpportunityScoreDisplay({
   return (
     <div className="grid min-w-0 gap-8">
       <span className="w-fit rounded-full border border-soft-mist bg-lilac-mist px-10 py-4 text-caption font-w540 text-ink-charcoal">
-        MVP scoring model
+        Skor awal
       </span>
       <p aria-label={`Opportunity Score ${formatScore(result.score)} dari 100`} className="text-heading-sm font-w460 text-ink-charcoal">
         {formatScore(result.score)} <span className="text-body-sm text-stone-gray">/ 100</span>
       </p>
-      <p className="wrap-anywhere text-caption text-stone-gray">
-        Versi model: {result.modelVersion}
-      </p>
+
       {!compact ? (
         <>
           <p className="max-w-[76ch] text-caption leading-body-sm text-stone-gray">

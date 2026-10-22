@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { entrepreneurProfileSchema } from "./validation";
+import { entrepreneurProfileSchema, entrepreneurProfileReadSchema } from "./validation";
 
 describe("entrepreneur profile validation", () => {
   it("normalizes required location fields and selection sets", () => {
@@ -24,7 +24,7 @@ describe("entrepreneur profile validation", () => {
       ],
       customerSegmentIds: ["20000000-0000-4000-8000-000000000001"],
       salesChannelIds: ["30000000-0000-4000-8000-000000000001"],
-      preferredProductType: " ",
+      preferredProductType: " Bakso ayam ",
       businessObjective: null,
       notes: " notes ",
     };
@@ -40,8 +40,10 @@ describe("entrepreneur profile validation", () => {
       "10000000-0000-4000-8000-000000000001",
       "10000000-0000-4000-8000-000000000002",
     ]);
-    expect(result.preferredProductType).toBeNull();
+    expect(result.preferredProductType).toBe("Bakso ayam");
     expect(result.notes).toBe("notes");
+    expect(entrepreneurProfileSchema.safeParse({ ...input, preferredProductType: " " }).success).toBe(false);
+    expect(entrepreneurProfileReadSchema.parse({ ...input, preferredProductType: null }).preferredProductType).toBeNull();
   });
 
   it("rejects a budget range where maximum is below minimum", () => {

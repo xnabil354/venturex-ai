@@ -143,9 +143,9 @@ describe("FitScoreSection", () => {
     );
 
     expect(await screen.findByLabelText("Fit Score 82,5")).toBeTruthy();
-    expect(screen.getByText((_, element) =>
+    expect(screen.queryByText((_, element) =>
       element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
-    )).toBeTruthy();
+    )).toBeNull();
     expect(screen.queryByText("Data belum cukup untuk menghitung Fit Score.")).toBeNull();
     finder.unmount();
 
@@ -159,9 +159,9 @@ describe("FitScoreSection", () => {
     />);
 
     expect(await screen.findByLabelText("Fit Score 82,5")).toBeTruthy();
-    expect(screen.getByText((_, element) =>
+    expect(screen.queryByText((_, element) =>
       element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
-    )).toBeTruthy();
+    )).toBeNull();
     expect(screen.queryByText("Data belum cukup untuk menghitung Fit Score.")).toBeNull();
     expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/fit-score"))).toHaveLength(2);
   });
@@ -192,10 +192,10 @@ describe("FitScoreSection", () => {
     render(<FitScoreSection opportunityId={opportunity.id} />);
 
     expect(await screen.findByText("MVP Heuristic Fit Score")).toBeTruthy();
-    expect(screen.getByText(/Versi kebijakan: FIT_MVP_HEURISTIC_V1/u)).toBeTruthy();
-    expect(screen.getByText((_, element) =>
+    expect(screen.queryByText(/Versi kebijakan: FIT_MVP_HEURISTIC_V1/u)).toBeNull();
+    expect(screen.queryByText((_, element) =>
       element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
-    )).toBeTruthy();
+    )).toBeNull();
     expect(screen.getByText(componentLabel)).toBeTruthy();
     expect(screen.getByText("Batas anggaran mencukupi.")).toBeTruthy();
     expect(screen.getByText(DISCLAIMER)).toBeTruthy();

@@ -213,7 +213,7 @@ Versioned fields:
 - preferred product type;
 - business objective.
 
-`notes` is intentionally excluded from profile-version invalidation in the MVP. Notes are stored, but do not invalidate cached recommendation or analysis context because notes are not currently defined as a personalization input.
+`notes` is intentionally excluded from profile-version invalidation in the MVP. Notes are stored, but do not change the onboarding `profileVersion` counter. The separately consented SearchApi Opportunity Finder may use notes as generation context; it computes a keyed context fingerprint for each private analysis, so this exception does not alter onboarding version semantics or introduce a shared analysis cache.
 
 Before comparison:
 
@@ -222,7 +222,7 @@ Before comparison:
 - sort junction IDs;
 - deduplicate junction IDs.
 
-If future AI or recommendation logic uses notes as input, versioning behavior requires a requirement change.
+Any other AI or recommendation logic that uses notes as input still requires a requirement and versioning review.
 
 ## 12. Reference seed strategy
 

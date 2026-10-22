@@ -102,7 +102,7 @@ const entrepreneurProfileFields = {
   interestCategoryIds: referenceIdsSchema,
   customerSegmentIds: referenceIdsSchema,
   salesChannelIds: referenceIdsSchema,
-  preferredProductType: optionalTextSchema(100),
+  preferredProductType: z.string().trim().min(1, "Tuliskan produk yang ingin Anda eksplorasi.").max(100),
   businessObjective: optionalLongTextSchema,
   notes: optionalLongTextSchema,
 };
@@ -140,6 +140,10 @@ export type EntrepreneurProfileInput = z.infer<
   typeof entrepreneurProfileSchema
 >;
 
-export type EntrepreneurProfileEditValues = z.infer<
-  typeof entrepreneurProfileEditSchema
->;
+export const entrepreneurProfileReadSchema = z.object({
+  location: editableLocationSchema,
+  ...entrepreneurProfileFields,
+  preferredProductType: optionalTextSchema(100),
+}).strict();
+
+export type EntrepreneurProfileEditValues = z.infer<typeof entrepreneurProfileReadSchema>;

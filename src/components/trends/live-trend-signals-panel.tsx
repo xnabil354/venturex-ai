@@ -35,10 +35,10 @@ function normalizeSearch(value: string): string {
 }
 
 const blockedAnalysisMessage: Record<LiveTrendSignalsResponse["analysisAvailability"]["reason"], string> = {
-  READY: "9Router siap digunakan setelah persetujuan Anda.",
-  AI_FEATURE_DISABLED: "Analisis 9Router belum diaktifkan pada lingkungan ini.",
-  AI_PROVIDER_CONFIGURATION_UNAVAILABLE: "Endpoint, kunci server, atau model 9Router belum siap atau tidak diizinkan pada lingkungan ini.",
-  SOURCE_PROCESSING_NOT_APPROVED: "Pemrosesan observasi Google Trends oleh 9Router belum disetujui.",
+  READY: "Analisis siap setelah persetujuan Anda.",
+  AI_FEATURE_DISABLED: "Analisis belum tersedia saat ini.",
+  AI_PROVIDER_CONFIGURATION_UNAVAILABLE: "Analisis belum siap digunakan.",
+  SOURCE_PROCESSING_NOT_APPROVED: "Analisis belum tersedia saat ini.",
 };
 
 export function LiveTrendSignalsPanel({
@@ -91,17 +91,17 @@ export function LiveTrendSignalsPanel({
       });
       const payload = await readJson(response);
       if (!response.ok || isApiError(payload)) {
-        setRefreshError(isApiError(payload) ? payload.error.message ?? "Observasi Google Trends belum tersedia." : "Observasi Google Trends belum tersedia.");
+        setRefreshError("Sinyal belum dapat dimuat. Coba lagi.");
         return;
       }
       const parsed = liveTrendSignalsResponseSchema.safeParse(payload.data);
       if (!parsed.success) {
-        setRefreshError("Respons Google Trends tidak memenuhi kontrak tampilan. Katalog historis tidak digunakan sebagai pengganti.");
+        setRefreshError("Data sinyal tidak dapat ditampilkan. Coba lagi.");
         return;
       }
       setSnapshot(parsed.data);
     } catch {
-      setRefreshError("Koneksi ke endpoint Google Trends gagal. Katalog historis tidak digunakan sebagai pengganti.");
+      setRefreshError("Sinyal gagal dimuat. Coba lagi.");
     } finally {
       setRefreshing(false);
     }
@@ -133,22 +133,22 @@ export function LiveTrendSignalsPanel({
           setRetrySeconds(Number.isFinite(parsedSeconds) && parsedSeconds > 0 ? parsedSeconds : 60);
           setRetryVisible(true);
         }
-        setAnalysisError(isApiError(payload) ? payload.error.message ?? "Analisis 9Router belum tersedia." : "Analisis 9Router belum tersedia.");
+        setAnalysisError("Analisis belum berhasil. Coba lagi.");
         return;
       }
       if (isApiError(payload)) {
-        setAnalysisError(payload.error.message ?? "Analisis 9Router belum tersedia.");
+        setAnalysisError("Analisis belum berhasil. Coba lagi.");
         return;
       }
       const parsed = liveTrendAnalysisResponseSchema.safeParse(payload.data);
       if (!parsed.success) {
-        setAnalysisError("Respons 9Router tidak memenuhi kontrak tampilan. Hasil sintetis lokal tidak ditampilkan.");
+        setAnalysisError("Hasil analisis tidak dapat ditampilkan. Coba lagi.");
         return;
       }
       setAnalysis(parsed.data);
       setSelectedSignalId(null);
     } catch {
-      setAnalysisError("Koneksi ke layanan 9Router gagal.");
+      setAnalysisError("Analisis gagal dimuat. Coba lagi.");
     } finally {
       setAnalyzing(false);
       setConsent(false);
@@ -186,7 +186,7 @@ export function LiveTrendSignalsPanel({
           >
             {timeWindowOptions.map((option) => <option key={option.hours} value={option.hours}>{option.label}</option>)}
           </select>
-          <span className="text-caption font-w460 text-stone-gray">Indonesia · Penelusuran Google · rentang diterapkan saat Anda menekan perbarui.</span>
+            <span className="text-caption font-w460 text-stone-gray">Indonesia · rentang diterapkan saat Anda menekan perbarui.</span>
         </label>
         <label className="grid gap-6 text-body-sm font-w540 text-ink-charcoal">
           Kata kunci produk dari profil
@@ -202,7 +202,7 @@ export function LiveTrendSignalsPanel({
             placeholder="Contoh: bakso"
             value={keyword}
           />
-          <span className="text-caption font-w460 text-stone-gray">Hanya menyaring daftar yang sudah dimuat; mengubahnya tidak mengirim profil atau membuat request baru.</span>
+            <span className="text-caption font-w460 text-stone-gray">Menyaring sinyal yang sudah dimuat.</span>
         </label>
         <label className="flex items-start gap-10 text-body-sm leading-body-sm text-ink-charcoal sm:col-span-2">
           <input
@@ -220,37 +220,29 @@ export function LiveTrendSignalsPanel({
       {snapshot ? (
         <div className="grid gap-20" aria-live="polite">
           {snapshot.mode === "MOCK_TEST" ? (
-            <StatusNotice tone="warning">TEST STUB — bukan respons Google Trends live.</StatusNotice>
+            <StatusNotice tone="warning">Mode contoh menggunakan data simulasi.</StatusNotice>
           ) : null}
 
           <details className="group rounded-cards border border-[#ded8cb] bg-[#faf9f6] p-16 text-caption leading-body-sm text-stone-gray transition-colors">
             <summary className="flex cursor-pointer items-center justify-between font-w540 text-ink-charcoal focus-visible:outline-2 focus-visible:outline-deep-lagoon">
               <span className="flex items-center gap-8">
                 <span className="h-6 w-6 rounded-full bg-deep-lagoon" />
-                <span>Detail Metadata &amp; Provenance Google Trends</span>
+                <span>Detail sinyal</span>
               </span>
               <span className="text-deep-lagoon text-body-sm transition-transform duration-200 group-open:rotate-180">▾</span>
             </summary>
             <div className="grid gap-8 border-t border-soft-mist mt-12 pt-12">
-              <p>
-                Snapshot {snapshot.mode === "MOCK_TEST" ? "uji" : "disajikan"} {new Date(snapshot.generatedAt).toLocaleString("id-ID")} · sumber diambil {new Date(snapshot.retrievedAt).toLocaleString("id-ID")} · Indonesia · {snapshot.source.timeWindowHours} jam terakhir · {snapshot.cache === "NETWORK" ? "request baru" : snapshot.cache === "COALESCED" ? "request bersama" : "cache sementara"} · status batch {snapshot.batchStatus}{snapshot.freshness === "STALE" ? " · data lama" : ""}
-              </p>
-              <p>
-                Diterima {snapshot.records.accepted} dari {snapshot.records.retrieved}; ditolak {snapshot.records.rejected}. Klasifikasi lokal: {snapshot.screening.classifications.LIKELY_FNB} kemungkinan F&amp;B, {snapshot.screening.classifications.REVIEW_REQUIRED} perlu tinjauan, {snapshot.screening.classifications.OUT_OF_SCOPE} di luar cakupan.
-              </p>
-              <p>
-                F&amp;B adalah penyaringan heuristic VENTUREX, bukan kategori yang diterapkan pada sumber. Kata kunci hanya menyaring hasil Trending Now yang sudah diterima; tidak ada hasil khusus kueri Bakso jika Google Trends tidak memasukkannya ke daftar.
-              </p>
+              <p>Menampilkan sinyal yang sesuai dengan filter pilihan Anda.</p>
             </div>
           </details>
 
-          {snapshot.freshness === "STALE" ? <StatusNotice tone="warning">Refresh baru tidak berhasil; observasi cache ditandai lama dan bukan data baru.</StatusNotice> : null}
+          {snapshot.freshness === "STALE" ? <StatusNotice tone="warning">Data mungkin belum terbaru. Coba perbarui sinyal.</StatusNotice> : null}
 
           {visibleSignals.length === 0 ? (
             <StatusNotice tone="info" className="text-stone-gray">
               {normalizedKeyword
-                ? <>Tidak ada sinyal Trending Now pada rentang {snapshot.source.timeWindowHours} jam yang cocok dengan “{keyword.trim()}”. Ini tidak membuktikan bahwa minat pencarian untuk istilah tersebut tidak ada; istilah ini hanya menyaring daftar trending umum yang dikembalikan.</>
-                : "Tidak ada sinyal yang cocok dengan cakupan F&B lokal pada observasi ini. Tidak ada data yang dibuat untuk mengisi daftar."}
+                ? <>Tidak ada sinyal untuk “{keyword.trim()}” dalam rentang ini. Coba rentang waktu yang lebih panjang.</>
+                : "Belum ada sinyal yang cocok. Coba perbarui daftar."}
             </StatusNotice>
           ) : (
             <ul aria-label="Sinyal Google Trends dengan relevansi F&B" className="grid gap-16 md:grid-cols-2">
@@ -260,13 +252,13 @@ export function LiveTrendSignalsPanel({
                     <article aria-labelledby={`live-signal-${signal.id}`} className="grid gap-14">
                       <div className="flex flex-wrap items-center justify-between gap-8">
                         <Badge tone={signal.classification === "LIKELY_FNB" ? "wash" : "neutral"}>
-                          {signal.classification === "LIKELY_FNB" ? "Kemungkinan F&B · heuristic" : "Perlu tinjauan manual"}
+                          {signal.classification === "LIKELY_FNB" ? "Kemungkinan F&B" : "Perlu ditinjau"}
                         </Badge>
                         <span className="inline-flex items-center gap-6 text-caption font-w460 text-stone-gray">
                           {signal.classification === "LIKELY_FNB" ? (
                             <span className="h-6 w-6 rounded-full bg-emerald-500 animate-pulse" />
                           ) : null}
-                          Sinyal sumber · belum divalidasi
+                          Sinyal awal
                         </span>
                       </div>
                       <h3 className="wrap-anywhere text-heading-sm font-w460 text-ink-charcoal" id={`live-signal-${signal.id}`}>
@@ -293,18 +285,14 @@ export function LiveTrendSignalsPanel({
                       </div>
 
                       <dl className="grid gap-8 border-t border-soft-mist pt-12 text-caption text-stone-gray sm:grid-cols-2">
-                        <div><dt className="font-w540 text-ink-charcoal">Sumber</dt><dd>{signal.source.publisher}</dd></div>
                         <div><dt className="font-w540 text-ink-charcoal">Referensi sumber</dt><dd><a className="underline underline-offset-2 text-royal-violet" href={signal.source.url} rel="noreferrer" target="_blank">Google Trends Trending Now (Indonesia)</a></dd></div>
                         <div><dt className="font-w540 text-ink-charcoal">Wilayah</dt><dd>Indonesia (ID)</dd></div>
-                        <div><dt className="font-w540 text-ink-charcoal">Diambil</dt><dd>{new Date(signal.source.retrievedAt).toLocaleString("id-ID")}</dd></div>
-                        <div><dt className="font-w540 text-ink-charcoal">Mulai trending</dt><dd>{signal.source.providerStartedAtUnixSeconds ? new Date(signal.source.providerStartedAtUnixSeconds * 1000).toLocaleString("id-ID") : "Tidak tersedia"}</dd></div>
-                        <div><dt className="font-w540 text-ink-charcoal">Volume pencarian dari sumber</dt><dd>{signal.metrics.volume.availability === "AVAILABLE" ? String(signal.metrics.volume.value) : "Tidak tersedia"} · unit tidak disediakan</dd></div>
-                        <div><dt className="font-w540 text-ink-charcoal">Perubahan volume dari sumber</dt><dd>{signal.metrics.volumeChange.availability === "AVAILABLE" ? String(signal.metrics.volumeChange.value) : "Tidak tersedia"} · unit tidak disediakan</dd></div>
-                        <div><dt className="font-w540 text-ink-charcoal">Status dari sumber</dt><dd>{signal.metrics.active.value ? "Aktif" : "Tidak aktif"}</dd></div>
+                        <div><dt className="font-w540 text-ink-charcoal">Volume</dt><dd>{signal.metrics.volume.availability === "AVAILABLE" ? String(signal.metrics.volume.value) : "Tidak tersedia"}</dd></div>
+                        <div><dt className="font-w540 text-ink-charcoal">Status</dt><dd>{signal.metrics.active.value ? "Aktif" : "Tidak aktif"}</dd></div>
                       </dl>
 
                       <p className="text-caption leading-body-sm text-stone-gray">
-                        Trending Now menunjukkan lonjakan aktivitas penelusuran, bukan pembelian, permintaan pasar, omzet, atau kelayakan usaha. Volume adalah nilai sumber tanpa unit yang dapat ditafsirkan sebagai jumlah pembeli.
+                        Sinyal pencarian bukan bukti pembelian atau jaminan keberhasilan usaha.
                       </p>
 
                       {snapshot.analysisAvailability.status === "AVAILABLE" ? (
@@ -314,21 +302,21 @@ export function LiveTrendSignalsPanel({
                           type="button"
                           variant="secondary"
                         >
-                          Analisis dengan 9Router
+                          Analisis tren
                         </Button>
                       ) : (
-                        <p className="text-caption text-stone-gray">Analisis 9Router belum tersedia: {blockedAnalysisMessage[snapshot.analysisAvailability.reason]}</p>
+                        <p className="text-caption text-stone-gray">{blockedAnalysisMessage[snapshot.analysisAvailability.reason]}</p>
                       )}
 
                       {selectedSignalId === signal.id ? (
                         <div className="grid gap-12 rounded-cards border border-midnight-wine/40 bg-warm-parchment p-16 sm:p-20">
-                          {publicHttpTransport ? <StatusNotice role="alert" tone="error">Peringatan transport: koneksi ke 9Router memakai HTTP tanpa enkripsi. Kunci API dan konteks yang dikirim dapat terlihat di jalur jaringan. Gunakan hanya profil uji sintetis dan jangan lanjutkan dengan data sensitif.</StatusNotice> : null}
+                          {publicHttpTransport ? <StatusNotice role="alert" tone="error">Koneksi tidak aman. Gunakan hanya data contoh.</StatusNotice> : null}
                           <label className="flex items-start gap-10 text-body-sm leading-body-sm text-ink-charcoal">
                             <input checked={consent} className="mt-3 size-16 accent-midnight-wine" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
-                            <span>Saya setuju VENTUREX mengirim kategori produk/minat, jenis produk yang diminati bila diisi, segmen konsumen, kanal penjualan, dan bila relevan tingkat pengalaman/komitmen waktu dari profil server saya, bersama ringkasan sinyal Google Trends terpilih, ke layanan 9Router yang dikonfigurasi operator dengan model cx/gpt-6-luna-xhigh untuk satu analisis. Nama akun, email, lokasi, uraian bebas, catatan, dan angka finansial tidak dikirim. Hasil tidak disimpan oleh fitur ini. Retensi dan pemrosesan lanjutan layanan 9Router tidak diverifikasi oleh VENTUREX.{publicHttpTransport ? " Saya memahami request ini memakai HTTP tanpa enkripsi dan hanya melanjutkan dengan profil uji sintetis." : ""}</span>
+                            <span>Saya setuju ringkasan sinyal dan konteks profil yang relevan diproses untuk analisis ini. Hasil tidak disimpan.</span>
                           </label>
-                          <p className="text-caption leading-body-sm text-stone-gray">Analisis adalah interpretasi awal, bukan fakta pasar atau jaminan. Penggunaan konteks profil hanya tersedia setelah pemrosesan sumber diizinkan dan persetujuan ini diberikan.</p>
-                          <Button disabled={!consent || analyzing} loading={analyzing} onClick={() => void analyze(signal.id)} type="button">{analyzing ? "Meminta 9Router…" : "Kirim persetujuan dan analisis"}</Button>
+                          <p className="text-caption leading-body-sm text-stone-gray">Hasil adalah panduan awal, bukan jaminan.</p>
+                          <Button disabled={!consent || analyzing} loading={analyzing} onClick={() => void analyze(signal.id)} type="button">{analyzing ? "Menganalisis…" : "Mulai analisis"}</Button>
                           {analysisError ? <p aria-live="polite" className="text-body-sm text-ink-charcoal" role="alert">{analysisError}</p> : null}
                           {analysisError && retryVisible ? (
                             <Button
@@ -352,9 +340,9 @@ export function LiveTrendSignalsPanel({
           {analysis ? (
             <Card aria-labelledby="live-analysis-heading" className="grid gap-16 p-20 sm:p-24 border-royal-violet/30">
               <div>
-                <p className="text-caption font-w540 text-royal-violet">{analysis.mode === "LIVE_PROVIDER" ? `Respons ${analysis.provider} live` : "TEST STUB — bukan respons 9Router live"}</p>
+                <p className="text-caption font-w540 text-royal-violet">Analisis selesai</p>
                 <h3 className="text-heading-sm font-w460 text-ink-charcoal" id="live-analysis-heading">Analisis sinyal terpilih</h3>
-                <p className="text-caption text-stone-gray">Sumber: {analysis.sourceReference.title} · {analysis.sourceReference.publisher} · diambil {new Date(analysis.sourceReference.retrievedAt).toLocaleString("id-ID")}</p>
+                <p className="text-caption text-stone-gray">Sumber: <a className="underline underline-offset-2 text-royal-violet" href={analysis.sourceReference.url} rel="noreferrer" target="_blank">Google Trends</a></p>
               </div>
               <dl className="grid gap-12">
                 {([

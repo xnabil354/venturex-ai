@@ -15,6 +15,7 @@ export function DarkFeatureBand() {
                   src="/images/culinary-craft.jpg"
                   alt="Komposisi bahan dan minuman artisanal pada kain linen hangat"
                   fill
+                  sizes="(max-width: 512px) calc(100vw - 2rem), 480px"
                   className="object-cover opacity-25 mix-blend-luminosity"
                 />
                 <div className="absolute inset-0 bg-deep-lagoon/80" />

@@ -29,6 +29,7 @@ import {
 } from "./errors";
 import {
   entrepreneurProfileEditSchema,
+  entrepreneurProfileReadSchema,
   entrepreneurProfileSchema,
   type EntrepreneurProfileEditValues as ProfileEditValues,
   type EntrepreneurProfileInput,
@@ -163,7 +164,7 @@ export class EntrepreneurProfileService {
       }
 
       const selections = await this.profileRepository.loadSelectionIds(profile.id, transaction);
-      return entrepreneurProfileEditSchema.parse({
+      return entrepreneurProfileReadSchema.parse({
         location: {
           text: profile.locationText,
           city: profile.city,

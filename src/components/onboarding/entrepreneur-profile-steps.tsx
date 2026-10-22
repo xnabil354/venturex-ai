@@ -6,7 +6,7 @@ import {
   type ExperienceLevel,
   type TimeCommitment,
 } from "@/profile/validation";
-import { Button, Input, Select, type SelectOption } from "@/components/ui";
+import { Button, Input, RupiahInput, Select, type SelectOption } from "@/components/ui";
 import { OTHER_FNB_CATEGORY_CODE } from "@/reference/constants";
 
 import { CheckboxGroup, FormSection } from "./entrepreneur-profile-options";
@@ -133,26 +133,22 @@ export function EntrepreneurProfileStepTwo({
         title="Budget awal"
       >
         <div className="grid gap-16 sm:grid-cols-2">
-          <Input
+          <RupiahInput
             error={errors.budgetMin}
-            hint="Masukkan angka tanpa titik atau koma."
+            hint="Pemisah ribuan ditambahkan otomatis."
             id="budget-min"
-            inputMode="numeric"
             label="Budget minimum (Rupiah) *"
-            onChange={(event) => updateForm({ budgetMin: digitsOnly(event.target.value) })}
-            placeholder="5000000"
-            type="text"
+            onValueChange={(budgetMin) => updateForm({ budgetMin })}
+            placeholder="5.000.000"
             value={state.budgetMin}
           />
-          <Input
+          <RupiahInput
             error={errors.budgetMax}
             hint="Tidak boleh lebih kecil dari budget minimum."
             id="budget-max"
-            inputMode="numeric"
             label="Budget maksimum (Rupiah) *"
-            onChange={(event) => updateForm({ budgetMax: digitsOnly(event.target.value) })}
-            placeholder="10000000"
-            type="text"
+            onValueChange={(budgetMax) => updateForm({ budgetMax })}
+            placeholder="10.000.000"
             value={state.budgetMax}
           />
         </div>
@@ -229,8 +225,8 @@ export function EntrepreneurProfileStepThree({
       </FormSection>
 
       <FormSection
-        description="Tambahkan konteks singkat jika sudah ada gambaran awal. Semua bagian di bawah ini bersifat opsional."
-        title="Konteks tambahan"
+        description="Tentukan produk untuk eksplorasi tren. Tujuan dan catatan boleh dikosongkan."
+        title="Arah usaha"
       >
         <div className="grid gap-16">
           {hasOtherCategory ? null : (
@@ -238,7 +234,8 @@ export function EntrepreneurProfileStepThree({
               error={errors.preferredProductType}
               hint="Contoh: kopi susu, frozen dimsum, healthy snack."
               id="preferred-product-type"
-              label="Jenis produk yang diminati"
+              label="Produk yang ingin dieksplorasi *"
+              required
               maxLength={100}
               onChange={(event) => updateForm({ preferredProductType: event.target.value })}
               value={state.preferredProductType}
@@ -309,8 +306,4 @@ function parseTimeCommitment(value: string): TimeCommitment | "" {
     default:
       return "";
   }
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/[^0-9]/g, "");
 }

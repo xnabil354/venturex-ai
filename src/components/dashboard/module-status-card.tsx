@@ -27,80 +27,77 @@ export function ModuleStatusCard({ description, state, title, href }: ModuleStat
   return (
     <section aria-labelledby={headingId}>
       <Card
+        surface={isAvailable ? "transparent" : "paper"}
         className={cx(
-          "grid gap-16 p-24 sm:p-32 transition-all duration-300",
+          "grid gap-20 p-20 transition-colors duration-200 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-24 sm:p-28",
           isAvailable
-            ? "border-paper-white/10 bg-deep-lagoon text-paper-white shadow-lg hover:shadow-2xl hover:border-paper-white/20"
-            : "border-[#ded8cb] bg-[#faf9f6] shadow-xs text-ink-charcoal",
+            ? "border-deep-lagoon/50 bg-deep-lagoon text-paper-white"
+            : "border-[#ded8cb] text-ink-charcoal hover:border-midnight-wine/35",
         )}
       >
-        <div className="flex flex-col gap-12 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-14">
+        <div className="flex min-w-0 items-start gap-14">
+          <span
+            className={cx(
+              "flex size-48 shrink-0 items-center justify-center rounded-small-buttons border",
+              isAvailable
+                ? "border-paper-white/20 bg-paper-white/10 text-lilac-mist"
+                : "border-[#ded8cb] bg-warm-parchment text-midnight-wine",
+            )}
+          >
+            <RouteIcon className="size-20" />
+          </span>
+          <div className="grid min-w-0 gap-6">
             <span
               className={cx(
-                "flex size-44 shrink-0 items-center justify-center rounded-small-buttons border transition-colors",
-                isAvailable
-                  ? "border-paper-white/20 bg-paper-white/15 text-lilac-mist"
-                  : "border-[#ded8cb] bg-warm-parchment text-midnight-wine",
+                "text-caption font-w540 uppercase tracking-widest",
+                isAvailable ? "text-lilac-mist" : "text-royal-violet",
               )}
             >
-              <RouteIcon className="size-20" />
+              Rencana usaha
             </span>
-            <div className="grid gap-4">
-              <span
-                className={cx(
-                  "text-caption font-w540 uppercase tracking-widest",
-                  isAvailable ? "text-lilac-mist" : "text-royal-violet",
-                )}
-              >
-                Langkah Eksekusi Utama
-              </span>
-              <h2
-                className={cx(
-                  "text-heading-sm font-w460 leading-heading-sm tracking-heading-sm",
-                  isAvailable ? "text-paper-white" : "text-ink-charcoal",
-                )}
-                id={headingId}
-              >
-                {title}
-              </h2>
-            </div>
+            <h2
+              className={cx(
+                "break-words text-body sm:text-heading-sm font-w460 leading-heading-sm tracking-heading-sm",
+                isAvailable ? "text-paper-white" : "text-ink-charcoal",
+              )}
+              id={headingId}
+            >
+              {title}
+            </h2>
+            <p
+              className={cx(
+                "max-w-[62ch] text-body-sm leading-relaxed",
+                isAvailable ? "text-paper-white/80" : "text-stone-gray",
+              )}
+            >
+              {description}
+            </p>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-12 sm:flex-col sm:items-end sm:justify-center sm:pl-0">
           {isAvailable ? (
-            <span className="inline-flex items-center gap-6 rounded-pills bg-paper-white/20 px-10 py-3 text-[11px] font-w540 text-paper-white border border-paper-white/10">
-              <span className="h-6 w-6 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex min-h-28 items-center rounded-pills border border-paper-white/20 bg-paper-white/10 px-10 text-caption font-w540 text-paper-white">
               {statusCopy[state.status]}
             </span>
           ) : (
             <Badge tone="neutral">{statusCopy[state.status]}</Badge>
           )}
-        </div>
-
-        <p
-          className={cx(
-            "max-w-[68ch] text-body-sm leading-relaxed",
-            isAvailable ? "text-paper-white/80" : "text-stone-gray",
-          )}
-        >
-          {description}
-        </p>
-
-        {href ? (
-          <div className="pt-4">
+          {href ? (
             <Link
               className={cx(
-                "group inline-flex min-h-[44px] items-center gap-10 px-20 py-8 text-body-sm font-w460 transition-all duration-200 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet",
+                "group inline-flex min-h-button items-center justify-center gap-8 rounded-buttons px-14 text-body-sm font-w540 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet",
                 isAvailable
-                  ? "rounded-buttons bg-paper-white text-midnight-wine hover:bg-lilac-mist shadow-xs"
-                  : "rounded-small-buttons border border-ink-charcoal bg-lilac-mist text-ink-charcoal hover:bg-paper-white",
+                  ? "bg-paper-white text-midnight-wine hover:bg-lilac-mist"
+                  : "bg-midnight-wine text-paper-white hover:bg-[#5a2932]",
               )}
               href={href}
             >
               <span>Buka Roadmap</span>
-              <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1" />
+              <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
             </Link>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </Card>
     </section>
   );

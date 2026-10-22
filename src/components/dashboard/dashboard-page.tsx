@@ -13,6 +13,8 @@ import { OpportunityPreviewSection } from "./opportunity-preview-section";
 import { ProfileSummary } from "./profile-summary";
 import { SavedOpportunityPreviewSection } from "./saved-opportunity-preview-section";
 import { TrendPreviewSection } from "./trend-preview-section";
+import { DashboardRadarPreview } from "./dashboard-radar-preview";
+import { JourneyReportCard } from "./journey-report-card";
 
 type ModuleDefinition = {
   readonly description: string;
@@ -22,7 +24,7 @@ type ModuleDefinition = {
 
 const entrepreneurModules = [
   {
-    description: "Lihat roadmap yang tersimpan atau mulai dari Opportunity yang eligible.",
+    description: "Tinjau roadmap tersimpan atau mulai dari peluang yang sesuai.",
     key: "roadmap",
     title: "Startup Roadmap",
   },
@@ -30,13 +32,14 @@ const entrepreneurModules = [
 
 const businessModules = [
   {
-    description: "Lihat Growth Roadmap tersimpan atau mulai dari Opportunity yang memenuhi syarat.",
+    description: "Tinjau roadmap tersimpan atau mulai dari peluang yang sesuai.",
     key: "roadmap",
     title: "Growth Roadmap",
   },
 ] satisfies readonly ModuleDefinition[];
 
 type DashboardLayoutProps = {
+  readonly viewerId?: string;
   readonly dashboard: DashboardDto;
   readonly profileUpdated: boolean;
   readonly modules: readonly ModuleDefinition[];
@@ -52,6 +55,7 @@ function DashboardLayout({
   profileSummary,
   profileTitle,
   profileUpdated,
+  viewerId,
 }: DashboardLayoutProps) {
   return (
     <PageContainer>
@@ -59,7 +63,7 @@ function DashboardLayout({
         <DashboardHeader dashboard={dashboard} />
         {profileUpdated ? (
           <StatusNotice aria-live="polite" role="status" tone="success">
-            Profil berhasil diperbarui. Ringkasan ini menampilkan data terbaru.
+            Profil berhasil diperbarui. Informasi di bawah menampilkan data terbaru.
           </StatusNotice>
         ) : null}
         <ProfileSummary
@@ -81,37 +85,31 @@ function DashboardLayout({
         </ProfileSummary>
 
         <section aria-labelledby="dashboard-next-steps" className="grid gap-20">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-baseline sm:justify-between border-b border-soft-mist pb-16">
+          <div className="flex flex-col gap-6 border-b border-soft-mist pb-16 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal" id="dashboard-next-steps">
               Lanjutkan eksplorasi
             </h2>
-            <p className="max-w-[48ch] text-body-sm leading-relaxed text-stone-gray">
-              Mulai dari sinyal terbaru, susun hipotesis, lalu simpan dan uji pilihan yang paling relevan.
+            <p className="max-w-[48ch] text-body-sm leading-relaxed text-stone-gray sm:text-right">
+              Mulai dari tren, lanjutkan ide usaha Anda.
             </p>
           </div>
 
-          {/* Featured Milestone Card: Roadmap (Flagship Bento Card) */}
-          <div className="grid gap-16">
-            {modules.map((module) => (
-              <ModuleStatusCard
-                description={module.description}
-                key={module.key}
-                state={dashboard.modules[module.key]}
-                title={module.title}
-                href="/roadmaps"
-              />
+          <ol aria-label="Perjalanan eksplorasi usaha" className="grid gap-16">
+            {[
+              viewerId ? <DashboardRadarPreview key="trends" state={dashboard.modules.trends} userId={viewerId} productQuery={dashboard.userType === "ENTREPRENEUR" ? dashboard.profile.preferredProductType ?? "" : dashboard.profile.businessName} /> : <TrendPreviewSection key="trends" state={dashboard.modules.trends} title="Trend Radar" />,
+              <OpportunityPreviewSection key="opportunities" state={dashboard.modules.opportunities} title="Opportunity Finder" />,
+              <SavedOpportunityPreviewSection key="saved" state={dashboard.modules.savedOpportunities} title="Peluang tersimpan" />,
+              ...modules.map(module => <ModuleStatusCard key={module.key} description={module.description} state={dashboard.modules[module.key]} title={module.title} href="/roadmaps" />),
+            ].map((content, index, steps) => (
+              <li key={index} className="relative grid min-w-0 grid-cols-[28px_minmax(0,1fr)] gap-10 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-16">
+                {index < steps.length - 1 ? <span aria-hidden="true" className="absolute bottom-[-16px] left-[14px] top-28 w-px bg-soft-mist sm:left-20 sm:top-40" /> : null}
+                <span aria-label={`Langkah ${index + 1}`} className="relative flex size-28 items-center justify-center rounded-full border border-midnight-wine/20 bg-warm-parchment text-caption font-w540 text-midnight-wine sm:size-40">{index + 1}</span>
+                <div className="min-w-0">{content}</div>
+              </li>
             ))}
-          </div>
-
-          {/* 2-Column Bento Grid: Trend Radar & Opportunity Finder */}
-          <div className="grid gap-16 lg:grid-cols-2">
-            <TrendPreviewSection state={dashboard.modules.trends} title="Trend Radar" />
-            <OpportunityPreviewSection state={dashboard.modules.opportunities} title="Opportunity Finder" />
-          </div>
-
-          {/* Bottom Bento Card: Saved Opportunities */}
-          <SavedOpportunityPreviewSection state={dashboard.modules.savedOpportunities} title="Peluang tersimpan" />
+          </ol>
         </section>
+        {viewerId ? <JourneyReportCard /> : null}
       </div>
     </PageContainer>
   );
@@ -122,20 +120,22 @@ function assertNever(value: never): never {
 }
 
 export type DashboardPageProps = {
+  readonly viewerId?: string;
   readonly dashboard: DashboardDto;
   readonly profileUpdated?: boolean;
 };
 
-export function DashboardPage({ dashboard, profileUpdated = false }: DashboardPageProps) {
+export function DashboardPage({ dashboard, profileUpdated = false, viewerId }: DashboardPageProps) {
   switch (dashboard.userType) {
     case USER_TYPES.ENTREPRENEUR:
       return (
         <DashboardLayout
           dashboard={dashboard}
+          {...(viewerId ? { viewerId } : {})}
           modules={entrepreneurModules}
           profileStatus="Profil siap"
           profileSummary={<EntrepreneurSummary profile={dashboard.profile} />}
-          profileTitle="Ringkasan profil"
+          profileTitle="Profil calon usaha"
           profileUpdated={profileUpdated}
         />
       );
@@ -143,10 +143,11 @@ export function DashboardPage({ dashboard, profileUpdated = false }: DashboardPa
       return (
         <DashboardLayout
           dashboard={dashboard}
+          {...(viewerId ? { viewerId } : {})}
           modules={businessModules}
           profileStatus={null}
           profileSummary={<BusinessSummary profile={dashboard.profile} />}
-          profileTitle="Ringkasan bisnis"
+          profileTitle="Profil usaha"
           profileUpdated={profileUpdated}
         />
       );
