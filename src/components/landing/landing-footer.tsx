@@ -25,27 +25,27 @@ export function LandingFooter() {
             </h3>
             <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
               <li>
-                <a href="#fitur-utama" className="transition-colors hover:text-paper-white">
+                <a href="#fitur-utama" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Trend Radar
                 </a>
               </li>
               <li>
-                <a href="#fitur-utama" className="transition-colors hover:text-paper-white">
+                <a href="#fitur-utama" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Opportunity Finder
                 </a>
               </li>
               <li>
-                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white">
+                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Personal Fit Score Engine
                 </a>
               </li>
               <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white">
+                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Startup Roadmap (Calon Pengusaha)
                 </a>
               </li>
               <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white">
+                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Growth Roadmap (UMKM Existing)
                 </a>
               </li>
@@ -58,22 +58,22 @@ export function LandingFooter() {
             </h3>
             <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
               <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white">
+                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Calon Pengusaha (Discover &rarr; Start)
                 </a>
               </li>
               <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white">
+                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   UMKM F&B (Discover &rarr; Grow)
                 </a>
               </li>
               <li>
-                <Link href="/register" className="transition-colors hover:text-paper-white">
+                <Link href="/register" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Pendaftaran Akun Baru
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="transition-colors hover:text-paper-white">
+                <Link href="/login" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Portal Masuk Pengguna
                 </Link>
               </li>
@@ -86,17 +86,17 @@ export function LandingFooter() {
             </h3>
             <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
               <li>
-                <a href="#kualitas-data" className="transition-colors hover:text-paper-white">
+                <a href="#kualitas-data" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Standar Bukti Pasar Terkurasi
                 </a>
               </li>
               <li>
-                <a href="#kualitas-data" className="transition-colors hover:text-paper-white">
+                <a href="#kualitas-data" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Transparansi Zero-Hallucination
                 </a>
               </li>
               <li>
-                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white">
+                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
                   Model Evaluasi 4-Pilar
                 </a>
               </li>

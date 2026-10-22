@@ -39,7 +39,7 @@ export function SuiteTabStrip() {
               aria-controls="panel-entrepreneur"
               onClick={() => setActiveTab("entrepreneur")}
               className={cx(
-                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150",
+                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2",
                 activeTab === "entrepreneur"
                   ? "bg-lilac-mist text-ink-charcoal font-w540"
                   : "bg-paper-white text-stone-gray hover:text-ink-charcoal font-w460"
@@ -62,7 +62,7 @@ export function SuiteTabStrip() {
               aria-controls="panel-umkm"
               onClick={() => setActiveTab("umkm")}
               className={cx(
-                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150",
+                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2",
                 activeTab === "umkm"
                   ? "bg-lilac-mist text-ink-charcoal font-w540"
                   : "bg-paper-white text-stone-gray hover:text-ink-charcoal font-w460"

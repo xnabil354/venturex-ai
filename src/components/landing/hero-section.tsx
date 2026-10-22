@@ -1,12 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-    FloatingGlassDock,
-    FloatingGlassPill,
-    LiveMarketPulseCard,
-    OpportunityFitMockupCard,
-    TrendSignalMockupCard,
-} from "./floating-mockup-card";
+import { FloatingGlassDock, FloatingGlassPill, LiveMarketPulseCard, OpportunityFitMockupCard, TrendSignalMockupCard } from "./floating-mockup-card";
 import { ArrowRightIcon, CompassIcon, RouteIcon, ShieldCheckIcon, TargetIcon } from "./icons";
 
 export function HeroSection() {
@@ -53,7 +47,8 @@ export function HeroSection() {
 
                 {/* Editorial Subheadline */}
                 <p className="mt-14 sm:mt-18 text-body-sm sm:text-body font-w460 text-paper-white/80 max-w-[520px] mx-auto leading-relaxed text-balance">
-                    Padukan sinyal tren pasar terkurasi dengan modal dan kapabilitas riil Anda untuk menghasilkan rekomendasi bisnis kuliner yang tervalidasi.
+                    Padukan sinyal tren pasar terkurasi dengan modal dan kapabilitas riil Anda untuk menghasilkan rekomendasi bisnis kuliner yang
+                    tervalidasi.
                 </p>
 
                 {/* Superhuman Capsule Pill CTA Group */}
@@ -80,56 +75,44 @@ export function HeroSection() {
 
             {/* Desktop 3D Spatial Floating Glass Constellation (Intentionally Asymmetrical, Perfectly Level, Organic Offsets) */}
             <div className="hidden lg:block absolute inset-0 z-20 pointer-events-none">
-                {/* 1. Left Wing Upper Anchor: Trend Intelligence Signal (Shifted inward from margin) */}
-                <div className="absolute lg:left-[35px] xl:left-[55px] top-[13%] xl:top-[14%] pointer-events-auto animate-float-1 z-20">
-                    <TrendSignalMockupCard className="shadow-[0_24px_50px_-10px_rgba(0,0,0,0.65)] lg:max-w-[285px] xl:max-w-[325px]" />
+                {/* 1. Left Wing Upper Anchor: Trend Intelligence Signal */}
+                <div className="absolute lg:left-[24px] xl:left-[36px] 2xl:left-[55px] top-[13%] xl:top-[14%] pointer-events-auto animate-float-1 z-20">
+                    <TrendSignalMockupCard className="shadow-[0_24px_50px_-10px_rgba(0,0,0,0.65)] lg:max-w-[270px] xl:max-w-[295px] 2xl:max-w-[325px]" />
                 </div>
 
-                {/* 2. Left Wing Clustered Dock: Shifted alongside Card 1 */}
-                <div className="absolute lg:left-[330px] xl:left-[395px] top-[18%] xl:top-[20%] pointer-events-auto animate-float-2 z-25">
+                {/* 2. Left Wing Clustered Dock: Appears alongside Card 1 on spacious displays (>= 2xl / 1536px) */}
+                <div className="hidden 2xl:block absolute 2xl:left-[395px] top-[18%] xl:top-[20%] pointer-events-auto animate-float-2 z-25">
                     <FloatingGlassDock className="shadow-[0_18px_42px_rgba(0,0,0,0.6)]" />
                 </div>
 
-                {/* 3. Left Wing Stepped Anchor: Live Market Pulse Feed (Shifted inward) */}
-                <div className="absolute lg:left-[100px] xl:left-[230px] 2xl:left-[260px] bottom-[20%] xl:bottom-[22%] pointer-events-auto animate-float-3 z-20">
+                {/* 3. Left Wing Stepped Anchor: Live Market Pulse Feed */}
+                <div className="absolute lg:left-[32px] xl:left-[80px] 2xl:left-[260px] bottom-[20%] xl:bottom-[22%] pointer-events-auto animate-float-3 z-20">
                     <LiveMarketPulseCard className="shadow-[0_20px_44px_-10px_rgba(0,0,0,0.6)] scale-[0.98] lg:max-w-[260px] xl:max-w-[290px]" />
                 </div>
 
-                {/* 4. Right Wing Satellite: Deteksi Bahan Baku Pill (Shifted inward) */}
-                <div className="absolute lg:right-[180px] xl:right-[220px] top-[22%] xl:top-[23%] pointer-events-auto animate-float-1 z-20">
-                    <FloatingGlassPill
-                        icon={CompassIcon}
-                        text="Deteksi Bahan Baku: Rempah Serai & Jahe"
-                    />
+                {/* 4. Right Wing Satellite: Deteksi Bahan Baku Pill */}
+                <div className="absolute lg:right-[80px] xl:right-[140px] 2xl:right-[220px] top-[22%] xl:top-[23%] pointer-events-auto animate-float-1 z-20">
+                    <FloatingGlassPill icon={CompassIcon} text="Deteksi Bahan Baku: Rempah Serai & Jahe" />
                 </div>
 
-                {/* 5. Right Wing Mid-Low Anchor: Opportunity Fit Engine (Shifted inward from margin) */}
-                <div className="absolute lg:right-[40px] xl:right-[65px] top-[32%] xl:top-[34%] pointer-events-auto animate-float-2 z-20">
-                    <OpportunityFitMockupCard className="shadow-[0_26px_56px_-12px_rgba(0,0,0,0.7)] lg:max-w-[290px] xl:max-w-[330px]" />
+                {/* 5. Right Wing Mid-Low Anchor: Opportunity Fit Engine */}
+                <div className="absolute lg:right-[24px] xl:right-[36px] 2xl:right-[65px] top-[32%] xl:top-[34%] pointer-events-auto animate-float-2 z-20">
+                    <OpportunityFitMockupCard className="shadow-[0_26px_56px_-12px_rgba(0,0,0,0.7)] lg:max-w-[270px] xl:max-w-[295px] 2xl:max-w-[330px]" />
                 </div>
 
                 {/* 6. Right Wing Indented Satellite: Margin Kotor Pill (Shifted inward) */}
                 <div className="absolute lg:right-[60px] xl:right-[90px] top-[64%] xl:top-[66%] pointer-events-auto animate-float-3 z-20">
-                    <FloatingGlassPill
-                        icon={ShieldCheckIcon}
-                        text="Margin Kotor 65% Terverifikasi Faktual"
-                    />
+                    <FloatingGlassPill icon={ShieldCheckIcon} text="Margin Kotor 65% Terverifikasi Faktual" />
                 </div>
 
                 {/* 7. Right Wing Satellite: Estimasi BEP Pill (Shifted inward) */}
                 <div className="absolute lg:right-[160px] xl:right-[200px] bottom-[19%] xl:bottom-[20%] pointer-events-auto animate-float-1 z-20">
-                    <FloatingGlassPill
-                        icon={TargetIcon}
-                        text="Estimasi BEP 4.2 Bulan · Risiko Rendah"
-                    />
+                    <FloatingGlassPill icon={TargetIcon} text="Estimasi BEP 4.2 Bulan · Risiko Rendah" />
                 </div>
 
                 {/* 8. Center-Bottom Organic Satellite: Roadmap Pill (Subtly Off-Center to avoid rigid grid) */}
                 <div className="absolute left-[42%] xl:left-[44%] bottom-[5%] xl:bottom-[6%] pointer-events-auto animate-float-2 z-20">
-                    <FloatingGlassPill
-                        icon={RouteIcon}
-                        text="Roadmap 4 Pekan Siap Eksekusi"
-                    />
+                    <FloatingGlassPill icon={RouteIcon} text="Roadmap 4 Pekan Siap Eksekusi" />
                 </div>
             </div>
         </section>

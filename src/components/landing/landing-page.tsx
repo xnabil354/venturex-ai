@@ -1,5 +1,4 @@
 import { AtmosphericCta } from "./atmospheric-cta";
-import { DarkFeatureBand } from "./dark-feature-band";
 import { HeroSection } from "./hero-section";
 import { InteractiveSpecimen } from "./interactive-specimen";
 import { LandingFooter } from "./landing-footer";
@@ -39,10 +38,7 @@ export function LandingPage() {
         {/* 7. Suite Product 3: Collaborative Action Roadmap Bento */}
         <RoadmapBento />
 
-        {/* 8. Enterprise & Data Integrity Dark Feature Band in Deep Lagoon */}
-        <DarkFeatureBand />
-
-        {/* 9. Atmospheric Gradient Conversion Call-to-Action */}
+        {/* 8. Atmospheric Green Conversion Call-to-Action */}
         <AtmosphericCta />
       </main>
 

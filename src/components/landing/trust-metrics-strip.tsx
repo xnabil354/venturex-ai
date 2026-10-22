@@ -33,7 +33,7 @@ export function TrustMetricsStrip() {
   ];
 
   return (
-    <section className="border-y border-soft-mist bg-paper-white py-32" aria-label="Standar Validasi Data">
+    <section id="kualitas-data" className="border-y border-soft-mist bg-paper-white py-32 scroll-mt-24" aria-label="Standar Validasi Data">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
         <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-soft-mist">
           {metrics.map((item) => (
