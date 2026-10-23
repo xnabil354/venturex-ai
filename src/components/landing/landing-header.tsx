@@ -54,28 +54,22 @@ export function LandingHeader() {
             className="hidden items-center gap-20 lg:gap-28 md:flex"
           >
             <a
-              href="#alur-solusi"
-              className="text-body-sm lg:text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm py-4 px-2"
-            >
-              Alur Solusi
-            </a>
-            <a
               href="#fitur-utama"
               className="text-body-sm lg:text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm py-4 px-2"
             >
               Fitur Utama
             </a>
             <a
-              href="#kualitas-data"
+              href="#alur-solusi"
               className="text-body-sm lg:text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm py-4 px-2"
             >
-              Integritas Data
+              Alur Solusi
             </a>
             <a
-              href="#simulasi-skor"
+              href="#pricing"
               className="text-body-sm lg:text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm py-4 px-2"
             >
-              Simulasi Fit
+              Pricing
             </a>
           </nav>
         </div>
@@ -137,13 +131,6 @@ export function LandingHeader() {
         >
           <nav className="flex flex-col gap-16" aria-label="Navigasi Mobile">
             <a
-              href="#alur-solusi"
-              className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Alur Solusi
-            </a>
-            <a
               href="#fitur-utama"
               className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
               onClick={() => setMobileMenuOpen(false)}
@@ -151,18 +138,18 @@ export function LandingHeader() {
               Fitur Utama
             </a>
             <a
-              href="#kualitas-data"
+              href="#alur-solusi"
               className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Integritas Data
+              Alur Solusi
             </a>
             <a
-              href="#simulasi-skor"
+              href="#pricing"
               className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Simulasi Fit
+              Pricing
             </a>
             <div className="mt-8 flex flex-col gap-12 border-t border-white/10 pt-16">
               <Link

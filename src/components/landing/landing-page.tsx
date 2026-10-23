@@ -9,8 +9,15 @@ import { SuiteTabStrip } from "./suite-tab-strip";
 import { TestimonialBand } from "./testimonial-band";
 import { TrendRadarBento } from "./trend-radar-bento";
 import { TrustMetricsStrip } from "./trust-metrics-strip";
+import type { PublicPricingSnapshot } from "@/billing/public-pricing";
 
-export function LandingPage() {
+export function LandingPage({
+  isAuthenticated = false,
+  pricing = null,
+}: Readonly<{
+  isAuthenticated?: boolean;
+  pricing?: PublicPricingSnapshot | null;
+}>) {
   return (
     <div className="min-h-screen bg-warm-parchment text-ink-charcoal antialiased flex flex-col">
       {/* Fixed Transparent Editorial Navigation */}
@@ -39,7 +46,7 @@ export function LandingPage() {
         {/* 7. Suite Product 3: Collaborative Action Roadmap Bento */}
         <RoadmapBento />
 
-        <PricingSection />
+        <PricingSection isAuthenticated={isAuthenticated} pricing={pricing} />
 
         {/* 8. Atmospheric Green Conversion Call-to-Action */}
         <AtmosphericCta />
