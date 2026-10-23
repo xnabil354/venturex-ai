@@ -2,6 +2,8 @@ import "server-only";
 import { z } from "zod";
 import { getCurrentUser } from "@/auth/current-user";
 import { EntrepreneurAnalysisError, EntrepreneurAnalysisService } from "@/opportunity/entrepreneur-analysis-service";
+import { BillingError } from "@/billing/errors";
+import { BillingService } from "@/billing/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,14 +48,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!user) throw new EntrepreneurAnalysisError("UNAUTHENTICATED");
     const parsed = await readBody(request);
     const deadline = AbortSignal.any([request.signal, AbortSignal.timeout(160_000)]);
-    const data = user.userType === "UMKM_EXISTING"
-      ? await new (await import("@/opportunity/business-analysis-service")).BusinessAnalysisService().analyze(user, id, parsed, deadline)
-      : await new EntrepreneurAnalysisService().analyze(user, id, parsed, deadline);
+    const data = await new BillingService().runAiUsage(user.id, "DETAILED_ANALYSIS", `detail-${id}-${crypto.randomUUID()}`, async () => {
+      if (user.userType === "UMKM_EXISTING") {
+        const { BusinessAnalysisService } = await import("@/opportunity/business-analysis-service");
+        return new BusinessAnalysisService().analyze(user, id, parsed, deadline);
+      }
+      return new EntrepreneurAnalysisService().analyze(user, id, parsed, deadline);
+    });
     return Response.json({ data }, { headers });
   } catch (error) {
-    const code = error instanceof EntrepreneurAnalysisError ? error.code : "UNAVAILABLE";
-    const status = { UNAUTHENTICATED: 401, FORBIDDEN: 403, NOT_FOUND: 404, INVALID_REQUEST: 400, UNAVAILABLE: 503, RATE_LIMITED: 429 }[code];
-    const message = { UNAUTHENTICATED: "Masuk kembali untuk membuka analisis.", FORBIDDEN: "Analisis memerlukan profil lengkap, hipotesis milik Anda, dan persetujuan pemrosesan.", NOT_FOUND: "Hipotesis tidak ditemukan.", INVALID_REQUEST: "Periksa persetujuan dan estimasi yang diisi.", UNAVAILABLE: "Analisis belum dapat disimpan atau diproses. Hipotesis dan hasil sebelumnya tetap tersedia.", RATE_LIMITED: "Analisis masih berjalan atau baru selesai. Tunggu sebentar sebelum memperbarui." }[code];
+    const code: string = error instanceof BillingError ? error.code : error instanceof EntrepreneurAnalysisError ? error.code : "UNAVAILABLE";
+    const status = ({ UNAUTHENTICATED: 401, FORBIDDEN: 403, NOT_FOUND: 404, INVALID_REQUEST: 400, UNAVAILABLE: 503, RATE_LIMITED: 429, AI_ACCESS_LOCKED: 403, INSUFFICIENT_CREDITS: 402 } as Record<string, number>)[code] ?? 503;
+    const message = error instanceof BillingError ? error.message : ({ UNAUTHENTICATED: "Masuk kembali untuk membuka analisis.", FORBIDDEN: "Analisis memerlukan profil lengkap, hipotesis milik Anda, dan persetujuan pemrosesan.", NOT_FOUND: "Hipotesis tidak ditemukan.", INVALID_REQUEST: "Periksa persetujuan dan estimasi yang diisi.", UNAVAILABLE: "Analisis belum dapat disimpan atau diproses. Hipotesis dan hasil sebelumnya tetap tersedia.", RATE_LIMITED: "Analisis masih berjalan atau baru selesai. Tunggu sebentar sebelum memperbarui." } as Record<string, string>)[code] ?? "Analisis belum dapat diproses.";
     return Response.json({ error: { code, message } }, { status, headers: { ...headers, ...(status === 429 ? { "Retry-After": "60" } : {}) } });
   }
 }

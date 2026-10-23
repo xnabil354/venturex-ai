@@ -31,6 +31,7 @@ export class User extends Model<
   declare onboardingStatus: OnboardingStatus;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+  declare loginDisabledAt: Date | null;
   declare opportunityAnalyses: NonAttribute<UserOpportunityAnalysis[]> | undefined;
 }
 
@@ -76,6 +77,11 @@ export function getUserModel(): typeof User {
         type: DataTypes.DATE,
         allowNull: false,
         field: "updated_at",
+      },
+      loginDisabledAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: "login_disabled_at",
       },
     },
     {

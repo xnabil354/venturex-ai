@@ -197,6 +197,12 @@ Product API:
 /api/v1
 ```
 
+## Billing Sandbox amendment
+
+Billing uses additive v1 endpoints: `GET /api/v1/billing`, `POST /api/v1/billing/checkout`, and provider-only `POST /api/v1/billing/duitku/callback`. Checkout accepts only a catalog product code; the server owns price, credits, owner, order ID, and entitlement. The return URL has no authority to settle a transaction. See `docs/Billing Sandbox MVP.md` for the full contract.
+
+Operator endpoints are restricted server-side to an `ADMIN` session: `GET /api/v1/admin/transactions`, `GET /api/v1/admin/billing/settings`, `PATCH /api/v1/admin/billing/products/{productCode}`, and `PATCH /api/v1/admin/billing/usage/{usageKind}`. Mutations require the same origin, strict JSON bodies, bounded numeric values, and a configuration version; they never alter payment status or historical payment snapshots.
+
 Contoh:
 
 ```text

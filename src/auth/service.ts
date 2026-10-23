@@ -23,6 +23,12 @@ import {
   UserRepository,
   type UserRepositoryPort,
 } from "../db/repositories/user-repository";
+import { AdminRepository } from "../db/repositories/admin-repository";
+import { toSafeAdmin, type SafeAdmin } from "./admin-types";
+
+export type AuthenticatedAccount =
+  | { readonly accountType: "USER"; readonly account: SafeUser }
+  | { readonly accountType: "ADMIN"; readonly account: SafeAdmin };
 
 export class AuthService {
   private userRepository: UserRepositoryPort | undefined;
@@ -84,23 +90,25 @@ export class AuthService {
     throw new UserTypeAlreadySelectedError();
   }
 
-  async validateCredentials(input: unknown): Promise<SafeUser | null> {
+  async validateCredentials(input: unknown): Promise<AuthenticatedAccount | null> {
     const parsedInput = credentialsSchema.safeParse(input);
     if (!parsedInput.success) {
       return null;
     }
 
-    const user = await this.getUserRepository().findByEmail(
-      normalizeEmail(parsedInput.data.email),
-    );
-    if (!user) {
-      return null;
+    const email = normalizeEmail(parsedInput.data.email);
+    const admin = await new AdminRepository().findByEmail(email);
+    if (admin) {
+      const isValid = await verifyPassword(parsedInput.data.password, admin.passwordHash);
+      return isValid ? { accountType: "ADMIN", account: toSafeAdmin(admin) } : null;
     }
 
+    const user = await this.getUserRepository().findByEmail(email);
+    if (!user) return null;
     const isValid = await verifyPassword(
       parsedInput.data.password,
       user.passwordHash,
     );
-    return isValid ? toSafeUser(user) : null;
+    return isValid ? { accountType: "USER", account: toSafeUser(user) } : null;
   }
 }

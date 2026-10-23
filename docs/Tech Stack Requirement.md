@@ -3467,3 +3467,6 @@ Versi patch harus diperiksa kembali sebelum final production deployment.
 ## User journey exports (22 October 2026)
 
 Server-side PDFKit 0.20 and ExcelJS 4.4 produce PDF/XLSX from validated owner-scoped snapshots. Noto Sans regular/bold is bundled under its OFL license for PDF text; Excel uses Arial with wrapping and print settings. Font assets are included in standalone tracing. No external rendering service or additional model call is required. See [Journey Reports](Journey%20Reports.md).
+# Billing Sandbox amendment
+
+The existing Next.js server runtime integrates Duitku POP sandbox through server-side `fetch`; no Duitku secret or authoritative amount reaches the client bundle. PostgreSQL/Sequelize transactions and row locks serialize credit reservation and callback settlement. Required server environment variables are `APP_URL`, `DUITKU_MERCHANT_CODE`, and `DUITKU_API_KEY`. Billing operators are persisted in PostgreSQL and verified through an `ADMIN` Auth.js session, not an email allowlist.

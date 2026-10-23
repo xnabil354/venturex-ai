@@ -9,6 +9,7 @@ import { SuiteTabStrip } from "./suite-tab-strip";
 import { TestimonialBand } from "./testimonial-band";
 import { TrendRadarBento } from "./trend-radar-bento";
 import { TrustMetricsStrip } from "./trust-metrics-strip";
+import { PricingSection } from "./pricing-section";
 
 export function LandingPage() {
   return (
@@ -38,6 +39,8 @@ export function LandingPage() {
 
         {/* 7. Suite Product 3: Collaborative Action Roadmap Bento */}
         <RoadmapBento />
+
+        <PricingSection />
 
         {/* 8. Enterprise & Data Integrity Dark Feature Band in Deep Lagoon */}
         <DarkFeatureBand />

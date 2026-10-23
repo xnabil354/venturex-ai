@@ -182,7 +182,7 @@ VENTUREX MVP **bukan**:
 - CRM penuh;
 - supplier marketplace;
 - procurement system;
-- payment gateway;
+- payment gateway di luar amendemen Billing Sandbox MVP (`docs/Billing Sandbox MVP.md`);
 - delivery system;
 - loan platform;
 - autonomous business execution;

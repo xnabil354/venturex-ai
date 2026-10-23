@@ -2040,6 +2040,12 @@ Once an entrepreneur hypothesis is saved, isSaved cannot return to false, DELETE
 
 Normalize administrative locality prefixes (including Kota/Kabupaten Administrasi), Jkt. aliases and directional Jakarta names before matching. Match complete locality names rather than arbitrary substrings, preserve Jakarta Utara/Selatan/Timur/Barat/Pusat distinctions, and reject street-only occurrences. Google Maps queries combine product, canonical city, profile province when present, and Indonesia. No guessed coordinates or automatic paid retries are added.
 
+## Billing Sandbox amendment
+
+Migration `023-create-billing.ts` adds `billing_accounts`, `billing_payments`, `credit_lots`, immutable `credit_ledger_entries`, and idempotency-oriented `billing_webhook_events`. Financial audit data is separated from general product records; no callback payload containing unnecessary payer data is persisted.
+
+Migration `024-create-admin-billing-controls.ts` separates operators into `admins`, disables the migrated legacy customer's login without deleting user-owned records, and adds versioned product/usage settings plus append-only operator audit logs. `billing_payments.granted_credits` is a payment-time entitlement snapshot used during settlement and scheduled-plan activation.
+
 Retain optional competitors.diagnostics in existing analysis JSONB: receivedCount, inspectedCount (maximum 20), invalidCount, outsideCityCount and duplicateCount. sampleCount is the unique locally matching count; at most five example places remain stored. Counters contain no extra raw addresses. The Competition disclosure shows these counters, distinguishes empty provider results from filtered results and keeps zero samples unknown. Old snapshots without diagnostics remain readable. Provider error envelopes are not treated as empty search evidence.
 
 The local Maps cache key moves to LOCAL_COMPETITOR_SAMPLE_V2, and input fingerprints include competitor matching version 2, preventing reuse of old empty samples for new analyses. Saved permanent snapshots stay immutable. Reanalysis applies only to unsaved hypotheses using existing consent and owner checks; the scoring formula and weights do not change.

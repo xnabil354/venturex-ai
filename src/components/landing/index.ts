@@ -11,4 +11,5 @@ export { DarkFeatureBand } from "./dark-feature-band";
 export { InteractiveSpecimen } from "./interactive-specimen";
 export { RoadmapBento } from "./roadmap-bento";
 export { AtmosphericCta } from "./atmospheric-cta";
+export { PricingSection } from "./pricing-section";
 export * from "./icons";

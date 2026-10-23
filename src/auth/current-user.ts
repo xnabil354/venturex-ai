@@ -6,6 +6,7 @@ import { toSafeUser, userIdSchema, type SafeUser } from "./user-types";
 
 export async function getCurrentUser(): Promise<SafeUser | null> {
   const session = await auth();
+  if (session?.user?.accountType !== "USER") return null;
   const rawUserId = session?.user?.id;
 
   if (!rawUserId) {
@@ -18,5 +19,5 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
   }
 
   const user = await new UserRepository().findById(parsedUserId.data);
-  return user ? toSafeUser(user) : null;
+  return user && !user.loginDisabledAt ? toSafeUser(user) : null;
 }

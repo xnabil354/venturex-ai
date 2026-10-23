@@ -101,7 +101,7 @@ FSD mencakup fungsi MVP berikut:
 21. Error dan state handling.
 22. Product analytics events.
 
-FSD tidak mencakup fungsi di luar MVP seperti POS, ERP, accounting, inventory, payroll, procurement, payment gateway, native mobile app, dan autonomous business execution.
+FSD tidak mencakup fungsi di luar MVP seperti POS, ERP, accounting, inventory, payroll, procurement, native mobile app, dan autonomous business execution. Payment gateway sandbox dan monitoring pembayaran yang terbatas diatur oleh amendemen Billing Sandbox MVP.
 
 ---
 
@@ -187,9 +187,9 @@ Framework:
 | System | Backend/application logic | Validation, scoring, routing, persistence |
 | AI Service | External/internal AI engine | Explanation dan reasoning berbasis structured context |
 | Data Source | Sumber trend/evidence | Menyediakan market/trend input |
-| Admin | Tidak termasuk core MVP | Tidak dispesifikasikan pada PRD |
+| Admin | Monitoring pembayaran read-only | Allowlist email server-side; tanpa refund, rekonsiliasi, atau mutasi finansial |
 
-**Catatan:** Admin dashboard tidak termasuk scope MVP karena tidak didefinisikan pada PRD.
+**Catatan:** Admin MVP dibatasi hanya pada monitoring pembayaran read-only sesuai `docs/Billing Sandbox MVP.md`.
 
 ---
 

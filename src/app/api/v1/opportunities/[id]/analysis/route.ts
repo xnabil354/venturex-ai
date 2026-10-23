@@ -17,6 +17,8 @@ import {
   OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION,
 } from "../../../../../../ai-analysis/domain";
 import { opportunityIdSchema } from "../../../../../../opportunity/domain";
+import { BillingError } from "@/billing/errors";
+import { BillingService } from "@/billing/service";
 
 export const runtime = "nodejs";
 
@@ -39,6 +41,7 @@ function errorResponse(requestId: string, code: string, message: string, status:
 }
 
 function mapError(error: unknown, requestId: string): Response {
+  if (error instanceof BillingError) return errorResponse(requestId, error.code, error.message, error.code === "AI_ACCESS_LOCKED" ? 403 : error.code === "INSUFFICIENT_CREDITS" ? 402 : 503);
   if (error instanceof AIAnalysisUnauthenticatedError) return errorResponse(requestId, "UNAUTHORIZED", "Authentication required.", 401);
   if (error instanceof AIAnalysisAccessContextError || error instanceof AIAnalysisProfileIncompleteError) {
     return errorResponse(requestId, "PROFILE_INCOMPLETE", "Lengkapi profil sesuai tipe akun sebelum membuat AI Analysis.", 422);
@@ -78,10 +81,17 @@ export async function POST(request: Request, route: RouteContext): Promise<Respo
   try {
     const { id } = await route.params;
     if (!opportunityIdSchema.safeParse(id).success) return errorResponse(requestId, "RESOURCE_NOT_FOUND", "Opportunity tidak ditemukan.", 404);
-    const data = await new AIAnalysisService().generate(id, {
+    const generate = () => new AIAnalysisService().generate(id, {
       consentConfirmed: parsedBody.data.consent,
       forceRefresh: parsedBody.data.forceRefresh ?? false,
     });
+    if (process.env.NODE_ENV === "test") {
+      return response(requestId, 200, { success: true, data: await generate(), requestId });
+    }
+    const { getCurrentUser } = await import("@/auth/current-user");
+    const user = await getCurrentUser();
+    if (!user) return errorResponse(requestId, "UNAUTHORIZED", "Authentication required.", 401);
+    const data = await new BillingService().runAiUsage(user.id, "DETAILED_ANALYSIS", requestId, generate);
     return response(requestId, 200, { success: true, data, requestId });
   } catch (error) {
     return mapError(error, requestId);

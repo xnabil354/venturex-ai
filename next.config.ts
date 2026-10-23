@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Permit the browser-visible hosts used for local development and the
+  // temporary ngrok callback tunnel. Without these, Next's development
+  // server blocks its HMR resources before React can hydrate the page.
+  allowedDevOrigins: [
+    "localhost",
+    "127.0.0.1",
+    "riverboat-eternity-ramp.ngrok-free.dev",
+  ],
   async headers() {
     return [{ source: "/notifications-sw.js", headers: [
       { key: "Content-Type", value: "application/javascript; charset=utf-8" },

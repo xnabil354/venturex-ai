@@ -8,6 +8,8 @@ import { NINEROUTER_ALLOW_PUBLIC_HTTP_DEV_ONLY_FLAG } from "@/ai-analysis/ninero
 import { PrivateOpportunityError, PrivateOpportunityHypothesisService } from "@/opportunity/private-hypothesis-service";
 import { messageForPrivateOpportunityError } from "@/opportunity/private-opportunity-error-message";
 import { PrivateHypothesisStateError } from "@/opportunity/private-hypothesis-repository";
+import { BillingError } from "@/billing/errors";
+import { BillingService } from "@/billing/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,6 +93,10 @@ function statusFor(code: PrivateOpportunityError["code"]): number {
 }
 
 function errorResponse(error: unknown, requestId: string): Response {
+  if (error instanceof BillingError) {
+    const status = error.code === "AI_ACCESS_LOCKED" ? 403 : error.code === "INSUFFICIENT_CREDITS" ? 402 : 503;
+    return json({ code: error.code, message: error.message }, status, requestId, true);
+  }
   if (error instanceof PrivateHypothesisStateError) return json({ code: error.code, message: error.code === "SAVED_PERMANENT" ? "Peluang tersimpan bersifat permanen dan tidak dapat dihapus atau diubah." : error.code === "ANALYSIS_CHANGED" ? "Analisis berubah atau perlu diperbarui. Muat ulang dan tinjau kembali sebelum menyimpan." : "Lengkapi analisis dan kedua skor sebelum menyimpan peluang." }, 409, requestId, true);
   if (error instanceof PrivateOpportunityError) {
     if (error.providerDiagnostic) {
@@ -122,6 +128,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!isAllowedRequestHost(request)) return json({ code: "FORBIDDEN", message: "Fitur ini hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
   try {
     const user = await getCurrentUser();
+    if (!user) throw new PrivateOpportunityError("UNAUTHENTICATED");
     const savedOnly = new URL(request.url).searchParams.get("saved") === "true";
     const items = await new PrivateOpportunityHypothesisService().listForUser(user, savedOnly);
     return json(items, 200, requestId);
@@ -136,8 +143,9 @@ export async function POST(request: Request): Promise<Response> {
   if (!sameOriginMutation(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
   try {
     const user = await getCurrentUser();
+    if (!user) throw new PrivateOpportunityError("UNAUTHENTICATED");
     const body = await readBody(request);
-    const result = await new PrivateOpportunityHypothesisService().generateForUser(user, body, request.signal);
+    const result = await new BillingService().runAiUsage(user.id, "OPPORTUNITY_HYPOTHESIS", requestId, () => new PrivateOpportunityHypothesisService().generateForUser(user, body, request.signal));
     if (result.outcome === "INSUFFICIENT_EVIDENCE") {
       return json([], 200, requestId, false, undefined, {
         outcome: result.outcome,

@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
@@ -59,7 +59,6 @@ export function LoginForm({ registered = false }: LoginFormProps) {
     }
     // This state is an intentional guard: native submission must stay disabled
     // until React has attached the client-side authentication handler.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsReady(true);
   }, []);
 
@@ -109,7 +108,8 @@ export function LoginForm({ registered = false }: LoginFormProps) {
         return;
       }
 
-      router.replace("/dashboard");
+      const session = await getSession();
+      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/transactions" : "/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError("Terjadi kendala saat masuk. Silakan coba lagi.");

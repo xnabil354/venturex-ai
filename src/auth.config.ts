@@ -2,6 +2,7 @@ import Credentials from "next-auth/providers/credentials";
 import type { NextAuthConfig } from "next-auth";
 
 import { AuthService } from "./auth/service";
+import { isAccountType } from "./auth/admin-types";
 import { isUserType } from "./auth/user-types";
 
 export const authConfig = {
@@ -18,9 +19,10 @@ export const authConfig = {
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          userType: user.userType,
+          id: user.account.id,
+          email: user.account.email,
+          userType: user.accountType === "USER" ? user.account.userType : null,
+          accountType: user.accountType,
         };
       },
     }),
@@ -33,6 +35,7 @@ export const authConfig = {
       if (user?.id) {
         token.sub = user.id;
         token.userType = user.userType;
+        token.accountType = user.accountType;
       }
       return token;
     },
@@ -41,6 +44,7 @@ export const authConfig = {
         session.user.id = token.sub;
       }
       session.user.userType = isUserType(token.userType) ? token.userType : null;
+      session.user.accountType = isAccountType(token.accountType) ? token.accountType : "USER";
       return session;
     },
   },

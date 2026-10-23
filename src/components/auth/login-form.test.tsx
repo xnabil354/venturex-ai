@@ -6,9 +6,10 @@ import { hydrateRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-const { replaceMock, signInMock } = vi.hoisted(() => ({
+const { replaceMock, signInMock, getSessionMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   signInMock: vi.fn(),
+  getSessionMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -17,9 +18,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next-auth/react", () => ({
   signIn: signInMock,
+  getSession: getSessionMock,
 }));
 
-import { signIn, type SignInResponse } from "next-auth/react";
+import { getSession, signIn, type SignInResponse } from "next-auth/react";
 
 import { LoginForm } from "./login-form";
 
@@ -41,6 +43,7 @@ describe("LoginForm hydration security", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(signIn).mockResolvedValue(signInResponse);
+    vi.mocked(getSession).mockResolvedValue({ user: { accountType: "USER" } } as never);
   });
 
   afterEach(() => {

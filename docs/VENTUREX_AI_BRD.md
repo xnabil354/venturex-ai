@@ -451,7 +451,7 @@ Tidak termasuk:
 - payroll;
 - procurement;
 - supplier marketplace;
-- payment gateway;
+- payment gateway selain Duitku sandbox POP yang didefinisikan pada `docs/Billing Sandbox MVP.md`;
 - loan service;
 - delivery management;
 - social media automation;
@@ -1304,7 +1304,7 @@ Jika API eksternal gagal, sistem tetap dapat menjalankan demo menggunakan data f
 - inventory;
 - procurement;
 - native mobile app;
-- payment gateway;
+- payment gateway selain Duitku sandbox POP yang didefinisikan pada `docs/Billing Sandbox MVP.md`;
 - supplier marketplace;
 - autonomous decision making.
 

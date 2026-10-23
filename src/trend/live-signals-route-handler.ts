@@ -4,6 +4,7 @@ import { LiveSignalsError, type LiveTrendSignalsService } from "./live-signals";
 import { GOOGLE_TRENDS_TIME_WINDOWS_HOURS, type GoogleTrendsTimeWindowHours } from "./brightdata-google-trends";
 import { TrendSignalAnalysisError, type TrendSignalAnalysisService } from "../ai-analysis/trend-signal-analysis";
 import { ONBOARDING_STATUSES, isUserType, type SafeUser } from "../auth/user-types";
+import { BillingError } from "../billing/errors";
 
 const MAX_ANALYSIS_REQUEST_BYTES = 2_048;
 type UserResolver = () => Promise<SafeUser | null>;
@@ -49,6 +50,10 @@ function isTrendSignalAnalysisError(error: unknown): error is TrendSignalAnalysi
 }
 
 function errorResponse(error: unknown, requestId: string): Response {
+  if (error instanceof BillingError) {
+    const status = error.code === "AI_ACCESS_LOCKED" ? 403 : error.code === "INSUFFICIENT_CREDITS" ? 402 : 503;
+    return json({ code: error.code, message: error.message }, status, requestId, true);
+  }
   if (isLiveSignalsError(error)) {
     const status = error.code === "DISPLAY_RIGHTS_UNVERIFIED" ? 403
       : error.code === "SNAPSHOT_NOT_FOUND" ? 404
@@ -183,6 +188,7 @@ export function createLiveTrendSignalsRefreshPOST(dependencies: {
 export function createLiveTrendSignalsAnalysisPOST(dependencies: {
   readonly resolveUser: UserResolver;
   readonly service: Pick<TrendSignalAnalysisService, "generate">;
+  readonly runPaidAction?: <T>(user: SafeUser, requestId: string, action: () => Promise<T>) => Promise<T>;
 }) {
   return async function POST(request: Request): Promise<Response> {
     const requestId = `req_${randomUUID()}`;
@@ -203,7 +209,8 @@ export function createLiveTrendSignalsAnalysisPOST(dependencies: {
       try { body = JSON.parse(text) as unknown; } catch { return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true); }
       const parsed = liveTrendAnalysisRequestSchema.safeParse(body);
       if (!parsed.success) return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true);
-      const result = await dependencies.service.generate(user, parsed.data, requestId);
+      const action = () => dependencies.service.generate(user, parsed.data, requestId);
+      const result = dependencies.runPaidAction ? await dependencies.runPaidAction(user, requestId, action) : await action();
       return json(result, 200, requestId);
     } catch (error) {
       return errorResponse(error, requestId);
