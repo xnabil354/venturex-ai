@@ -28,14 +28,14 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
 
   const plans = [
     {
-      name: "Coba Gratis 1 Bulan",
+      name: "Coba Gratis Selama 1 Bulan",
       price: "",
       pricePeriod: null,
       features: [
-        "Gratis 5 kredit",
-        "Trend Radar",
-        "Growth/Startup Roadmap",
-        "Hipotesis dan analisis mendalam"
+        "5 kredit",
+        "Akses Trend Radar dan peluang terkurasi",
+        "Fit Score, risiko, dan roadmap validasi",
+        "Aksi AI selama kredit trial masih tersedia",
       ],
       action: "Pilih",
       featured: false,
@@ -43,10 +43,11 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
     {
       name: "Premium",
       price: formatRupiah(pricing.premium.amount),
-      pricePeriod: "/ bulan",
+      pricePeriod: "/ 30 hari",
       features: [
-        `${pricing.premium.credits} kredit/bulan`,
-        "Mencakup semua fitur gratis",
+        `${pricing.premium.credits} kredit untuk 30 hari`,
+        "Akses aksi AI selama paket aktif",
+        "Termasuk seluruh fitur inti VENTUREX",
       ],
       action: "Berlangganan",
       featured: true,
@@ -54,10 +55,11 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
     {
       name: "Pro",
       price: formatRupiah(pricing.pro.amount),
-      pricePeriod: "/ bulan",
+      pricePeriod: "/ 30 hari",
       features: [
-        `${pricing.pro.credits} kredit/bulan`,
-        "Mencakup semua fitur premium"
+        `${pricing.pro.credits} kredit untuk 30 hari`,
+        "Akses aksi AI selama paket aktif",
+        "Fitur inti yang sama dengan jatah kredit lebih besar",
       ],
       action: "Berlangganan",
       featured: false,
@@ -67,9 +69,9 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
   return (
     <section aria-labelledby="pricing-title" className="border-y border-soft-mist bg-paper-white py-28 sm:py-36" id="pricing">
       <div className="mx-auto w-full max-w-[1120px] px-16 sm:px-24">
-        <div className="max-w-[46rem]">
-          <h2 id="pricing-title" className="text-heading-lg font-w460 tracking-heading-lg text-ink-charcoal">Bayar untuk keputusan yang dipakai, bukan janji samar.</h2>
-          <p className="mt-12 text-body leading-relaxed text-stone-gray">Mulai dengan trial. Saat membutuhkan lebih banyak ruang untuk menguji peluang, pilih jatah kredit yang sesuai dengan ritme riset Anda.</p>
+        <div className="max-w-[72rem] text-center py-15">
+          <h2 id="pricing-title" className="text-heading-lg font-w460 tracking-heading-lg text-ink-charcoal">Pilihan paket untuk setiap tahap usaha.</h2>
+          <p className="mt-12 text-body leading-relaxed text-stone-gray ">Dari eksplorasi awal hingga pengembangan peluang, pilih jatah kredit yang sesuai.</p>
         </div>
 
         <div className="mt-20 grid gap-16 lg:grid-cols-3">

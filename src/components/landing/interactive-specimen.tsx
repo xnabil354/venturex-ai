@@ -26,7 +26,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Rendah",
     estimatedCapital: "Rp8.000.000 – Rp12.000.000",
     paybackPeriod: "2.5 – 3.5 Bulan",
-    keyAdvantage: "Margin produk tinggi (>60%), perputaran stok bahan cepat, cocok untuk sistem booth mikro atau pre-order.",
+    keyAdvantage: "Format booth dan pre-order untuk menggambarkan skenario modal mikro.",
   },
   beverages_medium: {
     opportunityName: "Artisan Tea & Functional Herb Hub",
@@ -36,7 +36,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Rendah",
     estimatedCapital: "Rp18.000.000 – Rp25.000.000",
     paybackPeriod: "3.5 – 5.0 Bulan",
-    keyAdvantage: "Pangsa pasar loyal kelas urban, repeat order tinggi melalui aplikasi delivery dan langganan mingguan.",
+    keyAdvantage: "Contoh peluang minuman dengan skenario modal menengah.",
   },
   beverages_high: {
     opportunityName: "Specialty Tea & Beverage Experience Bar",
@@ -46,7 +46,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Sedang",
     estimatedCapital: "Rp40.000.000 – Rp60.000.000",
     paybackPeriod: "6.0 – 8.0 Bulan",
-    keyAdvantage: "Konsep dine-in bernilai tambah dengan potensi kemitraan dan diferensiasi brand yang kuat.",
+    keyAdvantage: "Contoh peluang minuman dengan skenario modal ekspansi.",
   },
   snacks_low: {
     opportunityName: "Gourmet Spiced Keripik & Root Chips Stand",
@@ -56,7 +56,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Rendah",
     estimatedCapital: "Rp6.000.000 – Rp10.000.000",
     paybackPeriod: "2.0 – 3.0 Bulan",
-    keyAdvantage: "Masa simpan produk lama, risiko basi minimal, mudah didistribusikan secara online maupun konsinyasi.",
+    keyAdvantage: "Contoh peluang camilan untuk skenario modal mikro.",
   },
   snacks_medium: {
     opportunityName: "Fresh Baked Artisan Pastry Pod",
@@ -66,7 +66,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Sedang",
     estimatedCapital: "Rp20.000.000 – Rp30.000.000",
     paybackPeriod: "4.0 – 5.5 Bulan",
-    keyAdvantage: "Daya tarik aroma langsung meningkatkan impuls beli di area perkantoran atau kampus.",
+    keyAdvantage: "Contoh peluang camilan untuk skenario modal menengah.",
   },
   snacks_high: {
     opportunityName: "Healthy & Gluten-Free Snack Production Lab",
@@ -76,7 +76,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Sedang",
     estimatedCapital: "Rp45.000.000 – Rp70.000.000",
     paybackPeriod: "6.5 – 9.0 Bulan",
-    keyAdvantage: "Peluang distribusi supermarket premium dan reseller B2B dengan harga jual per unit tinggi.",
+    keyAdvantage: "Contoh peluang camilan untuk skenario modal ekspansi.",
   },
   meals_low: {
     opportunityName: "Cloud Kitchen Comfort Rice Bowl Mini",
@@ -86,7 +86,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Rendah",
     estimatedCapital: "Rp9.000.000 – Rp14.000.000",
     paybackPeriod: "2.5 – 4.0 Bulan",
-    keyAdvantage: "Kebutuhan harian konsumen kantor, volume transaksi harian stabil saat jam makan siang.",
+    keyAdvantage: "Contoh peluang makanan utama untuk skenario modal mikro.",
   },
   meals_medium: {
     opportunityName: "High-Protein Clean Meal Prep & Bento",
@@ -96,7 +96,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Rendah",
     estimatedCapital: "Rp22.000.000 – Rp32.000.000",
     paybackPeriod: "3.5 – 5.0 Bulan",
-    keyAdvantage: "Model langganan katering harian mengunci arus kas di muka (prepaid cash flow).",
+    keyAdvantage: "Contoh peluang makanan utama untuk skenario modal menengah.",
   },
   meals_high: {
     opportunityName: "Specialty Noodle & Craft Broth Compact Outlet",
@@ -106,7 +106,7 @@ const simulationMatrix: Record<`${CategoryOption}_${CapitalOption}`, SimulationR
     riskLevel: "Sedang",
     estimatedCapital: "Rp50.000.000 – Rp80.000.000",
     paybackPeriod: "7.0 – 10.0 Bulan",
-    keyAdvantage: "Skalabilitas tinggi untuk pembukaan cabang kedua setelah resep dan SOP kaldu distandarisasi.",
+    keyAdvantage: "Contoh peluang makanan utama untuk skenario modal ekspansi.",
   },
 };
 
@@ -126,10 +126,10 @@ export function InteractiveSpecimen() {
             Simulator Cepat Interaktif
           </p>
           <h2 className="mt-12 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal text-balance">
-            Uji potensi kecocokan peluang Anda sekarang.
+            Lihat bentuk informasi yang akan Anda telaah.
           </h2>
           <p className="mt-16 text-body text-stone-gray text-balance">
-            Coba simulasi interaktif di bawah ini untuk melihat bagaimana algoritma VENTUREX memproses keselarasan antara kategori produk dan ketersediaan modal Anda.
+            Pilih kategori dan modal untuk melihat contoh cara VENTUREX menyajikan peluang, skor, risiko, dan kebutuhan modal. Semua nilai pada area ini adalah data dummy.
           </p>
         </div>
 
@@ -228,7 +228,7 @@ export function InteractiveSpecimen() {
             </div>
 
             <p className="mt-24 text-[12px] text-stone-gray border-t border-soft-mist pt-12">
-              * Ini adalah kalkulasi simulasi interaktif. Saat mendaftar akun, Anda dapat memasukkan data yang lebih detail dan akurat.
+              Data dummy untuk demonstrasi. Hasil analisis akun menggunakan profil dan data yang tersedia; skor bukan jaminan keberhasilan bisnis.
             </p>
           </div>
 
@@ -238,7 +238,7 @@ export function InteractiveSpecimen() {
               <div className="flex items-center justify-between border-b border-soft-mist/80 pb-16">
                 <div>
                   <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
-                    Hasil Rekomendasi Simulator
+                    Hasil simulasi · data dummy
                   </span>
                   <h3 className="mt-4 text-heading-sm font-w460 tracking-heading-sm text-ink-charcoal">
                     {currentResult.opportunityName}
@@ -260,7 +260,7 @@ export function InteractiveSpecimen() {
                     </span>
                     <span className="text-caption text-stone-gray">/ 100</span>
                   </div>
-                  <span className="text-[11px] text-stone-gray block mt-2">Daya tarik pasar & tren</span>
+                  <span className="text-[11px] text-stone-gray block mt-2">Contoh daya tarik pasar & tren</span>
                 </div>
 
                 <div className="rounded-small-buttons bg-lilac-mist/40 p-16 border border-lilac-mist">
@@ -271,24 +271,24 @@ export function InteractiveSpecimen() {
                     </span>
                     <span className="text-caption text-stone-gray">/ 100</span>
                   </div>
-                  <span className="text-[11px] text-stone-gray block mt-2">Kecocokan modal & profil</span>
+                  <span className="text-[11px] text-stone-gray block mt-2">Contoh kecocokan modal & profil</span>
                 </div>
               </div>
 
               {/* Detail Metrics */}
               <div className="mt-20 space-y-10 rounded-small-buttons bg-warm-parchment/40 p-16 text-body-sm">
                 <div className="flex justify-between">
-                  <span className="text-stone-gray">Alokasi Modal Estimasi:</span>
+                  <span className="text-stone-gray">Alokasi modal (dummy):</span>
                   <span className="font-w540 text-ink-charcoal">{currentResult.estimatedCapital}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-stone-gray">Proyeksi Balik Modal:</span>
+                  <span className="text-stone-gray">Balik modal (dummy):</span>
                   <span className="font-w540 text-ink-charcoal">{currentResult.paybackPeriod}</span>
                 </div>
                 <div className="border-t border-soft-mist/80 pt-8 mt-8">
-                  <span className="text-caption font-w540 text-stone-gray block">Keunggulan Strategis:</span>
+                  <span className="text-caption font-w540 text-stone-gray block">Catatan simulasi:</span>
                   <p className="mt-2 text-caption text-ink-charcoal leading-relaxed">
-                    {currentResult.keyAdvantage}
+                    {currentResult.keyAdvantage} Nilai aktual akan bergantung pada profil, bukti, dan data yang tersedia.
                   </p>
                 </div>
               </div>

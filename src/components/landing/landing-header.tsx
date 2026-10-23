@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export function LandingHeader() {
+import { LogoutButton } from "@/components/auth/logout-button";
+
+type LandingHeaderProps = Readonly<{
+  userEmail?: string;
+}>;
+
+export function LandingHeader({ userEmail }: LandingHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -69,26 +75,30 @@ export function LandingHeader() {
               href="#pricing"
               className="text-body-sm lg:text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm py-4 px-2"
             >
-              Pricing
+              Harga
             </a>
           </nav>
         </div>
 
         {/* Right: Auth CTA Controls */}
-        <div className="hidden items-center gap-16 md:flex shrink-0">
-          <Link
-            href="/login"
-            className="inline-flex min-h-[44px] items-center px-12 text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm"
-          >
-            Masuk
-          </Link>
-          <Link
-            href="/register"
-            className="inline-flex min-h-[44px] items-center justify-center rounded-small-buttons bg-paper-white px-20 text-body-sm font-w540 text-midnight-wine transition-all duration-200 hover:bg-lilac-mist hover:scale-[1.02] active:scale-[0.98] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e]"
-          >
-            Mulai Analisis
-          </Link>
-        </div>
+        {userEmail ? (
+          <LandingProfileMenu userEmail={userEmail} />
+        ) : (
+          <div className="hidden shrink-0 items-center gap-16 md:flex">
+            <Link
+              href="/login"
+              className="inline-flex min-h-[44px] items-center px-12 text-body font-w460 text-paper-white/80 transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] rounded-sm"
+            >
+              Masuk
+            </Link>
+            <Link
+              href="/register"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-small-buttons bg-paper-white px-20 text-body-sm font-w540 text-midnight-wine transition-all duration-200 hover:bg-lilac-mist hover:scale-[1.02] active:scale-[0.98] shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e]"
+            >
+              Daftar
+            </Link>
+          </div>
+        )}
 
         {/* Mobile Menu Button (Accessible 44x44px Touch Target) */}
         <button
@@ -149,9 +159,9 @@ export function LandingHeader() {
               className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Pricing
+              Harga
             </a>
-            <div className="mt-8 flex flex-col gap-12 border-t border-white/10 pt-16">
+            {userEmail ? null : <div className="mt-8 flex flex-col gap-12 border-t border-white/10 pt-16">
               <Link
                 href="/login"
                 className="text-center text-body font-w460 text-paper-white/85 py-10 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist"
@@ -164,12 +174,76 @@ export function LandingHeader() {
                 className="inline-flex min-h-[44px] items-center justify-center rounded-small-buttons bg-paper-white px-16 text-body font-w540 text-midnight-wine hover:bg-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Mulai Analisis
+                Daftar
               </Link>
-            </div>
+            </div>}
           </nav>
         </div>
       ) : null}
     </header>
+  );
+}
+
+function LandingProfileMenu({ userEmail }: Readonly<{ userEmail: string }>) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const profileLinkRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    profileLinkRef.current?.focus();
+
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) setIsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setIsOpen(false);
+      buttonRef.current?.focus();
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        aria-controls={isOpen ? "landing-profile-menu" : undefined}
+        aria-expanded={isOpen}
+        aria-label="Menu profil"
+        className="inline-flex size-48 items-center justify-center text-paper-white transition-colors hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist"
+        onClick={() => setIsOpen((current) => !current)}
+        ref={buttonRef}
+        title="Profil dan akun"
+        type="button"
+      >
+        <svg aria-hidden="true" className="size-20" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="3.25" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M5.5 20a6.5 6.5 0 0 1 13 0" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+        </svg>
+      </button>
+      {isOpen ? <div className="absolute right-0 top-full z-50 mt-8 w-[min(18rem,calc(100vw-2rem))] rounded-cards border border-white/15 bg-[#14080e] p-16 text-paper-white shadow-xl" id="landing-profile-menu">
+        <p className="break-words border-b border-white/10 pb-12 text-caption text-paper-white/70">{userEmail}</p>
+        <Link
+          className="mt-8 flex min-h-button items-center rounded-small-buttons px-12 text-body-sm font-w540 text-paper-white transition-colors hover:bg-white/10 hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-lilac-mist"
+          href="/profile"
+          onClick={() => setIsOpen(false)}
+          ref={profileLinkRef}
+        >
+          Edit profil
+        </Link>
+        <div onClick={() => setIsOpen(false)}>
+          <LogoutButton className="mt-4 w-full justify-start px-12 text-paper-white hover:bg-white/10 hover:text-lilac-mist" />
+        </div>
+      </div> : null}
+    </div>
   );
 }

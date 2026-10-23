@@ -12,5 +12,5 @@ export default async function HomePage() {
     getCurrentUser().catch(() => null),
   ]);
 
-  return <LandingPage isAuthenticated={user !== null} pricing={pricing} />;
+  return <LandingPage isAuthenticated={user !== null} pricing={pricing} {...(user ? { userEmail: user.email } : {})} />;
 }
