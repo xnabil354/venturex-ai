@@ -92,12 +92,12 @@ export function LandingFooter() {
               </li>
               <li>
                 <a href="#kualitas-data" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Transparansi Zero-Hallucination
+                  Sumber tren dan batasan data
                 </a>
               </li>
               <li>
                 <a href="#simulasi-skor" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Model Evaluasi 4-Pilar
+                  Model penilaian berbasis data tersedia
                 </a>
               </li>
               <li>
@@ -125,12 +125,12 @@ export function LandingFooter() {
               </li>
               <li>
                 <span className="text-paper-white/50 cursor-default">
-                  Kebijakan Privasi Data Profil
+                  Data profil dikelola untuk personalisasi
                 </span>
               </li>
               <li>
                 <span className="text-paper-white/50 cursor-default">
-                  Syarat Layanan & Ketentuan
+                  Ketentuan layanan tersedia saat pendaftaran
                 </span>
               </li>
             </ul>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { LandingPage } from "./landing-page";
@@ -38,14 +38,22 @@ describe("LandingPage Component", () => {
         expect(registerLinks[0]?.getAttribute("href")).toBe("/register");
     });
 
-    it("renders 6-cell trust and benchmark metrics", () => {
+    it("replaces public header CTAs with the profile control for an authenticated user", () => {
+        render(<LandingPage isAuthenticated userEmail="owner@example.com" />);
+
+        const header = screen.getByRole("banner");
+        expect(within(header).getByRole("button", { name: "Menu profil" }).getAttribute("aria-expanded")).toBe("false");
+        expect(within(header).queryByRole("link", { name: "Masuk" })).toBeNull();
+        expect(within(header).queryByRole("link", { name: "Daftar" })).toBeNull();
+    });
+
+    it("renders evidence-oriented trust metrics", () => {
         render(<LandingPage />);
 
-        expect(screen.getByText("100%")).toBeDefined();
-        expect(screen.getByText("Bukti Pasar Riil")).toBeDefined();
-        expect(screen.getByText("7 Sektor")).toBeDefined();
-        expect(screen.getByText("Kategori F&B Utama")).toBeDefined();
-        expect(screen.getByText("Zero-Hallucination")).toBeDefined();
+        expect(screen.getByText("Dengan sumber")).toBeDefined();
+        expect(screen.getByText("Tren terkurasi")).toBeDefined();
+        expect(screen.getByText("2 Persona")).toBeDefined();
+        expect(screen.getByText("Batasan jelas")).toBeDefined();
     });
 
     it("renders TrendRadarBento feature cards and evidence metrics", () => {
@@ -53,16 +61,15 @@ describe("LandingPage Component", () => {
 
         expect(screen.getByText(/Tangkap pergeseran pasar sebelum menjadi jenuh\./i)).toBeDefined();
         expect(screen.getByText("Deteksi Tren Berbasis Bukti")).toBeDefined();
-        expect(screen.getByText("Sinyal Pertumbuhan Kuartalan")).toBeDefined();
-        expect(screen.getByText("Analisis Bahan Baku Lokal")).toBeDefined();
-        expect(screen.getByText("Klasifikasi Segmen Pembeli")).toBeDefined();
+        expect(screen.getByText("Tren dengan konteks yang dapat ditelusuri")).toBeDefined();
+        expect(screen.getByText("Eksplorasi Peluang Menu")).toBeDefined();
+        expect(screen.getByText("Konteks Pengguna yang Dipersonalisasi")).toBeDefined();
     });
 
-    it("renders iconic Lilac Wash TestimonialBand", () => {
+    it("does not render an unverified customer testimonial", () => {
         render(<LandingPage />);
 
-        expect(screen.getByText(/VENTUREX menyelamatkan modal tabungan saya/i)).toBeDefined();
-        expect(screen.getByText(/Rian Pratama/i)).toBeDefined();
+        expect(screen.queryByText(/Rian Pratama/i)).toBeNull();
     });
 
     it("toggles between Calon Pengusaha and UMKM Existing tabs in SuiteTabStrip", () => {
@@ -116,9 +123,9 @@ describe("LandingPage Component", () => {
     it("renders RoadmapBento milestone stages", () => {
         render(<LandingPage />);
 
-        expect(screen.getByText(/Panduan eksekusi bertahap dari ide menuju pembukaan gerai\./i)).toBeDefined();
-        expect(screen.getByText("Validasi Resep & Sensory Test")).toBeDefined();
-        expect(screen.getByText("Peluncuran Kanal & Go-to-Market")).toBeDefined();
+        expect(screen.getByText(/Roadmap validasi untuk mengambil langkah berikutnya dengan lebih terarah\./i)).toBeDefined();
+        expect(screen.getByText("Pilih peluang untuk divalidasi")).toBeDefined();
+        expect(screen.getByText("Tinjau hasil dan tentukan langkah")).toBeDefined();
     });
 
     it("renders 4-column footer with brand, legal sections, and ghost watermark", () => {

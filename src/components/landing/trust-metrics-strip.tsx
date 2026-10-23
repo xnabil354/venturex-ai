@@ -1,29 +1,29 @@
 export function TrustMetricsStrip() {
   const metrics = [
     {
-      label: "Bukti Pasar Riil",
-      value: "100%",
-      detail: "Katalog tren terkurasi pakar",
+      label: "Tren terkurasi",
+      value: "Dengan sumber",
+      detail: "Setiap tren memuat bukti dan konteks",
     },
     {
-      label: "Kategori F&B Utama",
-      value: "7 Sektor",
-      detail: "Minuman, camilan, hingga katering",
+      label: "Jalur pengguna",
+      value: "2 Persona",
+      detail: "Calon pengusaha dan UMKM aktif",
     },
     {
-      label: "Segmen Konsumen",
-      value: "6 Persona",
-      detail: "Dari mahasiswa hingga keluarga",
+      label: "Fit Score",
+      value: "0–100",
+      detail: "Indikator kesesuaian berbasis profil",
     },
     {
-      label: "Dimensi Fit Scoring",
-      value: "4 Pilar",
-      detail: "Modal, keahlian, risiko, & kanal",
+      label: "Opportunity Score",
+      value: "0–100",
+      detail: "Indikator peluang dari data tersedia",
     },
     {
-      label: "Integritas AI",
-      value: "Zero-Hallucination",
-      detail: "Tanpa fabrikasi data tren",
+      label: "Batasan jelas",
+      value: "Bukan jaminan",
+      detail: "Skor mendukung, bukan menggantikan keputusan",
     },
     {
       label: "Misi Berkelanjutan",

@@ -47,8 +47,7 @@ export function HeroSection() {
 
                 {/* Editorial Subheadline */}
                 <p className="mt-14 sm:mt-18 text-body-sm sm:text-body font-w460 text-paper-white/80 max-w-[520px] mx-auto leading-relaxed text-balance">
-                    Padukan sinyal tren pasar terkurasi dengan modal dan kapabilitas riil Anda untuk menghasilkan rekomendasi bisnis kuliner yang
-                    tervalidasi.
+                    Padukan tren terkurasi dengan profil usaha Anda untuk menilai peluang, kesesuaian, risiko, dan langkah validasi berikutnya.
                 </p>
 
                 {/* Superhuman Capsule Pill CTA Group */}
@@ -85,14 +84,14 @@ export function HeroSection() {
                     <FloatingGlassDock className="shadow-[0_18px_42px_rgba(0,0,0,0.6)]" />
                 </div>
 
-                {/* 3. Left Wing Stepped Anchor: Live Market Pulse Feed */}
+                {/* 3. Left Wing Stepped Anchor: Trend preview */}
                 <div className="absolute lg:left-[32px] xl:left-[80px] 2xl:left-[260px] bottom-[20%] xl:bottom-[22%] pointer-events-auto animate-float-3 z-20">
                     <LiveMarketPulseCard className="shadow-[0_20px_44px_-10px_rgba(0,0,0,0.6)] scale-[0.98] lg:max-w-[260px] xl:max-w-[290px]" />
                 </div>
 
-                {/* 4. Right Wing Satellite: Deteksi Bahan Baku Pill */}
+                {/* 4. Right Wing Satellite: Dummy trend context pill */}
                 <div className="absolute lg:right-[80px] xl:right-[140px] 2xl:right-[220px] top-[22%] xl:top-[23%] pointer-events-auto animate-float-1 z-20">
-                    <FloatingGlassPill icon={CompassIcon} text="Deteksi Bahan Baku: Rempah Serai & Jahe" />
+                    <FloatingGlassPill icon={CompassIcon} text="Rempah serai & jahe" />
                 </div>
 
                 {/* 5. Right Wing Mid-Low Anchor: Opportunity Fit Engine */}
@@ -100,19 +99,19 @@ export function HeroSection() {
                     <OpportunityFitMockupCard className="shadow-[0_26px_56px_-12px_rgba(0,0,0,0.7)] lg:max-w-[270px] xl:max-w-[295px] 2xl:max-w-[330px]" />
                 </div>
 
-                {/* 6. Right Wing Indented Satellite: Margin Kotor Pill (Shifted inward) */}
+                {/* 6. Right Wing Indented Satellite: Dummy margin pill */}
                 <div className="absolute lg:right-[60px] xl:right-[90px] top-[64%] xl:top-[66%] pointer-events-auto animate-float-3 z-20">
-                    <FloatingGlassPill icon={ShieldCheckIcon} text="Margin Kotor 65% Terverifikasi Faktual" />
+                    <FloatingGlassPill icon={ShieldCheckIcon} text="Margin kotor 65%" />
                 </div>
 
-                {/* 7. Right Wing Satellite: Estimasi BEP Pill (Shifted inward) */}
+                {/* 7. Right Wing Satellite: Dummy risk pill */}
                 <div className="absolute lg:right-[160px] xl:right-[200px] bottom-[19%] xl:bottom-[20%] pointer-events-auto animate-float-1 z-20">
-                    <FloatingGlassPill icon={TargetIcon} text="Estimasi BEP 4.2 Bulan · Risiko Rendah" />
+                    <FloatingGlassPill icon={TargetIcon} text="BEP 4,2 bulan · Risiko rendah" />
                 </div>
 
-                {/* 8. Center-Bottom Organic Satellite: Roadmap Pill (Subtly Off-Center to avoid rigid grid) */}
+                {/* 8. Center-Bottom Organic Satellite: Dummy roadmap pill */}
                 <div className="absolute left-[42%] xl:left-[44%] bottom-[5%] xl:bottom-[6%] pointer-events-auto animate-float-2 z-20">
-                    <FloatingGlassPill icon={RouteIcon} text="Roadmap 4 Pekan Siap Eksekusi" />
+                    <FloatingGlassPill icon={RouteIcon} text="Roadmap 4 pekan" />
                 </div>
             </div>
         </section>

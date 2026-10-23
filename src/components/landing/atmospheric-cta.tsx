@@ -23,7 +23,7 @@ export function AtmosphericCta() {
               Bangun bisnis kuliner dengan fondasi data pasar yang kuat.
             </h2>
             <p className="mt-16 text-body font-w460 text-paper-white/85 leading-body max-w-[560px]">
-              Daftar dalam 2 menit, isi profil modal atau usaha Anda, dan biarkan sistem memetakan peluang terbaik dengan risiko terukur.
+              Buat akun, lengkapi profil modal atau usaha Anda, lalu telaah peluang, skor, risiko, dan bukti yang tersedia sebelum mengambil langkah berikutnya.
             </p>
           </div>
 
