@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Badge, Button, Card, EmptyState, PageContainer, StatusNotice } from "@/components/ui";
 import type { StatusNoticeTone } from "@/components/ui/status-notice";
@@ -177,6 +178,7 @@ export function PrivateOpportunityFinder({
   readonly pagination?: { readonly page: number; readonly hasMore: boolean };
   readonly profileActionRequired?: boolean;
 }) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const comparisonKey = comparisonOwnerId ? `venturex:compare:${comparisonOwnerId}` : null;
   const [fallbackIds, setFallbackIds] = useState<readonly string[]>([]);
@@ -320,6 +322,7 @@ export function PrivateOpportunityFinder({
       setNoticeTone("success");
       setNotice(`${generatedItems.length} hipotesis tersimpan. Tinjau sebelum digunakan.`);
       setConsent(false);
+      router.refresh();
     } catch {
       setError("Koneksi ke layanan AI terputus. Periksa Opportunity Finder sebelum mencoba kembali.");
     } finally {

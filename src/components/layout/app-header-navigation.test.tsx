@@ -34,4 +34,12 @@ describe("AppHeaderNavigation profile control", () => {
     expect(profileButton.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("link", { name: "Edit profil" })).toBeNull();
   });
+
+  it("shows the authenticated user's remaining credits as a link to billing", () => {
+    render(<AppHeaderNavigation availableCredits={7} userEmail="owner@example.com" />);
+
+    const credits = screen.getByRole("link", { name: "7 kredit tersedia. Buka paket dan kredit" });
+    expect(credits.getAttribute("href")).toBe("/billing");
+    expect(credits.textContent).toContain("7 kredit");
+  });
 });

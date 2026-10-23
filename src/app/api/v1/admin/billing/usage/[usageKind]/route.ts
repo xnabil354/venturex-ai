@@ -8,7 +8,7 @@ import { BillingAdminError, updateUsageSetting } from "@/billing/admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const usageKinds = ["TREND_INSIGHT", "OPPORTUNITY_HYPOTHESIS", "DETAILED_ANALYSIS"] as const;
+const usageKinds = ["OPPORTUNITY_HYPOTHESIS", "DETAILED_ANALYSIS"] as const;
 const bodySchema = z.object({ creditCost: z.number().int().min(0).max(100), version: z.number().int().positive() }).strict();
 
 function sameOrigin(request: Request): boolean {

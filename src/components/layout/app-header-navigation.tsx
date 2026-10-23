@@ -22,9 +22,10 @@ const mobileLinkClasses =
 
 type AppHeaderNavigationProps = {
   userEmail?: string;
+  availableCredits?: number;
 };
 
-export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
+export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNavigationProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -124,6 +125,20 @@ export function AppHeaderNavigation({ userEmail }: AppHeaderNavigationProps) {
           </div>
 
           <div className="flex items-center gap-8 sm:gap-12">
+            {userEmail && availableCredits !== undefined ? (
+              <Link
+                aria-label={`${availableCredits} kredit tersedia. Buka paket dan kredit`}
+                className="inline-flex min-h-button items-center gap-6 rounded-pills border border-white/15 bg-white/10 px-10 text-caption font-w540 text-paper-white transition-colors hover:border-lilac-mist hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist"
+                href="/billing"
+                title="Paket dan kredit"
+              >
+                <svg aria-hidden="true" className="size-14 shrink-0 text-lilac-mist" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 3.75 19.25 8v8L12 20.25 4.75 16V8L12 3.75Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" />
+                  <path d="m4.75 8 7.25 4.25L19.25 8M12 12.25v8" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" />
+                </svg>
+                <span>{availableCredits} kredit</span>
+              </Link>
+            ) : null}
             {userEmail ? <NotificationBell /> : null}
             {userEmail ? (
               <div className="relative lg:ml-8 lg:border-l lg:border-white/15 lg:pl-12" ref={profileMenuRef}>

@@ -3,6 +3,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+
 vi.mock("next/link", async () => {
   const React = await import("react");
   return {
@@ -99,6 +103,7 @@ const generatedItem = {
 const fetchMock = vi.fn<typeof fetch>();
 
 beforeEach(() => {
+  router.refresh.mockReset();
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockImplementation(async (input) => {
@@ -275,6 +280,7 @@ describe("PrivateOpportunityFinder timeout state", () => {
     expect(screen.getByText("Wawancarai 10 calon pelanggan tentang pilihan kemasan.")).toBeTruthy();
     expect(screen.getByText("Lakukan pengujian selama 7 hari dan catat tanggapan.")).toBeTruthy();
     expect(screen.getByText("Data transaksi 30 hari masih perlu dikumpulkan.")).toBeTruthy();
+    expect(router.refresh).toHaveBeenCalledOnce();
   });
 
   it("asks before deleting a hypothesis and removes it from the account after success", async () => {

@@ -58,6 +58,25 @@ describe("authenticated Trend live routes", () => {
     expect(generate).toHaveBeenCalledOnce();
   });
 
+  it("runs Trend Insight without a billing-credit wrapper", async () => {
+    const generate = vi.fn().mockResolvedValue({ summary: "Sinyal siap ditinjau." });
+    const handler = createLiveTrendSignalsAnalysisPOST({
+      resolveUser: async () => user,
+      service: { generate },
+    });
+
+    const response = await handler(post("/api/v1/trends/live-signals/analysis", {
+      snapshotId: "80000000-0000-4000-8000-000000000001",
+      signalId: "80000000-0000-4000-8000-000000000002",
+      consent: true,
+      disclosureVersion: "trends-ninerouter-profile-v2",
+    }));
+
+    expect(response.status).toBe(200);
+    expect(generate).toHaveBeenCalledOnce();
+    expect(generate).toHaveBeenCalledWith(user, expect.any(Object), expect.stringMatching(/^req_/u));
+  });
+
   it("routes a user-authorized explicit refresh through the service only after origin and role checks", async () => {
     const refresh = vi.fn().mockResolvedValue({ snapshotId: "80000000-0000-4000-8000-000000000001" });
     const handler = createLiveTrendSignalsRefreshPOST({ resolveUser: async () => user, service: { refresh } });
