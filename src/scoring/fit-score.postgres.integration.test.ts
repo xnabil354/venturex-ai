@@ -70,6 +70,9 @@ const MIGRATION_NAMES = [
   "015-create-opportunity-fit-inputs.ts",
   "016-create-roadmaps.ts",
   "017-create-trend-evidence-provenances.ts",
+  "018-create-private-opportunity-hypotheses.ts",
+  "019-add-entrepreneur-location-details.ts",
+  "020-add-business-location-details.ts",
 ];
 
 const IDS = {

@@ -142,7 +142,6 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
               </dd>
             </div>
           </dl>
-          <p className="text-caption text-stone-gray">Provider: {state.analysis.provider} · Model: {state.analysis.model} · Dibuat: {state.analysis.generatedAt}</p>
         </div>
       ) : null}
       {state.error ? (
@@ -159,11 +158,11 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
         <label className="flex items-start gap-10 text-body-sm leading-body-sm text-ink-charcoal">
           <input checked={consent} className="mt-3 size-16 accent-royal-violet" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
           <span>
-            Saya setuju VENTUREX mengirim konteks minimum profil yang sesuai tipe akun saya, ringkasan Opportunity, Trend terpublikasi, dan evidence terpilih ke layanan 9Router yang dikonfigurasi operator untuk dianalisis dengan model {state.analysis?.model ?? "cx/gpt-6-luna-xhigh"}. Lokasi, anggaran/harga persis, uraian bebas, nama produk, identitas akun, dan kontak tidak dikirim. Persetujuan ini berlaku untuk permintaan yang saya mulai.
+            Saya setuju konteks profil dan bukti terpilih diproses untuk analisis ini.
           </span>
         </label>
         <p className="text-caption leading-body-sm text-stone-gray">
-          Hasil disimpan sebagai AI Analysis akun Anda sesuai fitur aplikasi. Retensi dan pemrosesan lanjutan pada layanan 9Router tidak diverifikasi oleh VENTUREX. Jangan lanjutkan bila Anda tidak menyetujui pengiriman ini.
+          Hasil analisis disimpan di akun Anda.
         </p>
       </div>
       <Button

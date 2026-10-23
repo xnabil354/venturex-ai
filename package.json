@@ -8,9 +8,9 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/notifications/run-app.mjs dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/notifications/run-app.mjs start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -23,15 +23,21 @@
     "catalog:import": "node --env-file-if-exists=.env --experimental-strip-types scripts/catalog/import-curated-catalog.mjs",
     "catalog:lifecycle": "node --conditions=react-server --env-file-if-exists=.env --experimental-transform-types scripts/catalog/lifecycle.mjs",
     "trend:preview": "node --conditions=react-server --experimental-transform-types scripts/trend/preview-brightdata-candidates.mjs",
-    "trend:curate": "node --conditions=react-server --experimental-transform-types scripts/trend/prepare-candidate-curation.mjs"
+    "trend:curate": "node --conditions=react-server --experimental-transform-types scripts/trend/prepare-candidate-curation.mjs",
+    "notifications:setup": "node --env-file-if-exists=.env scripts/notifications/setup.mjs",
+    "notifications:worker": "node --conditions=react-server --env-file-if-exists=.env scripts/notifications/worker.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.67",
     "@tailwindcss/postcss": "^4.1.14",
     "ai": "^7.0.137",
     "argon2": "^0.45.1",
+    "exceljs": "^4.4.0",
+    "jiti": "^2.7.0",
     "next": "16.3.6",
     "next-auth": "5.0.0-beta.32",
+    "papaparse": "^5.7.0",
+    "pdfkit": "^0.20.2",
     "pg": "^8.23.0",
     "pg-hstore": "^2.3.4",
     "react": "19.2.0",
@@ -40,6 +46,7 @@
     "server-only": "^0.0.1",
     "tailwindcss": "^4.1.14",
     "umzug": "^3.8.3",
+    "web-push": "^3.6.7",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -47,9 +54,12 @@
     "@testing-library/dom": "10.4.2",
     "@testing-library/react": "16.3.3",
     "@types/node": "^24.0.0",
+    "@types/papaparse": "^5.5.2",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.36.0",
     "eslint-config-next": "16.3.6",
     "jsdom": "30.1.2",

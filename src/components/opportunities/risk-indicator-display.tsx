@@ -88,9 +88,7 @@ export function RiskIndicatorDisplay({
         </p>
         {!compact ? (
           <>
-            {result.modelVersion ? (
-              <p className="text-caption text-stone-gray">Versi model: {result.modelVersion}</p>
-            ) : null}
+
             {result.missingFactors.length > 0 ? (
               <p className="text-caption leading-body-sm text-stone-gray">
                 Faktor yang belum dapat dinilai: {result.missingFactors.map((factor) => RISK_FACTOR_LABELS[factor]).join(", ")}.
@@ -121,11 +119,7 @@ export function RiskIndicatorDisplay({
           {result.reasons[0]}
         </p>
       </div>
-      {compact ? (
-        <p className="text-caption text-stone-gray">Versi policy: {result.modelVersion}</p>
-      ) : (
-        <>
-          <p className="text-caption text-stone-gray">Versi model: {result.modelVersion}</p>
+      {compact ? null : (<>
           <div className="grid gap-8">
             <h3 className="text-body-sm font-w540 text-ink-charcoal">Alasan penilaian</h3>
             <ul className="grid gap-8">
@@ -145,7 +139,7 @@ export function RiskIndicatorDisplay({
                     {factor.label}: {LEVEL_LABELS[factor.level]}
                   </span>
                   <span className="wrap-anywhere text-caption leading-body-sm text-stone-gray">
-                    Nilai sumber: {factor.value}. Sumber: {factor.source}. Referensi field: {factor.sourceReference}.
+                    Nilai: {factor.value}. Sumber: {factor.source}.
                   </span>
                 </li>
               ))}

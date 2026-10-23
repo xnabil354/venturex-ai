@@ -62,8 +62,8 @@ describe("RiskIndicatorDisplay", () => {
     expect(markup).toContain("Alasan penilaian");
     expect(markup).toContain("Kompleksitas eksekusi: Sedang");
     expect(markup).toContain("55 /100");
-    expect(markup).toContain("opportunity_fit_requirements.operational_complexity");
-    expect(markup).toContain("Versi model: approved-risk-v2");
+    expect(markup).not.toContain("opportunity_fit_requirements.operational_complexity");
+    expect(markup).not.toContain("Versi model: approved-risk-v2");
     expect(markup).toContain("tidak otomatis membuktikan faktor risiko tertentu");
     expect(markup).toContain('href="https://example.org/dataset"');
     expect(markup).toContain("Indikator ini bukan prediksi hasil bisnis.");

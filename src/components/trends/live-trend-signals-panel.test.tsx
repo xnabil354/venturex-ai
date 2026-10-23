@@ -108,9 +108,9 @@ describe("LiveTrendSignalsPanel", () => {
 
     expect(fetcher).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Muat sinyal terbaru" }));
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("izin penggunaan"));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Sinyal belum dapat dimuat. Coba lagi."));
     expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("button", { name: "Analisis dengan 9Router" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Analisis tren" })).toBeNull();
   });
 
   it("renders provider attribution and the partial-source result without calling mock content live", async () => {
@@ -119,15 +119,15 @@ describe("LiveTrendSignalsPanel", () => {
     render(<LiveTrendSignalsPanel />);
 
     fireEvent.click(screen.getByRole("button", { name: "Muat sinyal terbaru" }));
-    await screen.findByText(/TEST STUB .* bukan respons Google Trends live\./u);
+    await screen.findByText("Mode contoh menggunakan data simulasi.");
     expect(screen.getByRole("heading", { name: "kopi susu" })).toBeTruthy();
-    expect(document.body.textContent).toContain("Snapshot uji ");
+    expect(document.body.textContent).not.toContain("Snapshot uji ");
     expect(document.body.textContent).not.toContain("Bright Data");
-    expect(screen.getAllByText("Google Trends", { exact: true }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Google Trends Trending Now (Indonesia)" })).toBeTruthy();
     expect(screen.getByText("Google Trends Trending Now (Indonesia)")).toBeTruthy();
-    expect(document.body.textContent).toContain("sumber diambil");
-    expect(screen.getByText("Diterima 2 dari 3; ditolak 1.", { exact: false })).toBeTruthy();
-    expect(screen.getByText("Volume pencarian dari sumber").parentElement?.textContent).toContain("unit tidak disediakan");
+    expect(document.body.textContent).not.toContain("sumber diambil");
+    expect(screen.queryByText("Diterima 2 dari 3; ditolak 1.", { exact: false })).toBeNull();
+    expect(screen.getByText("Volume Sumber").parentElement?.textContent).toContain("2K+");
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
@@ -139,14 +139,14 @@ describe("LiveTrendSignalsPanel", () => {
     render(<LiveTrendSignalsPanel />);
 
     fireEvent.click(screen.getByRole("button", { name: "Muat sinyal terbaru" }));
-    await screen.findByText(/TEST STUB .* bukan respons Google Trends live\./u);
-    fireEvent.click(screen.getByRole("button", { name: "Analisis dengan 9Router" }));
-    const submit = screen.getByRole("button", { name: "Kirim persetujuan dan analisis" });
+    await screen.findByText("Mode contoh menggunakan data simulasi.");
+    fireEvent.click(screen.getByRole("button", { name: "Analisis tren" }));
+    const submit = screen.getByRole("button", { name: "Mulai analisis" });
     expect((submit as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getAllByRole("checkbox")[1]!);
     fireEvent.click(submit);
 
-    await screen.findByText("TEST STUB — bukan respons 9Router live");
+    await screen.findByText("Analisis selesai");
     for (const label of ["Ringkasan", "Mengapa relevan", "Konsumen sasaran", "Kompetisi", "Potensi sebagai hipotesis", "Risiko", "Langkah berikutnya"]) {
       expect(screen.getByText(label)).toBeTruthy();
     }
@@ -174,9 +174,9 @@ describe("LiveTrendSignalsPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Muat sinyal terbaru" }));
     await screen.findByRole("heading", { name: "kopi susu" });
-    fireEvent.click(screen.getByRole("button", { name: "Analisis dengan 9Router" }));
+    fireEvent.click(screen.getByRole("button", { name: "Analisis tren" }));
     fireEvent.click(screen.getAllByRole("checkbox")[1]!);
-    fireEvent.click(screen.getByRole("button", { name: "Kirim persetujuan dan analisis" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mulai analisis" }));
 
     await screen.findByRole("alert");
     const retry = screen.getByRole("button", { name: "Coba lagi dalam 60 detik" }) as HTMLButtonElement;

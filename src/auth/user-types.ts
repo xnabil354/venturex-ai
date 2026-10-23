@@ -36,6 +36,7 @@ export type UserRecord = {
   readonly onboardingStatus: OnboardingStatus;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  readonly loginDisabledAt?: Date | null;
 };
 
 export type SafeUser = Omit<

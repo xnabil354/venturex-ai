@@ -5,9 +5,10 @@ import { AppHeaderNavigation } from "@/components/layout/app-header-navigation";
 type AppShellProps = {
   children: ReactNode;
   userEmail?: string;
+  availableCredits?: number;
 };
 
-export function AppShell({ children, userEmail }: AppShellProps) {
+export function AppShell({ children, userEmail, availableCredits }: AppShellProps) {
   return (
     <div className="min-h-screen bg-warm-parchment">
       <a
@@ -16,7 +17,10 @@ export function AppShell({ children, userEmail }: AppShellProps) {
       >
         Skip to content
       </a>
-      <AppHeaderNavigation {...(userEmail ? { userEmail } : {})} />
+      <AppHeaderNavigation
+        {...(userEmail ? { userEmail } : {})}
+        {...(availableCredits === undefined ? {} : { availableCredits })}
+      />
       <main className="min-w-0" id="main-content">
         {children}
       </main>

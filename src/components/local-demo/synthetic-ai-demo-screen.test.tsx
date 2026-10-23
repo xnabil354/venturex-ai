@@ -63,8 +63,9 @@ describe("SyntheticAIDemoScreen", () => {
     expect(screen.getByRole("button", { name: "Tampilkan contoh analisis" }).hasAttribute("disabled")).toBe(true);
     fireEvent.click(screen.getByRole("radio", { name: /Calon pengusaha/ }));
     fireEvent.click(screen.getByRole("button", { name: "Tampilkan contoh analisis" }));
-    expect(await screen.findByText(execution.displayLabel)).toBeTruthy();
-    expect(screen.getByText(expectedMode)).toBeTruthy();
+    expect(await screen.findByText("Contoh analisis")).toBeTruthy();
+    expect(screen.queryByText(execution.displayLabel)).toBeNull();
+    expect(screen.queryByText(expectedMode)).toBeNull();
     expect(screen.getByText("Opportunity Score: tidak tersedia", { exact: false })).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -78,8 +79,8 @@ describe("SyntheticAIDemoScreen", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Pelaku UMKM/ }));
     fireEvent.click(screen.getByRole("button", { name: "Tampilkan contoh analisis" }));
     expect(await screen.findByRole("alert")).toBeTruthy();
-    expect(screen.getByRole("alert").textContent).toContain("9Router melaporkan layanan sementara tidak tersedia (HTTP 503)");
-    expect(screen.getByRole("alert").textContent).toContain("Tidak ada retry otomatis");
+    expect(screen.getByRole("alert").textContent).toContain("Layanan sementara tidak tersedia. Coba lagi nanti.");
+    expect(screen.getByRole("alert").textContent).not.toContain("9Router");
     fireEvent.click(screen.getByRole("button", { name: "Tampilkan contoh analisis" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Respons simulasi tidak valid");
     expect(screen.queryByText("Contoh hasil simulasi — bukan respons 9Router live")).toBeNull();

@@ -217,11 +217,7 @@ export function FitScoreSection({
               {formatScore(visibleState.result.value)}
               <span className="ml-4 text-body-sm font-w400 text-stone-gray">/ 100</span>
             </p>
-            <p className="wrap-anywhere text-caption text-stone-gray">
-              Model: {visibleState.result.modelType === "ENTREPRENEUR_FIT" ? "Entrepreneur Fit" : "Business Fit"}
-              <span className="mx-4" aria-hidden="true">·</span>
-              Versi kebijakan: {visibleState.result.policyVersion}
-            </p>
+
           </div>
 
           {!compact ? (

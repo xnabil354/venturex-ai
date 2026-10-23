@@ -9,6 +9,9 @@ const serverEnvSchema = z.object({
   DB_POOL_MIN: z.coerce.number().int().min(0).default(0),
   DB_POOL_IDLE: z.coerce.number().int().min(0).default(10_000),
   DB_POOL_ACQUIRE: z.coerce.number().int().min(1).default(30_000),
+  APP_URL: z.string().url().optional(),
+  DUITKU_MERCHANT_CODE: z.string().trim().min(1).optional(),
+  DUITKU_API_KEY: z.string().trim().min(16).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

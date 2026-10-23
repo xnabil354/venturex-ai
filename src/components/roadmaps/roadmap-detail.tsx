@@ -26,7 +26,7 @@ export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail
             Opportunity: <Link className="text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet" href={`/opportunities/${roadmap.opportunity.id}`}>{roadmap.opportunity.name}</Link>
           </p>
           <p className="max-w-[76ch] text-body-sm leading-body-sm text-stone-gray">
-            Rencana ini dibuat dengan template deterministik {context.version}; hasilnya bukan prediksi atau rekomendasi otomatis.
+            Roadmap ini berisi langkah awal, bukan prediksi.
           </p>
         </header>
 

@@ -1,0 +1,33 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { createJiti } from "jiti";
+import ExcelJS from "exceljs";
+const root = process.cwd();
+const jiti = createJiti(import.meta.url, { alias: { "@": path.join(root, "src"), "server-only": path.join(root, "node_modules/server-only/empty.js") } });
+const { privateBusinessFixture } = await jiti.import("../../src/opportunity/test-fixtures/private-business.ts");
+const { privateEntrepreneurFixture } = await jiti.import("../../src/opportunity/test-fixtures/private-entrepreneur.ts");
+const { generatePrivateGrowthRoadmap } = await jiti.import("../../src/roadmap/private-growth-generator.ts");
+const { generatePrivateStartupRoadmap } = await jiti.import("../../src/roadmap/private-startup-generator.ts");
+const { progressState } = await jiti.import("../../src/reports/journey.ts");
+const { buildJourneyReport } = await jiti.import("../../src/reports/model.ts");
+const { exportPdf, exportExcel } = await jiti.import("../../src/reports/export.ts");
+const destination = path.join(root, "artifacts/journey-reports-20261022"); await fs.mkdir(destination, { recursive: true });
+for (const userType of ["ENTREPRENEUR", "UMKM_EXISTING"]) {
+  const item = userType === "ENTREPRENEUR" ? privateEntrepreneurFixture() : privateBusinessFixture();
+  item.hypothesis.title = "Contoh QA — Uji bakso ayam keluarga";
+  item.hypothesis.concept += " Pelanggan memberikan masukan tentang rasa, kemasan, harga, dan layanan. ".repeat(10);
+  if (userType === "ENTREPRENEUR") item.hypothesis.startupRoadmap = generatePrivateStartupRoadmap(item);
+  else item.hypothesis.growthRoadmap = generatePrivateGrowthRoadmap(item);
+  const plan = item.hypothesis.startupRoadmap ?? item.hypothesis.growthRoadmap;
+  plan.steps[0].action = "=CONTOH DATA QA, bukan hasil pasar. " + "Catat kebutuhan pelanggan, rasa, kemasan, dan biaya aktual sebelum memutuskan langkah berikutnya. ".repeat(12);
+  const common = { location: { text: "Jakarta Selatan, DKI Jakarta", city: "Jakarta Selatan", province: "DKI Jakarta", countryCode: "ID" }, customerSegments: [{ name: "Keluarga", code: "FAMILY" }], salesChannels: [{ name: "Pesan antar", code: "DELIVERY" }] };
+  const profile = userType === "ENTREPRENEUR" ? { ...common, budget: { min: 1000000, max: 3000000 }, experienceLevel: "BEGINNER", timeCommitment: "PART_TIME", preferredProductType: "Bakso ayam", interests: [{ name: "Makanan", code: "FOOD" }] } : { ...common, businessName: "Kedai Contoh QA", businessCategory: { name: "Makanan", code: "FOOD" }, averagePrice: { min: 15000, max: 25000 }, productCount: 1 };
+  const progress = progressState(item, userType, plan.steps.map((_, i) => ({ stage: i + 1, completed_at: new Date() })));
+  const report = buildJourneyReport(item, { userType, profile }, progress);
+  const pdf = await exportPdf(report), xlsx = await exportExcel(report);
+  await fs.writeFile(path.join(destination, `${userType}.pdf`), pdf); await fs.writeFile(path.join(destination, `${userType}.xlsx`), xlsx);
+  const book = new ExcelJS.Workbook(); await book.xlsx.load(xlsx);
+  let formulas = 0; book.eachSheet(sheet => sheet.eachRow(row => row.eachCell(cell => { if (cell.type === ExcelJS.ValueType.Formula) formulas++; })));
+  if (formulas || book.worksheets.length !== 3 || !pdf.subarray(0, 4).equals(Buffer.from("%PDF"))) throw new Error("EXPORT_VALIDATION_FAILED");
+  console.log(JSON.stringify({ userType, pdfBytes: pdf.length, excelBytes: xlsx.length, sheets: book.worksheets.map(s => s.name), formulas }));
+}

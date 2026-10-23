@@ -1,11 +1,12 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button, Input } from "@/components/ui";
 import { EyeIcon, EyeOffIcon } from "./auth-icons";
+import { consumeRegisteredEmail } from "./registered-email";
 
 type LoginFormProps = {
   registered?: boolean;
@@ -48,9 +49,16 @@ export function LoginForm({ registered = false }: LoginFormProps) {
   const errorSummaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const registeredEmail = consumeRegisteredEmail();
+    if (registeredEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setValues((current) => ({
+        ...current,
+        email: current.email || registeredEmail,
+      }));
+    }
     // This state is an intentional guard: native submission must stay disabled
     // until React has attached the client-side authentication handler.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsReady(true);
   }, []);
 
@@ -100,7 +108,8 @@ export function LoginForm({ registered = false }: LoginFormProps) {
         return;
       }
 
-      router.replace("/dashboard");
+      const session = await getSession();
+      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/transactions" : "/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError("Terjadi kendala saat masuk. Silakan coba lagi.");

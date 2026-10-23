@@ -63,6 +63,8 @@ export type TrendSignalProviderDiagnosticCategory =
   | "REQUEST_REJECTED"
   | "NETWORK"
   | "TIMEOUT"
+  | "UPSTREAM_TIMEOUT"
+  | "CLIENT_ABORTED"
   | "UPSTREAM_HTTP"
   | "UPSTREAM_UNAVAILABLE"
   | "RATE_LIMITED"
@@ -272,11 +274,8 @@ export class TrendSignalAnalysisService {
         classification: resolved.signal.classification,
       },
       limitations: [
-        "Analisis merupakan interpretasi model atas sinyal pencarian dan konteks profil terpilih, bukan fakta pasar atau saran profesional.",
-        "Klasifikasi F&B bersifat heuristic; sinyal belum divalidasi secara faktual atau dipublikasikan sebagai Trend VENTUREX.",
-        "Rentang Trending Now yang diminta ditampilkan terpisah dari waktu mulai tren; nilai volume tidak disertai unit dan tidak boleh ditafsirkan sebagai besaran permintaan.",
-        "Informasi profil yang dikirim terbatas pada kategori, segmen, kanal, dan bila relevan tingkat pengalaman serta komitmen waktu; data lokasi, nama, email, catatan, uraian bebas, dan angka finansial dikecualikan. Retensi dan pemrosesan lanjutan pada layanan 9Router tidak diverifikasi oleh VENTUREX.",
-        "Hasil hanya ditampilkan pada respons ini dan tidak disimpan oleh fitur ini ke database VENTUREX.",
+        "Analisis ini merupakan panduan awal, bukan fakta pasar.",
+        "Sinyal pencarian tidak membuktikan pembelian atau permintaan.",
       ],
     };
   }

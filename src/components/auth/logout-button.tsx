@@ -3,12 +3,16 @@
 import { signOut } from "next-auth/react";
 
 import { Button } from "@/components/ui";
+import { disableBrowserPush } from "@/notifications/browser-push";
 
 export function LogoutButton({ className }: { className?: string }) {
   return (
     <Button
       className={className}
-      onClick={() => void signOut({ callbackUrl: "/login" })}
+      onClick={() => void (async () => {
+        try { await disableBrowserPush(); } catch { /* Session revocation still prevents authenticated push display. */ }
+        await signOut({ callbackUrl: "/login" });
+      })()}
       variant="ghost"
     >
       Keluar

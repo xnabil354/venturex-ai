@@ -3,6 +3,7 @@ import { HeroSection } from "./hero-section";
 import { InteractiveSpecimen } from "./interactive-specimen";
 import { LandingFooter } from "./landing-footer";
 import { LandingHeader } from "./landing-header";
+import { PricingSection } from "./pricing-section";
 import { RoadmapBento } from "./roadmap-bento";
 import { SuiteTabStrip } from "./suite-tab-strip";
 import { TestimonialBand } from "./testimonial-band";
@@ -37,6 +38,8 @@ export function LandingPage() {
 
         {/* 7. Suite Product 3: Collaborative Action Roadmap Bento */}
         <RoadmapBento />
+
+        <PricingSection />
 
         {/* 8. Atmospheric Green Conversion Call-to-Action */}
         <AtmosphericCta />

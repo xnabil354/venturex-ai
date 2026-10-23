@@ -187,7 +187,9 @@ export function validateStep(
       if (!state.timeCommitment) {
         errors.timeCommitment = "Pilih komitmen waktu Anda.";
       }
-      if (state.preferredProductType.trim().length > 100) {
+      if (!state.preferredProductType.trim()) {
+        errors.preferredProductType = "Tuliskan produk yang ingin Anda eksplorasi.";
+      } else if (state.preferredProductType.trim().length > 100) {
         errors.preferredProductType = "Jenis produk maksimal 100 karakter.";
       }
       return errors;

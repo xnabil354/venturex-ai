@@ -42,6 +42,7 @@ function toUserRecord(user: User): UserRecord {
     onboardingStatus: user.onboardingStatus,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+    loginDisabledAt: user.loginDisabledAt,
   };
 }
 
@@ -62,7 +63,7 @@ export class UserRepository implements UserRepositoryPort, UserProfileRepository
 
   async findByEmail(email: string): Promise<UserRecord | null> {
     const user = await this.model.findOne({
-      where: { email: normalizeEmail(email) },
+      where: { email: normalizeEmail(email), loginDisabledAt: null },
     });
     return user ? toUserRecord(user) : null;
   }

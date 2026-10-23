@@ -7,6 +7,7 @@ type ButtonVariant = "primary" | "secondary" | "ghost";
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
   loading?: boolean;
+  loadingText?: string;
   variant?: ButtonVariant;
 };
 
@@ -24,6 +25,7 @@ export function Button({
   className,
   disabled,
   loading = false,
+  loadingText = "Loading",
   type = "button",
   variant = "primary",
   ...props
@@ -47,7 +49,7 @@ export function Button({
       </span>
       {loading ? (
         <span aria-live="polite" className="absolute">
-          Loading
+          {loadingText}
         </span>
       ) : null}
     </button>

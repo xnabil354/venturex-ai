@@ -84,8 +84,8 @@ describe("OpportunityScoreDisplay", () => {
     const markup = render(availableResult);
 
     expect(markup).toContain("75,25");
-    expect(markup).toContain("MVP scoring model");
-    expect(markup).toContain("approved-v2");
+    expect(markup).not.toContain("MVP scoring model");
+    expect(markup).not.toContain("approved-v2");
     expect(markup).toContain("bukan probabilitas keberhasilan");
     expect(markup).toContain("Bobot yang disetujui");
     expect(markup).toContain("16,67%");

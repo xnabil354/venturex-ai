@@ -30,6 +30,8 @@ const MIGRATIONS = [
   "016-create-roadmaps.ts",
   "017-create-trend-evidence-provenances.ts",
   "018-create-private-opportunity-hypotheses.ts",
+  "019-add-entrepreneur-location-details.ts",
+  "020-add-business-location-details.ts",
 ];
 
 const runId = randomUUID();
@@ -191,7 +193,7 @@ async function assertMigrations(url, databaseName) {
     const result = await client.query('SELECT name FROM "SequelizeMeta" ORDER BY name');
     const names = result.rows.map(({ name }) => name);
     if (JSON.stringify(names) !== JSON.stringify(MIGRATIONS)) {
-      throw new Error(`Expected all 18 migrations on ${databaseName}; found ${names.length}.`);
+      throw new Error(`Expected all ${MIGRATIONS.length} migrations on ${databaseName}; found ${names.length}.`);
     }
   } finally {
     await client.end();
@@ -392,7 +394,7 @@ async function main() {
     await runProcess(
       process.execPath,
       ["--env-file-if-exists=.env", "--experimental-strip-types", "scripts/db.mjs", "up"],
-      "Apply migrations 001-018 to the empty PostgreSQL integration database",
+      "Apply current migrations to the empty PostgreSQL integration database",
       environmentFor(integrationUrl),
       [integrationUrl],
     );
@@ -413,7 +415,7 @@ async function main() {
     await runProcess(
       process.execPath,
       ["--env-file-if-exists=.env", "--experimental-strip-types", "scripts/db.mjs", "up"],
-      "Apply migrations 001-018 to the fresh E2E database",
+      "Apply current migrations to the fresh E2E database",
       environmentFor(e2eUrl),
       [e2eUrl],
     );

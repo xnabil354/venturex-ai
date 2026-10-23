@@ -44,7 +44,7 @@ function toTrendError(error: unknown): TrendSignalAnalysisError {
     ? error.category === "UPSTREAM_AUTH" ? "AI_UPSTREAM_AUTH_FAILED" : "AI_PROVIDER_CONFIGURATION_UNAVAILABLE"
     : error.category === "INVALID_RESPONSE" ? "AI_RESPONSE_INVALID"
       : error.category === "RATE_LIMITED" ? "RATE_LIMITED"
-        : error.category === "TIMEOUT" ? "AI_UPSTREAM_TIMEOUT"
+        : error.category === "TIMEOUT" || error.category === "UPSTREAM_TIMEOUT" ? "AI_UPSTREAM_TIMEOUT"
           : error.category === "NETWORK" ? "AI_UPSTREAM_NETWORK_FAILED"
             : error.category === "UPSTREAM_UNAVAILABLE" ? "AI_UPSTREAM_UNAVAILABLE"
               : "AI_UPSTREAM_FAILED";
