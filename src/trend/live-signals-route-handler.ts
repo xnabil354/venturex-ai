@@ -188,7 +188,6 @@ export function createLiveTrendSignalsRefreshPOST(dependencies: {
 export function createLiveTrendSignalsAnalysisPOST(dependencies: {
   readonly resolveUser: UserResolver;
   readonly service: Pick<TrendSignalAnalysisService, "generate">;
-  readonly runPaidAction?: <T>(user: SafeUser, requestId: string, action: () => Promise<T>) => Promise<T>;
 }) {
   return async function POST(request: Request): Promise<Response> {
     const requestId = `req_${randomUUID()}`;
@@ -210,7 +209,7 @@ export function createLiveTrendSignalsAnalysisPOST(dependencies: {
       const parsed = liveTrendAnalysisRequestSchema.safeParse(body);
       if (!parsed.success) return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true);
       const action = () => dependencies.service.generate(user, parsed.data, requestId);
-      const result = dependencies.runPaidAction ? await dependencies.runPaidAction(user, requestId, action) : await action();
+      const result = await action();
       return json(result, 200, requestId);
     } catch (error) {
       return errorResponse(error, requestId);

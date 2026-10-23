@@ -16,7 +16,7 @@ type AccountRow = {
   readonly scheduled_starts_at: Date | null;
   readonly scheduled_payment_id: string | null;
 };
-type CreditLotRow = { readonly id: string; readonly remaining_credits: number };
+type CreditLotRow = { readonly id: string; readonly source: "TRIAL" | "PLAN" | "TOPUP"; readonly remaining_credits: number };
 type PaymentRow = {
   readonly id: string;
   readonly user_id: string;
@@ -129,7 +129,7 @@ export class BillingService {
       { type: QueryTypes.SELECT },
     );
     const cost = new Map(rows.map((row) => [row.usage_kind, row.credit_cost]));
-    const usages: readonly AiUsageKind[] = ["TREND_INSIGHT", "OPPORTUNITY_HYPOTHESIS", "DETAILED_ANALYSIS"];
+    const usages: readonly AiUsageKind[] = ["OPPORTUNITY_HYPOTHESIS", "DETAILED_ANALYSIS"];
     return usages.map((usage) => {
       const credits = cost.get(usage);
       if (credits === undefined) throw new BillingError("BILLING_NOT_CONFIGURED", "Tarif penggunaan AI belum lengkap.");
@@ -248,13 +248,15 @@ export class BillingService {
       if (!usageSetting) throw new BillingError("BILLING_NOT_CONFIGURED", "Tarif penggunaan AI belum dikonfigurasi.");
       const cost = usageSetting.credit_cost;
       const [account] = await this.sequelize.query<AccountRow>("SELECT active_plan, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1 FOR UPDATE", { bind: [userId], type: QueryTypes.SELECT, transaction });
-      const [trial] = await this.sequelize.query<{ remaining: string }>(`SELECT COALESCE(SUM(remaining_credits), 0)::text AS remaining FROM credit_lots WHERE user_id = $1 AND source = 'TRIAL' AND state = 'ACTIVE' AND remaining_credits > 0 FOR UPDATE`, { bind: [userId], type: QueryTypes.SELECT, transaction });
-      if (!account || (!planIsActive(account, new Date()) && Number(trial?.remaining ?? 0) <= 0)) throw new BillingError("AI_ACCESS_LOCKED", "Paket aktif diperlukan untuk menggunakan AI.");
+      // ASVS V2.3.3/V2.3.4: lock every spendable lot and calculate eligibility
+      // from those locked rows, so concurrent AI requests cannot overspend credits.
       const lots = await this.sequelize.query<CreditLotRow>(`
-        SELECT id, remaining_credits FROM credit_lots
+        SELECT id, source, remaining_credits FROM credit_lots
         WHERE user_id = $1 AND state = 'ACTIVE' AND remaining_credits > 0 AND (expires_at IS NULL OR expires_at > now())
         ORDER BY (expires_at IS NULL) ASC, expires_at ASC NULLS LAST, created_at ASC FOR UPDATE
       `, { bind: [userId], type: QueryTypes.SELECT, transaction });
+      const trialCredits = lots.reduce((total, lot) => total + (lot.source === "TRIAL" ? lot.remaining_credits : 0), 0);
+      if (!account || (!planIsActive(account, new Date()) && trialCredits <= 0)) throw new BillingError("AI_ACCESS_LOCKED", "Paket aktif diperlukan untuk menggunakan AI.");
       let remaining = cost;
       const allocations: Array<{ lotId: string; credits: number }> = [];
       for (const lot of lots) {

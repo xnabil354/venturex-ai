@@ -8,7 +8,7 @@ export const BILLING_PRODUCTS = {
 
 export type BillingProductCode = keyof typeof BILLING_PRODUCTS;
 export type PlanTier = "FREE" | "PREMIUM" | "PRO";
-export type AiUsageKind = "TREND_INSIGHT" | "OPPORTUNITY_HYPOTHESIS" | "DETAILED_ANALYSIS";
+export type AiUsageKind = "OPPORTUNITY_HYPOTHESIS" | "DETAILED_ANALYSIS";
 
 export function isBillingProductCode(value: unknown): value is BillingProductCode {
   return typeof value === "string" && value in BILLING_PRODUCTS;

@@ -46,9 +46,8 @@ export function ProductSettingsForm({ initial }: { readonly initial: ReadonlyArr
 }
 
 const usageLabels: Record<AdminUsageSetting["usageKind"], string> = {
-  TREND_INSIGHT: "Trend Insight",
-  OPPORTUNITY_HYPOTHESIS: "Hipotesis Peluang",
-  DETAILED_ANALYSIS: "Analisis Detail",
+  OPPORTUNITY_HYPOTHESIS: "Buat hipotesis",
+  DETAILED_ANALYSIS: "Analisis mendalam",
 };
 
 export function UsageSettingsForm({ initial }: { readonly initial: ReadonlyArray<AdminUsageSetting> }) {

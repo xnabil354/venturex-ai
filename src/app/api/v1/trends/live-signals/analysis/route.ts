@@ -5,7 +5,6 @@ import { getLiveTrendSignalsService } from "@/trend/live-signals";
 import { createLiveTrendSignalsAnalysisPOST } from "@/trend/live-signals-route-handler";
 import { TrendSignalAnalysisError, TrendSignalAnalysisService, readTrendSignalNineRouterConfig } from "@/ai-analysis/trend-signal-analysis";
 import { NineRouterTrendSignalAnalysisProvider } from "@/ai-analysis/trend-signal-ninerouter-provider";
-import { BillingService } from "@/billing/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +21,6 @@ const service = new TrendSignalAnalysisService({
 const post = createLiveTrendSignalsAnalysisPOST({
   resolveUser: getCurrentUser,
   service,
-  runPaidAction: (user, requestId, action) => new BillingService().runAiUsage(user.id, "TREND_INSIGHT", requestId, action),
 });
 
 export async function POST(request: Request): Promise<Response> {

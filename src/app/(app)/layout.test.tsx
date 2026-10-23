@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
+  summaryForUser: vi.fn(),
   redirect: vi.fn((destination: string): never => {
     throw new Error(`REDIRECT:${destination}`);
   }),
@@ -9,6 +10,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
+vi.mock("@/billing/service", () => ({
+  BillingService: class {
+    summaryForUser(...args: unknown[]) { return mocks.summaryForUser(...args); }
+  },
+}));
 vi.mock("@/components/layout/app-shell", () => ({
   AppShell: ({ children }: { children: import("react").ReactNode }) => children,
 }));
@@ -30,6 +36,7 @@ function makeUser(overrides: Partial<SafeUser> = {}): SafeUser {
 describe("authenticated app layout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.summaryForUser.mockResolvedValue({ availableCredits: 5 });
     mocks.redirect.mockImplementation((destination: string): never => {
       throw new Error(`REDIRECT:${destination}`);
     });
@@ -54,6 +61,14 @@ describe("authenticated app layout", () => {
 
   it("renders protected content after completed onboarding", async () => {
     mocks.currentUser.mockResolvedValue(makeUser());
+
+    await expect(AppLayout({ children: "protected" })).resolves.toBeDefined();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("keeps the app available when the header credit summary is unavailable", async () => {
+    mocks.currentUser.mockResolvedValue(makeUser());
+    mocks.summaryForUser.mockRejectedValue(new Error("billing unavailable"));
 
     await expect(AppLayout({ children: "protected" })).resolves.toBeDefined();
     expect(redirect).not.toHaveBeenCalled();

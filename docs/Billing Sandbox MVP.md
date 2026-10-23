@@ -13,9 +13,9 @@ Amendemen produk ini menggantikan pengecualian payment gateway dan admin dashboa
 | Top up 30 | Rp50.000 | 30 | Tidak kedaluwarsa |
 | Top up 100 | Rp150.000 | 100 | Tidak kedaluwarsa |
 
-Premium dan Pro hanya berbeda pada jatah kredit. Tarif aksi AI adalah Trend insight 1 kredit, hipotesis peluang 2 kredit, dan analisis detail 3 kredit. Local synthetic demo serta roadmap deterministik tidak dipotong kredit.
+Premium dan Pro hanya berbeda pada jatah kredit. Tarif aksi AI adalah Buat hipotesis 2 kredit dan Analisis mendalam 3 kredit. Trend Insight, local synthetic demo, serta roadmap deterministik tidak dipotong kredit.
 
-AI membutuhkan paket Premium/Pro aktif atau kredit Free trial yang tersisa. Ketika paket berakhir, akun kembali ke Free dan AI terkunci, meski kredit top up masih tersisa. Sistem memakai lot yang akan kedaluwarsa paling awal terlebih dahulu.
+Aksi AI berbayar membutuhkan paket Premium/Pro aktif atau kredit Free trial yang tersisa. Ketika paket berakhir, akun kembali ke Free dan aksi berbayar terkunci, meski kredit top up masih tersisa. Sistem memakai lot yang akan kedaluwarsa paling awal terlebih dahulu.
 
 Pembelian plan sebelum periode aktif berakhir dijadwalkan sesudah periode tersebut. Upgrade Premium ke Pro terjadi segera, tanpa prorata; sisa kredit plan Premium hangus dan top up tetap ada. Tidak ada auto-debit, refund, maupun perubahan finansial oleh admin.
 
@@ -32,7 +32,7 @@ Provider adalah Duitku **sandbox** dengan model POP. Browser hanya mengirim `pro
 
 `billing_accounts` menyimpan entitlement saat ini; `billing_payments` menyimpan order provider; `credit_lots` menyimpan saldo yang dapat dipakai; `credit_ledger_entries` adalah catatan append-only grant, reservation, release, debit, forfeit, dan expire; `billing_webhook_events` menjaga idempotensi callback.
 
-Credit usage dicadangkan sebelum panggilan AI, diselesaikan setelah respons valid, dan dilepas jika aksi gagal. Admin memakai tabel `admins` dan sesi `ADMIN` terpisah, tetapi masuk melalui `/login` yang sama. Area `/admin` hanya dapat memantau transaksi, mengubah harga/jatah lima SKU tetap, serta mengubah biaya kredit tiga aksi AI. Setiap perubahan konfigurasi diaudit; tidak ada refund, perubahan status pembayaran, atau rekonsiliasi manual.
+Credit usage dicadangkan sebelum panggilan AI, diselesaikan setelah respons valid, dan dilepas jika aksi gagal. Admin memakai tabel `admins` dan sesi `ADMIN` terpisah, tetapi masuk melalui `/login` yang sama. Area `/admin` hanya dapat memantau transaksi, mengubah harga/jatah lima SKU tetap, serta mengubah biaya kredit dua aksi AI. Setiap perubahan konfigurasi diaudit; tidak ada refund, perubahan status pembayaran, atau rekonsiliasi manual.
 
 Harga dan jatah kredit dikonfigurasi di database. Checkout menyimpan snapshot harga dan jatah kredit pada payment, sehingga invoice `PENDING`, callback, dan transaksi lama tidak berubah saat operator memperbarui pengaturan. Biaya aksi AI dapat bernilai 0–100; nilai 0 tidak memotong kredit tetapi tetap memerlukan entitlement aktif.
 
