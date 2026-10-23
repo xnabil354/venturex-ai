@@ -48,18 +48,14 @@ describe("LandingPage Component", () => {
         expect(screen.getByText("Zero-Hallucination")).toBeDefined();
     });
 
-    it("renders TrendRadarBento and allows switching sub-category tabs", () => {
+    it("renders TrendRadarBento feature cards and evidence metrics", () => {
         render(<LandingPage />);
 
         expect(screen.getByText(/Tangkap pergeseran pasar sebelum menjadi jenuh\./i)).toBeDefined();
-
-        const snackButtons = screen.getAllByRole("button", { name: "Camilan" });
-        const snackSubTab = snackButtons[0];
-        if (snackSubTab) {
-            fireEvent.click(snackSubTab);
-        }
-
-        expect(screen.getByText("Artisan Root & Tubers Chips")).toBeDefined();
+        expect(screen.getByText("Deteksi Tren Berbasis Bukti")).toBeDefined();
+        expect(screen.getByText("Sinyal Pertumbuhan Kuartalan")).toBeDefined();
+        expect(screen.getByText("Analisis Bahan Baku Lokal")).toBeDefined();
+        expect(screen.getByText("Klasifikasi Segmen Pembeli")).toBeDefined();
     });
 
     it("renders iconic Lilac Wash TestimonialBand", () => {
@@ -123,19 +119,6 @@ describe("LandingPage Component", () => {
         expect(screen.getByText(/Panduan eksekusi bertahap dari ide menuju pembukaan gerai\./i)).toBeDefined();
         expect(screen.getByText("Validasi Resep & Sensory Test")).toBeDefined();
         expect(screen.getByText("Peluncuran Kanal & Go-to-Market")).toBeDefined();
-    });
-
-    it("renders Dark Feature Band highlighting data integrity", () => {
-        render(<LandingPage />);
-
-        expect(
-            screen.getByRole("heading", {
-                level: 2,
-                name: /Kecerdasan buatan dengan disiplin data nyata\./i,
-            }),
-        ).toBeDefined();
-
-        expect(screen.getByText(/Protokol Validasi Bukti/i)).toBeDefined();
     });
 
     it("renders 4-column footer with brand, legal sections, and ghost watermark", () => {

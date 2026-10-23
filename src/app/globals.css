@@ -59,6 +59,7 @@
   --spacing-32: 32px;
   --spacing-36: 36px;
   --spacing-40: 40px;
+  --spacing-44: 44px;
   --spacing-48: 48px;
   --spacing-64: 64px;
   --spacing-80: 80px;
@@ -246,8 +247,15 @@
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
+    animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 150ms !important;
+  }
+
+  .animate-float-1,
+  .animate-float-2,
+  .animate-float-3 {
+    animation: none !important;
   }
 }
+

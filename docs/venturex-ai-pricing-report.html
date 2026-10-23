@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laporan Biaya &amp; Rekomendasi Pricing — VENTUREX AI</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    :root { --ink:#29231e; --muted:#716960; --paper:#fffdf9; --line:#dfd8cf; --sand:#f1e8da; --orange:#d25b22; --deep:#3d2d21; --green:#3d725f; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:Arial, Helvetica, sans-serif; font-size:10.5pt; line-height:1.45; }
+    h1,h2,h3,p { margin-top:0; } h1,h2,h3 { font-family:Georgia, "Times New Roman", serif; letter-spacing:-.02em; }
+    h1 { font-size:36pt; line-height:1.03; max-width:560px; margin-bottom:18px; }
+    h2 { font-size:22pt; line-height:1.15; margin-bottom:10px; color:var(--deep); }
+    h3 { font-size:13pt; margin-bottom:6px; }
+    .page { min-height:269mm; position:relative; page-break-after:always; padding:1mm 2mm; }
+    .page:last-child { page-break-after:auto; }
+    .eyebrow { color:var(--orange); text-transform:uppercase; letter-spacing:.14em; font-size:8.5pt; font-weight:700; margin-bottom:18px; }
+    .cover { display:flex; flex-direction:column; justify-content:space-between; padding:16mm 8mm 8mm; background:linear-gradient(145deg,#fbf7f0 0%,#fbf7f0 65%,#ead5bc 65%,#ead5bc 100%); }
+    .brand { font-weight:800; letter-spacing:.12em; font-size:10pt; }
+    .tag { display:inline-block; border:1px solid var(--orange); color:var(--orange); border-radius:20px; padding:4px 10px; font-size:8.5pt; font-weight:700; margin-bottom:20px; }
+    .lead { max-width:495px; color:#50483f; font-size:14pt; line-height:1.45; }
+    .cover-foot { border-top:1px solid #b99f87; padding-top:12px; display:flex; justify-content:space-between; font-size:9pt; color:var(--muted); }
+    .callout { background:var(--deep); color:#fffaf3; padding:16px 18px; border-radius:3px; margin:14px 0 18px; }
+    .callout strong { color:#f8bc8d; }
+    .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:9px; margin:14px 0 18px; }
+    .card { border:1px solid var(--line); border-top:3px solid var(--orange); padding:12px; min-height:94px; background:#fffefa; }
+    .card .label { color:var(--muted); font-size:8.5pt; text-transform:uppercase; letter-spacing:.07em; font-weight:700; }
+    .card .value { font-family:Georgia,serif; font-size:22pt; font-weight:700; line-height:1.2; margin:8px 0 3px; color:var(--deep); }
+    .card p { margin-bottom:0; font-size:9pt; color:var(--muted); }
+    table { width:100%; border-collapse:collapse; margin:10px 0 18px; font-size:9.5pt; }
+    th { text-align:left; padding:8px 7px; color:var(--muted); border-bottom:1.5px solid var(--deep); font-size:8.2pt; letter-spacing:.06em; text-transform:uppercase; }
+    td { padding:8px 7px; border-bottom:1px solid var(--line); vertical-align:top; }
+    td.num, th.num { text-align:right; white-space:nowrap; }
+    tr.total td { font-weight:700; color:var(--deep); border-bottom:1.5px solid var(--deep); }
+    .note { border-left:3px solid var(--orange); padding:8px 11px; background:#fbf4eb; font-size:9pt; color:#5c5045; margin:10px 0 16px; }
+    .bars { margin:14px 0 18px; border:1px solid var(--line); padding:14px 14px 9px; }
+    .barrow { display:grid; grid-template-columns:130px 1fr 105px; align-items:center; gap:10px; margin-bottom:11px; font-size:9.5pt; }
+    .bartrack { height:18px; background:#eee6dd; overflow:hidden; }
+    .bar { height:100%; background:var(--orange); }
+    .bar.deep { background:var(--deep); }
+    .barrow strong { text-align:right; }
+    .price { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+    .price-card { border:1px solid var(--line); padding:14px; background:#fffefa; }
+    .price-card.recommended { border:2px solid var(--orange); background:#fff8ef; }
+    .price-card .price-value { font-family:Georgia,serif; color:var(--deep); font-size:27pt; font-weight:bold; margin:3px 0 7px; }
+    .pill { display:inline-block; background:#e7f0eb; color:var(--green); font-size:8.3pt; font-weight:700; padding:3px 7px; border-radius:11px; margin-bottom:8px; }
+    ul { padding-left:20px; margin:8px 0 15px; } li { margin:5px 0; }
+    .footer { position:absolute; bottom:0; left:2mm; right:2mm; padding-top:5px; border-top:1px solid var(--line); display:flex; justify-content:space-between; font-size:8pt; color:var(--muted); }
+    .source { font-size:8.5pt; color:var(--muted); } .source a { color:var(--deep); }
+    .risk { display:grid; grid-template-columns:118px 1fr; gap:7px 12px; margin-top:10px; font-size:9.5pt; } .risk dt { font-weight:700; color:var(--deep); } .risk dd { margin:0; }
+    .avoid-break { break-inside:avoid; }
+  </style>
+</head>
+<body>
+  <section class="page cover">
+    <div>
+      <div class="brand">VENTUREX AI</div>
+      <div style="margin-top:49mm">
+        <div class="tag">MEMO KEPUTUSAN INTERNAL</div>
+        <h1>Biaya minimum &amp; rekomendasi pricing</h1>
+        <p class="lead">Fondasi biaya untuk peluncuran komersial awal: infrastruktur sederhana, AI yang dibatasi, dan harga yang tetap tahan terhadap skenario pemakaian konservatif.</p>
+      </div>
+    </div>
+    <div class="cover-foot"><span>19 Oktober 2026</span><span>Versi 1.0 · Internal</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">01 · keputusan</div>
+    <h2>Kesimpulan yang dapat ditindaklanjuti</h2>
+    <div class="callout">Luncurkan satu paket <strong>Early Access Rp29.000–Rp39.000/bulan</strong> dengan kuota <strong>10 generasi AI</strong> per pengguna per bulan. Harga Rp29.000 tetap menghasilkan margin kotor sekitar <strong>74,3%</strong> dalam skenario token terburuk yang dihitung di laporan ini—sebelum backup off-server.</div>
+    <div class="grid">
+      <div class="card"><div class="label">Biaya tetap</div><div class="value">Rp117.250</div><p>VPS + amortisasi domain per bulan.</p></div>
+      <div class="card"><div class="label">AI normal</div><div class="value">Rp126.364</div><p>10.000 generasi/bulan pada estimasi pemakaian normal.</p></div>
+      <div class="card"><div class="label">AI maksimum</div><div class="value">Rp628.498</div><p>10.000 generasi/bulan pada batas token konservatif.</p></div>
+    </div>
+    <h3>Baseline yang disetujui</h3>
+    <table>
+      <tbody>
+        <tr><td>Pengguna aktif bulanan</td><td class="num">1.000 MAU</td></tr>
+        <tr><td>Pelanggan berbayar</td><td class="num">100 pelanggan</td></tr>
+        <tr><td>Pengguna bersamaan pada puncak</td><td class="num">25 pengguna</td></tr>
+        <tr><td>Kuota AI</td><td class="num">10 generasi/pengguna/bulan</td></tr>
+        <tr><td>Margin kotor minimum</td><td class="num">70%</td></tr>
+        <tr><td>Trend Radar live</td><td class="num">Tidak diluncurkan</td></tr>
+      </tbody>
+    </table>
+    <div class="note">Batas laporan: belum termasuk biaya backup off-server, pajak, tenaga kerja, dukungan pelanggan, maupun payment gateway. Ketiganya harus diputuskan sebelum penagihan pelanggan diaktifkan.</div>
+    <div class="footer"><span>VENTUREX AI · Biaya &amp; Pricing</span><span>1 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">02 · biaya tetap dan data</div>
+    <h2>Infrastruktur minimum yang relevan</h2>
+    <table>
+      <thead><tr><th>Komponen</th><th>Keputusan</th><th class="num">Biaya/bulan</th></tr></thead>
+      <tbody>
+        <tr><td>VPS produksi</td><td>2 vCPU · 2 GB RAM · 60 GB SSD. Menjalankan Next.js dan PostgreSQL dalam satu mesin.</td><td class="num">Rp109.000</td></tr>
+        <tr><td>Domain</td><td><code>venturex.ai.id</code>, Rp99.000/tahun, diamortisasi bulanan.</td><td class="num">Rp8.250</td></tr>
+        <tr><td>Bright Data SERP API</td><td>Katalog tren kurasi digunakan saat peluncuran; live Trend Radar tetap nonaktif.</td><td class="num">Rp0</td></tr>
+        <tr><td>Framework &amp; komponen</td><td>Next.js, PostgreSQL, Auth.js, dan SSL tidak mempunyai lisensi berbayar yang diperlukan pada baseline ini.</td><td class="num">Rp0</td></tr>
+        <tr class="total"><td>Total biaya tetap minimum</td><td>Sebelum backup off-server.</td><td class="num">Rp117.250</td></tr>
+      </tbody>
+    </table>
+    <h3>Bright Data: biaya masa depan, bukan biaya peluncuran</h3>
+    <p>Tarif yang telah ditetapkan adalah Rp27.000 per 1.000 request, atau Rp27 per request. Bila Trend Radar live diaktifkan nanti, gunakan refresh manual serta kuota eksplisit—misalnya 1.000 request/bulan menambah Rp27.000 pada biaya operasi.</p>
+    <div class="note">Kode saat ini memosisikan Bright Data sebagai integrasi opt-in dan katalog tren kurasi dapat berjalan tanpa provider tersebut. Ini membuat biaya live data benar-benar nol pada skenario peluncuran yang dipilih.</div>
+    <h3>Implikasi arsitektur VPS tunggal</h3>
+    <p>Spesifikasi VPS cukup untuk tahap awal dengan 25 pengguna bersamaan apabila koneksi database, memory Node.js, dan request AI dibatasi. Namun aplikasi dan database berada pada satu titik kegagalan; backup PostgreSQL terenkripsi di luar VPS adalah kebutuhan operasional, bukan fitur tambahan.</p>
+    <div class="footer"><span>VENTUREX AI · Biaya &amp; Pricing</span><span>2 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">03 · biaya AI</div>
+    <h2>gpt-6-luna adalah penggerak biaya utama</h2>
+    <p>Peluncuran memakai 9Router dengan harga resmi gpt-6-luna pada jalur <strong>Standard</strong>: US$0,10 per 1 juta token input dan US$0,50 per 1 juta token output. Jalur Standard dipilih karena fitur AI merespons langsung tindakan pengguna.</p>
+    <table>
+      <thead><tr><th>Skenario per generasi</th><th class="num">Input</th><th class="num">Output</th><th class="num">Biaya/generasi</th></tr></thead>
+      <tbody>
+        <tr><td>Estimasi normal</td><td class="num">2.000 token</td><td class="num">1.000 token</td><td class="num">Rp12,64 ≈ Rp13</td></tr>
+        <tr><td>Batas konservatif</td><td class="num">4.096 token</td><td class="num">6.144 token</td><td class="num">Rp62,85 ≈ Rp63</td></tr>
+      </tbody>
+    </table>
+    <p class="source">Kurs yang dipakai: Rp18.052/US$, JISDOR 16 Oktober 2026. <a href="https://www.bi.go.id/id/default.aspx?links=false">Sumber: Bank Indonesia</a>. Tarif model dan tarif Bright Data berasal dari keputusan harga produk yang diberikan untuk laporan ini.</p>
+    <div class="bars">
+      <div class="barrow"><span>AI normal / bulan</span><div class="bartrack"><div class="bar" style="width:20.1%"></div></div><strong>Rp126.364</strong></div>
+      <div class="barrow"><span>AI konservatif / bulan</span><div class="bartrack"><div class="bar deep" style="width:100%"></div></div><strong>Rp628.498</strong></div>
+      <p class="source" style="margin:4px 0 0">Dasar: 1.000 pengguna × 10 generasi = 10.000 generasi per bulan.</p>
+    </div>
+    <h3>Rumus transparan</h3>
+    <p><strong>Biaya generasi</strong> = ((token input × US$0,10) + (token output × US$0,50)) ÷ 1.000.000 × Rp18.052.</p>
+    <div class="note">Semua endpoint AI perlu memakai batas token yang sama atau lebih kecil dari skenario konservatif. Tanpa batas token dan kuota atomik, harga pelanggan tidak dapat dijamin.</div>
+    <div class="footer"><span>VENTUREX AI · Biaya &amp; Pricing</span><span>3 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">04 · unit economics</div>
+    <h2>Dua skenario, satu batas harga yang aman</h2>
+    <table>
+      <thead><tr><th>Komponen</th><th class="num">Normal</th><th class="num">Konservatif</th></tr></thead>
+      <tbody>
+        <tr><td>Biaya tetap</td><td class="num">Rp117.250</td><td class="num">Rp117.250</td></tr>
+        <tr><td>Biaya AI untuk 10.000 generasi</td><td class="num">Rp126.364</td><td class="num">Rp628.498</td></tr>
+        <tr class="total"><td>Total biaya bulanan</td><td class="num">Rp243.614</td><td class="num">Rp745.748</td></tr>
+        <tr><td>Biaya per 100 pelanggan berbayar</td><td class="num">Rp2.436</td><td class="num">Rp7.457</td></tr>
+      </tbody>
+    </table>
+    <p>Dalam kondisi konservatif, harga minimum untuk mencapai margin kotor 70% adalah sekitar <strong>Rp24.859/pelanggan/bulan</strong>, sebelum backup. Harga ditetapkan di atas angka ini untuk menyediakan ruang terhadap variasi kurs dan biaya operasional yang belum dialokasikan.</p>
+    <div class="price">
+      <div class="price-card recommended"><div class="pill">REKOMENDASI PELUNCURAN</div><h3>Early Access</h3><div class="price-value">Rp29.000</div><p>per pengguna / bulan</p><ul><li>10 generasi AI per bulan</li><li>Margin konservatif ±74,3% sebelum backup</li><li>Harga awal yang mudah diuji</li></ul></div>
+      <div class="price-card"><div class="pill">SETELAH VALIDASI 30 HARI</div><h3>Harga reguler</h3><div class="price-value">Rp39.000</div><p>per pengguna / bulan</p><ul><li>10 generasi AI per bulan</li><li>Margin konservatif ±80,9% sebelum backup</li><li>Ruang lebih besar untuk backup dan support</li></ul></div>
+    </div>
+    <div class="footer"><span>VENTUREX AI · Biaya &amp; Pricing</span><span>4 / 5</span></div>
+  </section>
+
+  <section class="page">
+    <div class="eyebrow">05 · guardrail dan tindak lanjut</div>
+    <h2>Syarat sebelum menjual akses berbayar</h2>
+    <dl class="risk">
+      <dt>Kuota atomik</dt><dd>Tolak generasi ke-11 dalam periode bulanan, termasuk ketika pengguna mengirim request paralel.</dd>
+      <dt>Telemetry biaya</dt><dd>Simpan user, fitur, model, input token, output token, status, dan biaya estimasi untuk setiap request AI.</dd>
+      <dt>Batas token</dt><dd>Jaga seluruh fitur AI pada atau di bawah 4.096 token input dan 6.144 token output per generasi.</dd>
+      <dt>Rate limit</dt><dd>Batasi per akun dan per IP untuk menjaga CPU VPS serta mengurangi penyalahgunaan kuota AI.</dd>
+      <dt>Backup off-server</dt><dd>Buat backup PostgreSQL terenkripsi, tetapkan retensi, dan lakukan uji restore sebelum payment diaktifkan.</dd>
+      <dt>Review 30 hari</dt><dd>Bandingkan biaya AI aktual dengan batas konservatif; tetapkan harga reguler atau revisi kuota berdasarkan data.</dd>
+    </dl>
+    <h3>Keputusan operasional</h3>
+    <ul>
+      <li>Gunakan katalog tren kurasi pada peluncuran; Bright Data live hanya dibuka setelah hak penggunaan dan anggaran request disetujui.</li>
+      <li>Jangan menawarkan AI tanpa batas atau rollover kuota sebelum telemetry dan kapasitas VPS tervalidasi.</li>
+      <li>Pisahkan biaya backup, pajak, dan payment gateway pada revisi laporan berikutnya; ketiganya tidak boleh disembunyikan dalam asumsi biaya minimum.</li>
+    </ul>
+    <div class="callout"><strong>Keputusan sekarang:</strong> mulai dengan Early Access Rp29.000/bulan, kuota 10 generasi AI, dan guardrail biaya wajib. Naikkan ke Rp39.000/bulan setelah data pemakaian selama 30 hari mendukung keputusan tersebut.</div>
+    <p class="source">Catatan: Semua angka bersifat estimasi operasional pada 19 Oktober 2026. Kurs, harga penyedia, dan pola token dapat berubah. Laporan ini bukan proyeksi pendapatan maupun komitmen harga permanen.</p>
+    <div class="footer"><span>VENTUREX AI · Biaya &amp; Pricing</span><span>5 / 5</span></div>
+  </section>
+</body>
+</html>

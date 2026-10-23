@@ -1,15 +1,14 @@
 import { AtmosphericCta } from "./atmospheric-cta";
-import { DarkFeatureBand } from "./dark-feature-band";
 import { HeroSection } from "./hero-section";
 import { InteractiveSpecimen } from "./interactive-specimen";
 import { LandingFooter } from "./landing-footer";
 import { LandingHeader } from "./landing-header";
+import { PricingSection } from "./pricing-section";
 import { RoadmapBento } from "./roadmap-bento";
 import { SuiteTabStrip } from "./suite-tab-strip";
 import { TestimonialBand } from "./testimonial-band";
 import { TrendRadarBento } from "./trend-radar-bento";
 import { TrustMetricsStrip } from "./trust-metrics-strip";
-import { PricingSection } from "./pricing-section";
 
 export function LandingPage() {
   return (
@@ -42,10 +41,7 @@ export function LandingPage() {
 
         <PricingSection />
 
-        {/* 8. Enterprise & Data Integrity Dark Feature Band in Deep Lagoon */}
-        <DarkFeatureBand />
-
-        {/* 9. Atmospheric Gradient Conversion Call-to-Action */}
+        {/* 8. Atmospheric Green Conversion Call-to-Action */}
         <AtmosphericCta />
       </main>
 

@@ -160,8 +160,9 @@ export function InteractiveSpecimen() {
                   <button
                     key={value}
                     type="button"
+                    aria-pressed={category === value}
                     onClick={() => setCategory(value)}
-                    className={`rounded-small-buttons border px-12 py-10 text-body-sm transition-colors ${
+                    className={`inline-flex min-h-[44px] items-center justify-center rounded-small-buttons border px-12 py-10 text-body-sm transition-colors focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2 cursor-pointer ${
                       category === value
                         ? "border-midnight-wine bg-midnight-wine text-paper-white font-w540"
                         : "border-soft-mist bg-warm-parchment/60 text-ink-charcoal hover:bg-paper-white"
@@ -200,8 +201,9 @@ export function InteractiveSpecimen() {
                   <button
                     key={value}
                     type="button"
+                    aria-pressed={capital === value}
                     onClick={() => setCapital(value)}
-                    className={`w-full rounded-small-buttons border p-12 text-left transition-colors ${
+                    className={`w-full min-h-[44px] rounded-small-buttons border p-12 text-left transition-colors focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2 cursor-pointer ${
                       capital === value
                         ? "border-midnight-wine bg-midnight-wine/5 ring-1 ring-midnight-wine"
                         : "border-soft-mist bg-warm-parchment/40 hover:bg-paper-white"

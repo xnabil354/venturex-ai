@@ -49,13 +49,13 @@ export function RoadmapBento() {
           <div className="mt-28 flex items-center justify-center gap-16">
             <Link
               href="/register"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-buttons bg-midnight-wine px-20 text-body-sm font-w460 text-paper-white hover:bg-midnight-wine/90"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-buttons bg-midnight-wine px-20 text-body-sm font-w460 text-paper-white hover:bg-midnight-wine/90 focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
             >
               Dapatkan Roadmap Anda
             </Link>
             <a
               href="#simulasi-skor"
-              className="inline-flex items-center gap-6 text-body-sm font-w460 text-royal-violet hover:underline"
+              className="inline-flex min-h-[44px] items-center gap-6 px-4 py-8 rounded-sm text-body-sm font-w460 text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
             >
               <span>Uji Simulasi Peluang</span>
               <span aria-hidden="true">&rarr;</span>

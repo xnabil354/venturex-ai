@@ -92,7 +92,7 @@ export function OpportunityFitMockupCard({ className = "" }: { className?: strin
       <div className="mt-10">
         <div className="h-6 w-full overflow-hidden rounded-pills bg-white/15 border border-white/10">
           <div
-            className="h-full bg-gradient-to-r from-royal-violet to-lilac-mist"
+            className="h-full bg-royal-violet"
             style={{ width: "86%" }}
           />
         </div>
@@ -160,7 +160,7 @@ export function FloatingGlassDock({ className = "" }: { className?: string }) {
 
   return (
     <div
-      className={`glass-dock rounded-full p-8 flex lg:flex-col items-center gap-10 shadow-2xl select-none ${className}`}
+      className={`glass-dock rounded-full p-8 flex lg:flex-col items-center gap-6 shadow-2xl select-none w-fit h-fit shrink-0 ${className}`}
       role="toolbar"
       aria-label="Venturex Core Toolset"
     >
@@ -171,10 +171,11 @@ export function FloatingGlassDock({ className = "" }: { className?: string }) {
             key={t.label}
             type="button"
             title={t.label}
-            className="group relative flex h-36 w-36 items-center justify-center rounded-full text-paper-white/80 transition-all duration-200 hover:scale-125 hover:bg-white/20 hover:text-lilac-mist active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist"
+            aria-label={t.label}
+            className="group relative flex h-44 w-44 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-paper-white/80 transition-all duration-200 hover:scale-115 hover:bg-white/20 hover:text-lilac-mist active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist"
           >
             <IconComponent className="h-18 w-18" />
-            <span className="pointer-events-none absolute left-full ml-12 hidden whitespace-nowrap rounded-small-buttons bg-[#1f1017]/95 px-10 py-4 text-[11px] font-w540 text-paper-white border border-white/20 shadow-xl lg:group-hover:block z-50">
+            <span className="pointer-events-none absolute left-full ml-12 hidden whitespace-nowrap rounded-small-buttons bg-midnight-wine/95 px-10 py-4 text-[11px] font-w540 text-paper-white border border-white/20 shadow-xl lg:group-hover:block z-50">
               {t.label}
             </span>
           </button>

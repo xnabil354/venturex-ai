@@ -27,7 +27,7 @@ export function TestimonialBand() {
         <div className="mt-20">
           <Link
             href="/register"
-            className="inline-flex items-center gap-6 text-body-sm font-w460 text-royal-violet hover:underline"
+            className="inline-flex min-h-[44px] items-center gap-6 px-4 py-8 rounded-sm text-body-sm font-w460 text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
           >
             <span>Pelajari studi kasus dan mulai analisis Anda</span>
             <span aria-hidden="true">&rarr;</span>

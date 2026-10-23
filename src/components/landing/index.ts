@@ -7,7 +7,6 @@ export { TrendRadarBento } from "./trend-radar-bento";
 export { TestimonialBand } from "./testimonial-band";
 export { SuiteTabStrip } from "./suite-tab-strip";
 export { CoreCapabilities } from "./core-capabilities";
-export { DarkFeatureBand } from "./dark-feature-band";
 export { InteractiveSpecimen } from "./interactive-specimen";
 export { RoadmapBento } from "./roadmap-bento";
 export { AtmosphericCta } from "./atmospheric-cta";
