@@ -2,12 +2,17 @@ import type { HTMLAttributes } from "react";
 
 import { cx } from "@/lib/cx";
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+type CardProps = HTMLAttributes<HTMLDivElement> & {
+  readonly surface?: "paper" | "transparent";
+};
+
+export function Card({ className, surface = "paper", ...props }: CardProps) {
   return (
     <div
       {...props}
       className={cx(
-        "rounded-cards border border-soft-mist bg-paper-white p-16",
+        "rounded-cards border border-soft-mist p-16",
+        surface === "paper" ? "bg-paper-white" : undefined,
         className,
       )}
     />

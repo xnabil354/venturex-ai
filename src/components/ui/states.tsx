@@ -22,7 +22,7 @@ export function EmptyState({
     <section
       aria-labelledby={titleId}
       className={cx(
-        "grid gap-12 border-t border-soft-mist pt-16 text-left",
+        "grid max-w-[62ch] gap-12 rounded-cards border border-soft-mist bg-paper-white p-20 text-left sm:p-24",
         className,
       )}
     >

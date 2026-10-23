@@ -76,7 +76,10 @@ describe("business profile form validation", () => {
       businessDescription: "Kedai minuman keluarga.",
       businessName: "Kedai Pagi",
       city: "Bandung",
+      cityId: "",
       customerSegmentIds: [SEGMENT_ID],
+      district: "",
+      districtId: "",
       locationText: "Bandung",
       notes: "Catatan pemilik.",
       products: [
@@ -84,7 +87,10 @@ describe("business profile form validation", () => {
         { categoryId: "", key: "product-2", name: "Teh Lemon", price: "" },
       ],
       province: "Jawa Barat",
+      provinceId: "",
       salesChannelIds: [CHANNEL_ID],
+      subdistrict: "",
+      subdistrictId: "",
     });
     expect(JSON.stringify(state)).not.toContain("productId");
     expect(JSON.stringify(state)).not.toContain("isActive");
@@ -127,7 +133,9 @@ describe("business profile form validation", () => {
         location: {
           text: "Jakarta Pusat",
           city: "Jakarta Pusat",
+          district: "",
           province: "DKI Jakarta",
+          subdistrict: "",
         },
         averagePrice: { min: 20000, max: 40000 },
         products: [

@@ -49,7 +49,7 @@ const PROFILE_ID = "40000000-0000-4000-8000-000000000001";
 const validInput: BusinessProfileInput = {
   businessName: "Kopi Nusantara",
   businessCategoryId: CATEGORY_ID,
-  location: { text: "Jakarta Pusat", city: null, province: "DKI Jakarta" },
+  location: { text: "Jakarta Pusat", city: null, province: "DKI Jakarta", district: null, subdistrict: null },
   averagePrice: { min: 20_000, max: 40_000 },
   products: [
     { name: "Kopi Susu", categoryId: CATEGORY_ID, price: 25_000 },
@@ -228,7 +228,7 @@ describe("BusinessProfileService", () => {
     expect(result.profileVersion).toBe(1);
   });
 
-  it("prefills every persisted business field, product, and reference selection", async () => {
+  it("prefills persisted fields including nullable location names, products, and reference selections", async () => {
     // Given
     const { service } = createService();
     await service.save(validInput, USER_ID);
@@ -238,6 +238,7 @@ describe("BusinessProfileService", () => {
 
     // Then
     expect(result).toEqual(validInput);
+    expect(result.location).toMatchObject({ district: null, subdistrict: null });
     expect(result.products).toEqual([
       { name: "Kopi Susu", categoryId: CATEGORY_ID, price: 25_000 },
       { name: "Teh Lemon", categoryId: null, price: null },

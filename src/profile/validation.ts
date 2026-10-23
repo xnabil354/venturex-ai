@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OTHER_FNB_CATEGORY_ID } from "../reference/constants";
 
 export const EXPERIENCE_LEVELS = {
   BEGINNER: "BEGINNER",
@@ -35,18 +36,43 @@ const optionalLongTextSchema = z
   .optional()
   .transform((value) => (value && value.length > 0 ? value : null));
 
+const requiredRegionNameSchema = z.string().trim().min(1).max(120);
+
 const locationSchema = z
+  .object({
+    text: z.string().trim().min(1).max(255),
+    city: requiredRegionNameSchema,
+    province: requiredRegionNameSchema,
+    district: requiredRegionNameSchema,
+    subdistrict: requiredRegionNameSchema,
+    countryCode: z.literal("ID").optional(),
+  })
+  .strict()
+  .transform(({ text, city, province, district, subdistrict }) => ({
+    text,
+    city,
+    province,
+    district,
+    subdistrict,
+    countryCode: "ID" as const,
+  }));
+
+const editableLocationSchema = z
   .object({
     text: z.string().trim().min(1).max(255),
     city: optionalTextSchema(120),
     province: optionalTextSchema(120),
+    district: optionalTextSchema(120),
+    subdistrict: optionalTextSchema(120),
     countryCode: z.literal("ID").optional(),
   })
   .strict()
-  .transform(({ text, city, province }) => ({
+  .transform(({ text, city, province, district, subdistrict }) => ({
     text,
     city,
     province,
+    district,
+    subdistrict,
     countryCode: "ID" as const,
   }));
 
@@ -61,29 +87,63 @@ const budgetSchema = z
     path: ["max"],
   });
 
+const entrepreneurProfileFields = {
+  budget: budgetSchema,
+  experienceLevel: z.enum([
+    EXPERIENCE_LEVELS.BEGINNER,
+    EXPERIENCE_LEVELS.SOME_EXPERIENCE,
+    EXPERIENCE_LEVELS.EXPERIENCED,
+  ]),
+  timeCommitment: z.enum([
+    TIME_COMMITMENTS.LIMITED,
+    TIME_COMMITMENTS.PART_TIME,
+    TIME_COMMITMENTS.FULL_TIME,
+  ]),
+  interestCategoryIds: referenceIdsSchema,
+  customerSegmentIds: referenceIdsSchema,
+  salesChannelIds: referenceIdsSchema,
+  preferredProductType: z.string().trim().min(1, "Tuliskan produk yang ingin Anda eksplorasi.").max(100),
+  businessObjective: optionalLongTextSchema,
+  notes: optionalLongTextSchema,
+};
+
+function validateOtherCategory(
+  profile: {
+    readonly interestCategoryIds: readonly string[];
+    readonly preferredProductType: string | null;
+  },
+  context: z.RefinementCtx,
+): void {
+  if (
+    profile.interestCategoryIds.includes(OTHER_FNB_CATEGORY_ID) &&
+    !profile.preferredProductType
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Tuliskan jenis usaha lainnya.",
+      path: ["preferredProductType"],
+    });
+  }
+}
+
 export const entrepreneurProfileSchema = z
-  .object({
-    location: locationSchema,
-    budget: budgetSchema,
-    experienceLevel: z.enum([
-      EXPERIENCE_LEVELS.BEGINNER,
-      EXPERIENCE_LEVELS.SOME_EXPERIENCE,
-      EXPERIENCE_LEVELS.EXPERIENCED,
-    ]),
-    timeCommitment: z.enum([
-      TIME_COMMITMENTS.LIMITED,
-      TIME_COMMITMENTS.PART_TIME,
-      TIME_COMMITMENTS.FULL_TIME,
-    ]),
-    interestCategoryIds: referenceIdsSchema,
-    customerSegmentIds: referenceIdsSchema,
-    salesChannelIds: referenceIdsSchema,
-    preferredProductType: optionalTextSchema(100),
-    businessObjective: optionalLongTextSchema,
-    notes: optionalLongTextSchema,
-  })
-  .strict();
+  .object({ location: locationSchema, ...entrepreneurProfileFields })
+  .strict()
+  .superRefine(validateOtherCategory);
+
+export const entrepreneurProfileEditSchema = z
+  .object({ location: editableLocationSchema, ...entrepreneurProfileFields })
+  .strict()
+  .superRefine(validateOtherCategory);
 
 export type EntrepreneurProfileInput = z.infer<
   typeof entrepreneurProfileSchema
 >;
+
+export const entrepreneurProfileReadSchema = z.object({
+  location: editableLocationSchema,
+  ...entrepreneurProfileFields,
+  preferredProductType: optionalTextSchema(100),
+}).strict();
+
+export type EntrepreneurProfileEditValues = z.infer<typeof entrepreneurProfileReadSchema>;

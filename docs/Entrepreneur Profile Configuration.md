@@ -34,6 +34,7 @@ All MVP categories are top-level records with `parent_id = null`.
 | `FROZEN_READY_TO_COOK` | Frozen dan siap masak | Covers frozen and ready-to-cook products. |
 | `HEALTHY_SPECIALTY` | Sehat dan kebutuhan khusus | Covers health-oriented and specialty food concepts without sensitive classification. |
 | `CATERING_FOOD_SERVICE` | Katering dan layanan makanan | A business/product category for catering and food-service concepts. |
+| `OTHER` | Lainnya | Lets entrepreneurs describe an F&B category that is not listed. |
 
 `CATERING_FOOD_SERVICE` is a business/product category. It must not be confused with `CATERING_B2B`, which is a sales channel.
 
@@ -113,12 +114,16 @@ The UI may provide helper presets, but persisted source of truth remains numeric
 
 | Field | MVP behavior |
 |---|---|
-| `location_text` | Required, human-readable, maximum 255 characters. |
-| `city` | Optional. |
-| `province` | Optional. |
+| `location_text` | Required address detail, maximum 255 characters. |
+| `province` | Required dropdown sourced from the [Emsifa Indonesia administrative regions API](https://github.com/emsifa/api-wilayah-indonesia), maximum 120 characters. |
+| `city` | Required dropdown, filtered by province, maximum 120 characters. |
+| `district` | Required dropdown for Kecamatan, filtered by city/regency, maximum 120 characters. |
+| `subdistrict` | Required dropdown for Kelurahan/Desa, filtered by Kecamatan, maximum 120 characters. |
 | `country_code` | Server default `ID`. |
 
-The MVP does not use Maps API, geocoding, coordinates, or automatic city/province inference.
+The form collects Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan, then alamat detail. All five location inputs are required. It fetches names and IDs from the Emsifa static API v2; only the selected names are stored in the existing profile fields. If the external list cannot be loaded, the required region fields cannot be completed until the user retries successfully.
+
+The MVP does not use Maps API, geocoding, coordinates, or automatic administrative-area inference.
 
 ## 8. Preferred product type
 
@@ -130,6 +135,7 @@ Rules:
 - maximum 100 characters;
 - empty value may be stored as `null`;
 - no additional reference table.
+- when the `OTHER` interest category is selected, the text is required and stores the custom category name.
 
 It is context for personalization, not a replacement for the F&B category master.
 
@@ -141,6 +147,8 @@ The onboarding form uses three progressive steps. There is no separate review st
 
 - location;
 - interest/category.
+
+The interest field remains multi-select. Selecting `OTHER` reveals a custom text field; the user must provide a name before continuing.
 
 ### Step 2: Budget dan Target Pelanggan
 
@@ -205,7 +213,7 @@ Versioned fields:
 - preferred product type;
 - business objective.
 
-`notes` is intentionally excluded from profile-version invalidation in the MVP. Notes are stored, but do not invalidate cached recommendation or analysis context because notes are not currently defined as a personalization input.
+`notes` is intentionally excluded from profile-version invalidation in the MVP. Notes are stored, but do not change the onboarding `profileVersion` counter. The separately consented SearchApi Opportunity Finder may use notes as generation context; it computes a keyed context fingerprint for each private analysis, so this exception does not alter onboarding version semantics or introduce a shared analysis cache.
 
 Before comparison:
 
@@ -214,7 +222,7 @@ Before comparison:
 - sort junction IDs;
 - deduplicate junction IDs.
 
-If future AI or recommendation logic uses notes as input, versioning behavior requires a requirement change.
+Any other AI or recommendation logic that uses notes as input still requires a requirement and versioning review.
 
 ## 12. Reference seed strategy
 

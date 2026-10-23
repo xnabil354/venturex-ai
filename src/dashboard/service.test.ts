@@ -177,6 +177,7 @@ function createService(
   trendServiceFactory?: DashboardQueryServiceDependencies["trendServiceFactory"],
   savedOpportunityServiceFactory?: DashboardQueryServiceDependencies["savedOpportunityServiceFactory"],
   opportunityServiceFactory?: DashboardQueryServiceDependencies["opportunityServiceFactory"],
+  roadmapServiceFactory?: DashboardQueryServiceDependencies["roadmapServiceFactory"],
 ): DashboardQueryService {
   const dependencies: DashboardQueryServiceDependencies = {
     currentUserResolver: async () => currentUser,
@@ -193,12 +194,17 @@ function createService(
         list: async (): Promise<OpportunityFinderResult> => ({
           status: "EMPTY",
           items: [],
+          categories: [],
+          selectedCategory: null,
           page: 1,
           pageSize: 10,
           totalCount: 0,
           totalPages: 1,
         }),
       })),
+    roadmapServiceFactory: roadmapServiceFactory ?? (() => ({
+      listForCurrentUser: async () => ({ items: [], page: 1, pageSize: 1, totalCount: 0, totalPages: 1 }),
+    })),
   };
 
   return new DashboardQueryService(dependencies);
@@ -234,16 +240,34 @@ describe("DashboardQueryService", () => {
         salesChannels: [{ code: "OFFLINE_STORE", name: "Gerai atau toko offline" }],
       },
       modules: {
-        trends: { status: "EMPTY", preview: [] },
-        opportunities: { status: "EMPTY", preview: [] },
-        savedOpportunities: { status: "EMPTY", preview: [] },
+        trends: { status: "UNAVAILABLE", preview: [] },
+        opportunities: { status: "UNAVAILABLE", preview: [] },
+        savedOpportunities: { status: "UNAVAILABLE", preview: [] },
         roadmap: { status: "UNAVAILABLE" },
       },
     });
     expect(entrepreneurRepository.requestedUserId).toBe(ENTREPRENEUR_USER_ID);
   });
 
-  it("returns ordered published Trend previews for the persisted entrepreneur type", async () => {
+  it("keeps the unavailable Roadmap state without invoking its service", async () => {
+    const roadmapList = vi.fn(async () => ({ items: [], page: 1, pageSize: 1, totalCount: 1, totalPages: 1 }));
+    const roadmapServiceFactory = vi.fn(() => ({ listForCurrentUser: roadmapList }));
+    const result = await createService(
+      user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING),
+      new MemoryEntrepreneurRepository(),
+      new MemoryBusinessRepository(),
+      undefined,
+      undefined,
+      undefined,
+      roadmapServiceFactory,
+    ).get();
+
+    expect(roadmapServiceFactory).not.toHaveBeenCalled();
+    expect(roadmapList).not.toHaveBeenCalled();
+    expect(result.modules.roadmap).toEqual({ status: "UNAVAILABLE" });
+  });
+
+  it("does not request published Trend previews while the module is unavailable", async () => {
     const entrepreneur = user(ENTREPRENEUR_USER_ID, USER_TYPES.ENTREPRENEUR);
     const records = [
       trendDto({
@@ -285,33 +309,14 @@ describe("DashboardQueryService", () => {
       trendServiceFactory,
     ).get();
 
-    expect(trendServiceFactory).toHaveBeenCalledWith(entrepreneur);
+    expect(trendServiceFactory).not.toHaveBeenCalled();
     expect(result.modules.trends).toEqual({
-      status: "AVAILABLE",
-      preview: [
-        {
-          id: "60000000-0000-4000-8000-000000000006",
-          title: "Newest eligible",
-          categoryName: "Consumer Behavior",
-          summary: "Ringkasan sinyal yang diterbitkan.",
-        },
-        {
-          id: "60000000-0000-4000-8000-000000000001",
-          title: "Tie first",
-          categoryName: "Consumer Behavior",
-          summary: "Ringkasan sinyal yang diterbitkan.",
-        },
-        {
-          id: "60000000-0000-4000-8000-000000000002",
-          title: "Tie second",
-          categoryName: "Consumer Behavior",
-          summary: "Ringkasan sinyal yang diterbitkan.",
-        },
-      ],
+      status: "UNAVAILABLE",
+      preview: [],
     });
   });
 
-  it("uses persisted UMKM eligibility for its Trend preview", async () => {
+  it("does not request Trend previews for UMKM while the module is unavailable", async () => {
     const umkm = user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING);
     const records = [
       trendDto({
@@ -325,21 +330,20 @@ describe("DashboardQueryService", () => {
       }),
     ];
 
+    const trendServiceFactory = vi.fn(() => ({ getPublishedTrends: async () => records }));
     const result = await createService(
       umkm,
       new MemoryEntrepreneurRepository(),
       new MemoryBusinessRepository(),
-      () => ({ getPublishedTrends: async () => records }),
+      trendServiceFactory,
     ).get();
 
+    expect(trendServiceFactory).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       userType: USER_TYPES.UMKM_EXISTING,
       profile: { businessName: "Kedai Pagi", productCount: 3 },
       modules: {
-        trends: {
-          status: "AVAILABLE",
-          preview: [{ id: "60000000-0000-4000-8000-000000000004", title: "UMKM eligible" }],
-        },
+        trends: { status: "UNAVAILABLE", preview: [] },
       },
     });
   });
@@ -347,7 +351,7 @@ describe("DashboardQueryService", () => {
   it.each([
     [USER_TYPES.ENTREPRENEUR, ENTREPRENEUR_USER_ID],
     [USER_TYPES.UMKM_EXISTING, BUSINESS_USER_ID],
-  ] as const)("loads at most three saved opportunities for the persisted %s user", async (userType, userId) => {
+  ] as const)("does not load saved opportunities for the persisted %s user while unavailable", async (userType, userId) => {
     const currentUser = user(userId, userType);
     const opportunities: OpportunityListItemDto[] = Array.from({ length: 4 }, (_, index) => ({
       id: `90000000-0000-4000-8000-00000000000${index + 1}`,
@@ -370,49 +374,75 @@ describe("DashboardQueryService", () => {
       savedOpportunityServiceFactory,
     ).get();
 
-    expect(savedOpportunityServiceFactory).toHaveBeenCalledWith(currentUser);
+    expect(savedOpportunityServiceFactory).not.toHaveBeenCalled();
+    expect(listForCurrentUser).not.toHaveBeenCalled();
     expect(result.modules.savedOpportunities).toEqual({
-      status: "AVAILABLE",
-      preview: opportunities.slice(0, 3).map(({ id, name, categoryName, summary }) => ({
-        id,
-        name,
-        categoryName,
-        summary,
-      })),
+      status: "UNAVAILABLE",
+      preview: [],
     });
-    expect(listForCurrentUser).toHaveBeenCalledWith(3);
-    expect(result.modules.savedOpportunities.preview).toHaveLength(3);
+    expect(result.modules.savedOpportunities.preview).toHaveLength(0);
   });
 
-  it("returns EMPTY when the saved-opportunity query succeeds without eligible records", async () => {
+  it("keeps unimplemented modules unavailable when injected services would return no records", async () => {
+    const trendServiceFactory = vi.fn(() => ({ getPublishedTrends: async () => [] }));
+    const savedOpportunityServiceFactory = vi.fn(() => ({ listForCurrentUser: async () => ({ status: "EMPTY" as const, items: [] as const }) }));
+    const opportunityServiceFactory = vi.fn(() => ({
+      list: async (): Promise<OpportunityFinderResult> => ({ status: "EMPTY", items: [], categories: [], selectedCategory: null, page: 1, pageSize: 10, totalCount: 0, totalPages: 1 }),
+    }));
+    const result = await createService(
+      user(ENTREPRENEUR_USER_ID, USER_TYPES.ENTREPRENEUR),
+      new MemoryEntrepreneurRepository(),
+      new MemoryBusinessRepository(),
+      trendServiceFactory,
+      savedOpportunityServiceFactory,
+      opportunityServiceFactory,
+    ).get();
+
+    expect(trendServiceFactory).not.toHaveBeenCalled();
+    expect(savedOpportunityServiceFactory).not.toHaveBeenCalled();
+    expect(opportunityServiceFactory).not.toHaveBeenCalled();
+    expect(result.modules).toEqual({
+      trends: { status: "UNAVAILABLE", preview: [] },
+      opportunities: { status: "UNAVAILABLE", preview: [] },
+      savedOpportunities: { status: "UNAVAILABLE", preview: [] },
+      roadmap: { status: "UNAVAILABLE" },
+    });
+  });
+
+  it("does not translate an unavailable saved-opportunity capability into ERROR", async () => {
+    const savedOpportunityServiceFactory = vi.fn(() => ({ listForCurrentUser: async () => ({ status: "ERROR" as const }) }));
     const result = await createService(
       user(ENTREPRENEUR_USER_ID, USER_TYPES.ENTREPRENEUR),
       new MemoryEntrepreneurRepository(),
       new MemoryBusinessRepository(),
       undefined,
-      () => ({ listForCurrentUser: async () => ({ status: "EMPTY", items: [] }) }),
+      savedOpportunityServiceFactory,
     ).get();
 
-    expect(result.modules.savedOpportunities).toEqual({ status: "EMPTY", preview: [] });
-    expect(result.modules.opportunities).toEqual({ status: "EMPTY", preview: [] });
+    expect(savedOpportunityServiceFactory).not.toHaveBeenCalled();
+    expect(result.modules.savedOpportunities).toEqual({ status: "UNAVAILABLE", preview: [] });
   });
 
   it("isolates saved-opportunity failures from profile and Trend data", async () => {
     const trend = trendDto({ affectedUserTypes: [USER_TYPES.UMKM_EXISTING] });
+    const trendServiceFactory = vi.fn(() => ({ getPublishedTrends: async () => [trend] }));
+    const savedOpportunityServiceFactory = vi.fn(() => ({ listForCurrentUser: async () => Promise.reject(new Error("saved storage failed")) }));
     const result = await createService(
       user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING),
       new MemoryEntrepreneurRepository(),
       new MemoryBusinessRepository(),
-      () => ({ getPublishedTrends: async () => [trend] }),
-      () => ({ listForCurrentUser: async () => Promise.reject(new Error("saved storage failed")) }),
+      trendServiceFactory,
+      savedOpportunityServiceFactory,
     ).get();
 
+    expect(trendServiceFactory).not.toHaveBeenCalled();
+    expect(savedOpportunityServiceFactory).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       userType: USER_TYPES.UMKM_EXISTING,
       profile: { businessName: "Kedai Pagi", productCount: 3 },
       modules: {
-        trends: { status: "AVAILABLE", preview: [{ id: trend.id }] },
-        savedOpportunities: { status: "ERROR", preview: [] },
+        trends: { status: "UNAVAILABLE", preview: [] },
+        savedOpportunities: { status: "UNAVAILABLE", preview: [] },
       },
     });
     expect(JSON.stringify(result)).not.toContain("saved storage failed");
@@ -421,7 +451,7 @@ describe("DashboardQueryService", () => {
   it.each([
     [USER_TYPES.ENTREPRENEUR, ENTREPRENEUR_USER_ID],
     [USER_TYPES.UMKM_EXISTING, BUSINESS_USER_ID],
-  ] as const)("loads the existing catalog service for the persisted %s user and preserves its order", async (userType, userId) => {
+  ] as const)("does not load the Opportunity catalog for the persisted %s user while unavailable", async (userType, userId) => {
     const currentUser = user(userId, userType);
     const items: OpportunityListItemDto[] = Array.from({ length: 4 }, (_, index) => ({
       id: `91000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
@@ -436,6 +466,8 @@ describe("DashboardQueryService", () => {
     const list = vi.fn(async (): Promise<OpportunityFinderResult> => ({
       status: "AVAILABLE",
       items,
+      categories: [],
+      selectedCategory: null,
       page: 1,
       pageSize: 10,
       totalCount: items.length,
@@ -452,29 +484,20 @@ describe("DashboardQueryService", () => {
       opportunityServiceFactory,
     ).get();
 
-    expect(opportunityServiceFactory).toHaveBeenCalledWith(currentUser);
-    expect(list).toHaveBeenCalledWith(1);
+    expect(opportunityServiceFactory).not.toHaveBeenCalled();
+    expect(list).not.toHaveBeenCalled();
     expect(result.modules.opportunities).toEqual({
-      status: "AVAILABLE",
-      preview: items.slice(0, 3).map((item) => ({
-        id: item.id,
-        name: item.name,
-        categoryName: item.categoryName,
-        summary: item.summary,
-        relatedTrendTitle: item.relatedTrend.title,
-      })),
+      status: "UNAVAILABLE",
+      preview: [],
     });
-    expect(result.modules.opportunities.preview.map((item) => item.id)).toEqual(
-      items.slice(0, 3).map((item) => item.id),
-    );
   });
 
-  it("returns EMPTY when the eligible Opportunity catalog is empty", async () => {
+  it("keeps Opportunity unavailable when the catalog has no records", async () => {
     const result = await createService(
       user(ENTREPRENEUR_USER_ID, USER_TYPES.ENTREPRENEUR),
     ).get();
 
-    expect(result.modules.opportunities).toEqual({ status: "EMPTY", preview: [] });
+    expect(result.modules.opportunities).toEqual({ status: "UNAVAILABLE", preview: [] });
   });
 
   it("isolates Opportunity preview failures from profile, Trend, and Saved previews", async () => {
@@ -489,39 +512,47 @@ describe("DashboardQueryService", () => {
         title: "Trend tersimpan",
       },
     };
+    const trendServiceFactory = vi.fn(() => ({ getPublishedTrends: async () => [trend] }));
+    const savedOpportunityServiceFactory = vi.fn(() => ({ listForCurrentUser: async () => ({ status: "AVAILABLE" as const, items: [savedItem] }) }));
+    const opportunityServiceFactory = vi.fn(() => ({ list: async () => Promise.reject(new Error("catalog database detail")) }));
     const result = await createService(
       user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING),
       new MemoryEntrepreneurRepository(),
       new MemoryBusinessRepository(),
-      () => ({ getPublishedTrends: async () => [trend] }),
-      () => ({ listForCurrentUser: async () => ({ status: "AVAILABLE", items: [savedItem] }) }),
-      () => ({ list: async () => Promise.reject(new Error("catalog database detail")) }),
+      trendServiceFactory,
+      savedOpportunityServiceFactory,
+      opportunityServiceFactory,
     ).get();
 
+    expect(trendServiceFactory).not.toHaveBeenCalled();
+    expect(savedOpportunityServiceFactory).not.toHaveBeenCalled();
+    expect(opportunityServiceFactory).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       userType: USER_TYPES.UMKM_EXISTING,
       profile: { businessName: "Kedai Pagi", productCount: 3 },
       modules: {
-        trends: { status: "AVAILABLE", preview: [{ id: trend.id }] },
-        savedOpportunities: { status: "AVAILABLE", preview: [{ id: savedItem.id }] },
-        opportunities: { status: "ERROR", preview: [] },
+        trends: { status: "UNAVAILABLE", preview: [] },
+        savedOpportunities: { status: "UNAVAILABLE", preview: [] },
+        opportunities: { status: "UNAVAILABLE", preview: [] },
       },
     });
     expect(JSON.stringify(result)).not.toContain("catalog database detail");
   });
 
   it("isolates Trend query failures from the completed profile summary", async () => {
+    const trendServiceFactory = vi.fn(() => ({ getPublishedTrends: async () => Promise.reject(new Error("private database detail")) }));
     const result = await createService(
       user(BUSINESS_USER_ID, USER_TYPES.UMKM_EXISTING),
       new MemoryEntrepreneurRepository(),
       new MemoryBusinessRepository(),
-      () => ({ getPublishedTrends: async () => Promise.reject(new Error("private database detail")) }),
+      trendServiceFactory,
     ).get();
 
+    expect(trendServiceFactory).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       userType: USER_TYPES.UMKM_EXISTING,
       profile: { businessName: "Kedai Pagi", productCount: 3 },
-      modules: { trends: { status: "ERROR", preview: [] } },
+      modules: { trends: { status: "UNAVAILABLE", preview: [] } },
     });
     expect(JSON.stringify(result)).not.toContain("private database detail");
   });

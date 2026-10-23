@@ -2,6 +2,8 @@ import Link from "next/link";
 import { useId } from "react";
 
 import type { DashboardSavedOpportunityModuleState } from "../../dashboard/dto";
+import { Badge, Card } from "../ui";
+import { ArrowRightIcon, TargetIcon } from "../landing/icons";
 
 const statusCopy = {
   AVAILABLE: "Tersedia",
@@ -11,10 +13,10 @@ const statusCopy = {
 } as const;
 
 const descriptionCopy = {
-  AVAILABLE: "Peluang tersimpan yang masih sesuai untuk tipe akun Anda.",
-  EMPTY: "Belum ada peluang eligible yang tersimpan.",
-  UNAVAILABLE: "Penyimpanan peluang belum tersedia di aplikasi.",
-  ERROR: "Peluang tersimpan belum dapat dimuat saat ini. Ringkasan Dashboard tetap tersedia.",
+  AVAILABLE: "Hipotesis pilihan Anda untuk ditinjau kembali.",
+  EMPTY: "Simpan hipotesis yang ingin Anda lanjutkan dari Opportunity Finder.",
+  UNAVAILABLE: "Simpan peluang yang ingin Anda nilai lebih lanjut.",
+  ERROR: "Peluang tersimpan belum dapat dimuat saat ini. Bagian lain di Dashboard tetap tersedia.",
 } as const;
 
 export type SavedOpportunityPreviewSectionProps = {
@@ -29,41 +31,56 @@ export function SavedOpportunityPreviewSection({
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-12 border-t border-soft-mist pt-24">
-      <div className="flex flex-wrap items-baseline justify-between gap-8">
-        <h2
-          className="text-label-bold font-w460 leading-label-bold text-ink-charcoal"
-          id={headingId}
-        >
-          {title}
-        </h2>
-        <p className="text-caption font-w540 text-stone-gray">{statusCopy[state.status]}</p>
-      </div>
-      <p className="text-body-sm leading-body-sm text-stone-gray">{descriptionCopy[state.status]}</p>
-      {state.status === "AVAILABLE" ? (
-        <ul className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-          {state.preview.map((opportunity) => (
-            <li className="grid content-start gap-8 border border-soft-mist bg-paper-white p-16" key={opportunity.id}>
-              <p className="text-caption font-w540 text-stone-gray">{opportunity.categoryName}</p>
-              <h3 className="text-label-bold font-w460 leading-label-bold text-ink-charcoal">
-                <Link
-                  className="transition-colors hover:text-royal-violet hover:underline"
-                  href={`/opportunities/${opportunity.id}`}
-                >
-                  {opportunity.name}
-                </Link>
-              </h3>
-              <p className="text-body-sm leading-body-sm text-stone-gray">{opportunity.summary}</p>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <Link
-        className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet underline-offset-4 transition-colors hover:text-midnight-wine hover:underline"
-        href="/saved-opportunities"
-      >
-        Lihat semua peluang tersimpan
-      </Link>
+    <section aria-labelledby={headingId} className="h-full">
+      <Card className="grid gap-16 border-royal-violet/20 bg-lilac-mist/15 p-20 transition-colors duration-200 hover:border-royal-violet/40 sm:p-24">
+        <div className="grid min-w-0 gap-14">
+          <div className="flex flex-wrap items-center justify-between gap-10">
+            <div className="flex items-center gap-10">
+              <span className="flex size-36 shrink-0 items-center justify-center rounded-small-buttons border border-royal-violet/20 bg-paper-white/70 text-royal-violet">
+                <TargetIcon className="size-18" />
+              </span>
+              <h2
+                className="text-label-bold font-w460 leading-label-bold text-ink-charcoal"
+                id={headingId}
+              >
+                {title}
+              </h2>
+            </div>
+            <Badge tone={state.status === "AVAILABLE" ? "wash" : "neutral"}>{state.status === "AVAILABLE" ? `${state.preview.length} tersimpan` : statusCopy[state.status]}</Badge>
+          </div>
+
+          <p className="text-body-sm leading-relaxed text-stone-gray">{descriptionCopy[state.status]}</p>
+
+          {state.status === "AVAILABLE" ? (
+            <ul className="divide-y divide-royal-violet/15 border-y border-royal-violet/15 sm:grid sm:grid-cols-2 sm:gap-x-24 sm:gap-y-16 sm:divide-y-0 sm:border-y-0 lg:grid-cols-3">
+              {state.preview.map((opportunity) => (
+                <li className="py-14 first:pt-0 sm:py-0 grid content-start gap-4" key={opportunity.id}>
+                  <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">{opportunity.categoryName}</span>
+                  <h3 className="break-words text-body font-w540 text-ink-charcoal">
+                    <Link
+                      className="transition-colors hover:text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
+                      href={opportunity.href ?? `/opportunities/${opportunity.id}`}
+                    >
+                      {opportunity.name}
+                    </Link>
+                  </h3>
+                  <p className="line-clamp-2 text-body-sm leading-relaxed text-stone-gray">{opportunity.summary}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <div className="flex sm:justify-end">
+          <Link
+            className="group inline-flex min-h-button w-full items-center justify-center gap-8 rounded-small-buttons border border-royal-violet/30 bg-paper-white px-14 text-body-sm font-w540 text-royal-violet transition-colors hover:border-royal-violet hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet sm:w-fit"
+            href="/saved"
+          >
+            <span>Lihat semua peluang tersimpan</span>
+            <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
+          </Link>
+        </div>
+      </Card>
     </section>
   );
 }

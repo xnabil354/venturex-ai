@@ -6,8 +6,12 @@ import { z } from "zod";
 
 import { Button, EmptyState, LoadingSkeleton } from "@/components/ui";
 import { cx } from "@/lib/cx";
-import type { EntrepreneurProfileInput } from "@/profile/validation";
+import type { EntrepreneurProfileEditValues } from "@/profile/validation";
 
+import {
+  OnboardingProgressPublisher,
+  OnboardingProgressSlot,
+} from "./onboarding-progress-context";
 import {
   EntrepreneurProfileStepOne,
   EntrepreneurProfileStepThree,
@@ -71,10 +75,11 @@ const profileSuccessSchema = z.object({
 });
 
 const STEP_META = {
-  1: { label: "Lokasi dan minat", title: "Di mana dan pada kategori apa Anda ingin mulai?" },
-  2: { label: "Budget dan target pelanggan", title: "Siapa yang ingin Anda layani?" },
-  3: { label: "Cara menjalankan usaha", title: "Bagaimana Anda ingin menjalankan usaha?" },
-} as const satisfies Record<EntrepreneurFormStep, { label: string; title: string }>;
+  1: { label: "Lokasi dan minat" },
+  2: { label: "Budget dan target pelanggan" },
+  3: { label: "Cara menjalankan usaha" },
+} as const satisfies Record<EntrepreneurFormStep, { label: string }>;
+const PROFILE_STEPS = [STEP_META[1], STEP_META[2], STEP_META[3]];
 
 class ReferenceLoadError extends Error {
   override readonly name = "ReferenceLoadError";
@@ -130,7 +135,7 @@ async function loadReferenceData(): Promise<ReferenceData> {
 }
 
 export type EntrepreneurProfileFormProps = {
-  readonly initialValues?: EntrepreneurProfileInput;
+  readonly initialValues?: EntrepreneurProfileEditValues;
   readonly mode?: "onboarding" | "edit";
 };
 
@@ -295,17 +300,29 @@ export function EntrepreneurProfileForm({
     void submitProfile();
   }
 
+  const progressPublisher = (
+    <OnboardingProgressPublisher currentStep={step} steps={PROFILE_STEPS} />
+  );
+
   if (references.status === "loading") {
-    return <ReferenceLoadingState />;
+    return (
+      <>
+        {progressPublisher}
+        <ReferenceLoadingState />
+      </>
+    );
   }
 
   if (references.status === "error") {
     return (
-      <EmptyState
-        action={<Button onClick={retryReferences} variant="secondary">Coba lagi</Button>}
-        description={references.message}
-        title="Pilihan profil belum tersedia"
-      />
+      <>
+        {progressPublisher}
+        <EmptyState
+          action={<Button onClick={retryReferences} variant="secondary">Coba lagi</Button>}
+          description={references.message}
+          title="Pilihan profil belum tersedia"
+        />
+      </>
     );
   }
 
@@ -315,23 +332,22 @@ export function EntrepreneurProfileForm({
     references.data.channels.length === 0
   ) {
     return (
-      <EmptyState
-        action={<Button onClick={retryReferences} variant="secondary">Muat ulang pilihan</Button>}
-        description="Data pilihan profil belum tersedia. Coba muat ulang sebelum melanjutkan."
-        title="Pilihan profil belum lengkap"
-      />
+      <>
+        {progressPublisher}
+        <EmptyState
+          action={<Button onClick={retryReferences} variant="secondary">Muat ulang pilihan</Button>}
+          description="Data pilihan profil belum tersedia. Coba muat ulang sebelum melanjutkan."
+          title="Pilihan profil belum lengkap"
+        />
+      </>
     );
   }
 
-  const currentStep = STEP_META[step];
   return (
-    <section aria-labelledby={headingId} className="grid gap-24 border-t border-soft-mist pt-20 sm:pt-24">
+    <section aria-labelledby={headingId} className="grid gap-32 border-t border-soft-mist pt-20 sm:pt-24">
       <header className="grid gap-12">
-        <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">
-          Profil entrepreneur
-        </p>
         <h1
-          className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg"
+          className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:max-w-none"
           id={headingId}
         >
           {mode === "edit" ? "Edit profil entrepreneur" : "Lengkapi profil calon pengusaha"}
@@ -343,15 +359,12 @@ export function EntrepreneurProfileForm({
         </p>
       </header>
 
-      <div aria-live="polite" className="grid gap-4 border-y border-soft-mist py-12">
-        <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">
-          Langkah {step} dari 3
-        </p>
-        <p className="text-body font-w540 text-ink-charcoal">{currentStep.label}</p>
-        <p className="text-body-sm text-stone-gray">{currentStep.title}</p>
-      </div>
+      {progressPublisher}
+      {mode === "edit" ? (
+        <OnboardingProgressSlot currentStep={step} steps={PROFILE_STEPS} />
+      ) : null}
 
-      <form className="grid gap-24" noValidate onSubmit={handleSubmit}>
+      <form className="grid gap-32" noValidate onSubmit={handleSubmit}>
         {step === 1 ? (
           <EntrepreneurProfileStepOne
             errors={stepErrors}
@@ -380,7 +393,7 @@ export function EntrepreneurProfileForm({
         {formError ? (
           <div
             aria-live="assertive"
-            className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal"
+            className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal"
             ref={errorSummaryRef}
             role="alert"
             tabIndex={-1}
@@ -391,7 +404,7 @@ export function EntrepreneurProfileForm({
 
         <div
           className={cx(
-            "flex flex-col-reverse gap-12 border-t border-soft-mist pt-20 sm:flex-row sm:items-center",
+            "flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center",
             step > 1 ? "sm:justify-between" : "sm:justify-end",
           )}
         >
@@ -403,11 +416,11 @@ export function EntrepreneurProfileForm({
               type="button"
               variant="ghost"
             >
-              Kembali
+              Sebelumnya
             </Button>
           ) : null}
           <Button className="w-full sm:w-auto" loading={isSubmitting} type="submit">
-            {step < 3 ? "Lanjutkan" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
+            {step < 3 ? "Selanjutnya" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
           </Button>
         </div>
       </form>

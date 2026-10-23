@@ -91,9 +91,13 @@ Business Profile reuses Entrepreneur Profile location behavior:
 | `location.text` | Required human-readable text, maximum 255 characters. |
 | `location.city` | Optional. |
 | `location.province` | Optional. |
+| `location.district` | Optional Kecamatan name, maximum 120 characters. |
+| `location.subdistrict` | Optional Kelurahan name, maximum 120 characters. |
 | `country_code` | Server-controlled ID, persisted as `ID`; not authoritative client input. |
 
-MVP does not use Maps, geocoding, coordinates, or automatic city/province inference.
+The onboarding form offers cascading province, city/regency, district, and village dropdowns from Emsifa API Wilayah Indonesia v2. Region IDs are used only to fetch dependent options; selected names are sent in the profile payload. Region selections remain optional for compatibility with existing Business Profile records, while `location.text` is required.
+
+MVP does not use Maps, geocoding, coordinates, or automatic location inference.
 
 ## 6. Customer segments
 
@@ -138,7 +142,7 @@ The schema may retain `PROFILE_IN_PROGRESS` for compatibility with the broader u
 - trim whitespace;
 - empty becomes `null`;
 - maximum 2,000 characters;
-- stored but not used as personalization/recommendation context in the MVP;
+- not used by the published MVP personalization/recommendation flow; the separately consented SearchApi Opportunity Finder may use it as generation context and records a keyed per-analysis fingerprint;
 - notes-only changes do not increment `profile_version`.
 
 ## 10. Profile version semantics

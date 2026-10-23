@@ -15,6 +15,7 @@ export type DashboardModuleState = {
 };
 
 export type DashboardTrendPreview = {
+  readonly href?: string;
   readonly id: string;
   readonly title: string;
   readonly categoryName: string;
@@ -22,10 +23,14 @@ export type DashboardTrendPreview = {
 };
 
 export type DashboardTrendModuleState = DashboardModuleState & {
+  readonly context?: string;
+  readonly observedAt?: string;
   readonly preview: readonly DashboardTrendPreview[];
 };
 
 export type DashboardSavedOpportunityPreview = {
+  readonly href?: string;
+  readonly generatedAt?: string;
   readonly id: string;
   readonly name: string;
   readonly categoryName: string;
@@ -37,6 +42,8 @@ export type DashboardSavedOpportunityModuleState = DashboardModuleState & {
 };
 
 export type DashboardOpportunityPreview = {
+  readonly href?: string;
+  readonly generatedAt?: string;
   readonly id: string;
   readonly name: string;
   readonly categoryName: string;

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { useId } from "react";
 
 import type { DashboardOpportunityModuleState } from "../../dashboard/dto";
+import { Badge, Card } from "../ui";
+import { ArrowRightIcon, CompassIcon } from "../landing/icons";
 
 const statusCopy = {
   AVAILABLE: "Tersedia",
@@ -11,10 +13,10 @@ const statusCopy = {
 } as const;
 
 const descriptionCopy = {
-  AVAILABLE: "Peluang katalog terkait Trend terpublikasi untuk tipe akun Anda.",
-  EMPTY: "Belum ada peluang dengan Trend terpublikasi untuk tipe akun Anda.",
-  UNAVAILABLE: "Preview peluang belum tersedia saat ini.",
-  ERROR: "Katalog peluang belum dapat dimuat. Bagian Dashboard lainnya tetap tersedia.",
+  AVAILABLE: "Hipotesis terbaru yang sudah Anda buat.",
+  EMPTY: "Buat hipotesis di Opportunity Finder untuk melihat ide Anda di sini.",
+  UNAVAILABLE: "Rangkai sinyal tren menjadi ide yang bisa diuji.",
+  ERROR: "Hipotesis belum dapat dimuat. Coba buka Opportunity Finder.",
 } as const;
 
 export type OpportunityPreviewSectionProps = {
@@ -26,47 +28,64 @@ export function OpportunityPreviewSection({ state, title }: OpportunityPreviewSe
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-12 border-t border-soft-mist pt-24">
-      <div className="flex flex-wrap items-baseline justify-between gap-8">
-        <h2
-          className="text-label-bold font-w460 leading-label-bold text-ink-charcoal"
-          id={headingId}
-        >
-          {title}
-        </h2>
-        <p className="text-caption font-w540 text-stone-gray">{statusCopy[state.status]}</p>
-      </div>
-      <p className="text-body-sm leading-body-sm text-stone-gray">{descriptionCopy[state.status]}</p>
-      {state.status === "AVAILABLE" ? (
-        <ul className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-          {state.preview.map((opportunity) => (
-            <li
-              className="grid content-start gap-8 border border-soft-mist bg-paper-white p-16"
-              key={opportunity.id}
-            >
-              <p className="text-caption font-w540 text-stone-gray">{opportunity.categoryName}</p>
-              <h3 className="text-label-bold font-w460 leading-label-bold text-ink-charcoal">
-                <Link
-                  className="transition-colors hover:text-royal-violet hover:underline"
-                  href={`/opportunities/${opportunity.id}`}
+    <section aria-labelledby={headingId}>
+      <Card className="flex flex-col gap-16 border-[#ded8cb] bg-paper-white p-20 transition-colors duration-200 hover:border-midnight-wine/40 sm:p-24">
+        <div className="grid gap-14">
+          <div className="flex flex-wrap items-center justify-between gap-10">
+            <div className="flex items-center gap-10">
+              <span className="flex size-36 shrink-0 items-center justify-center rounded-small-buttons border border-midnight-wine/25 bg-midnight-wine/10 text-midnight-wine">
+                <CompassIcon className="size-18" />
+              </span>
+              <h2
+                className="text-label-bold font-w460 leading-label-bold text-ink-charcoal"
+                id={headingId}
+              >
+                {title}
+              </h2>
+            </div>
+            <Badge tone={state.status === "AVAILABLE" ? "wash" : "neutral"}>{state.status === "AVAILABLE" ? `${state.preview.length} ide terbaru` : statusCopy[state.status]}</Badge>
+          </div>
+
+          <p className="text-body-sm leading-relaxed text-stone-gray">
+            {descriptionCopy[state.status]}
+          </p>
+
+          {state.status === "AVAILABLE" ? (
+            <ul className="grid gap-x-24 divide-y divide-soft-mist/70 border-y border-soft-mist/70 md:grid-cols-2 xl:grid-cols-3 md:divide-y-0">
+              {state.preview.map((opportunity) => (
+                <li
+                  className="grid content-start gap-6 py-14"
+                  key={opportunity.id}
                 >
-                  {opportunity.name}
-                </Link>
-              </h3>
-              <p className="text-body-sm leading-body-sm text-stone-gray">{opportunity.summary}</p>
-              <p className="text-caption leading-body-sm text-stone-gray">
-                Trend terkait: {opportunity.relatedTrendTitle}
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <Link
-        className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet underline-offset-4 transition-colors hover:text-midnight-wine hover:underline"
-        href="/opportunities"
-      >
-        Lihat semua peluang
-      </Link>
+                  <span className="text-caption font-w540 uppercase tracking-wider text-midnight-wine">{opportunity.categoryName}</span>
+                  <h3 className="break-words text-body font-w540 text-ink-charcoal">
+                    <Link
+                      className="transition-colors hover:text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
+                      href={opportunity.href ?? `/opportunities/${opportunity.id}`}
+                    >
+                      {opportunity.name}
+                    </Link>
+                  </h3>
+                  <p className="line-clamp-3 text-body-sm leading-relaxed text-stone-gray">{opportunity.summary}</p>
+                  <p className="break-words border-t border-soft-mist/40 pt-4 text-caption font-w460 leading-relaxed text-stone-gray">
+                    {opportunity.generatedAt ? "Sinyal asal" : "Trend terkait"}: {opportunity.relatedTrendTitle}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <div className="mt-auto border-t border-soft-mist/70 pt-10">
+          <Link
+            className="group inline-flex min-h-button w-fit items-center gap-8 rounded-small-buttons px-10 text-body-sm font-w540 text-midnight-wine transition-colors hover:text-royal-violet focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
+            href="/opportunities"
+          >
+            <span>Jelajahi Peluang</span>
+            <ArrowRightIcon className="size-14 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
+          </Link>
+        </div>
+      </Card>
     </section>
   );
 }

@@ -5,8 +5,15 @@ import { Card, PageContainer } from "@/components/ui";
 import type { OpportunityDetailDto } from "@/opportunity/dto";
 import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
+import { StartupRoadmapGenerateButton } from "@/components/roadmaps/startup-roadmap-generate-button";
 import { FitScoreSection } from "./fit-score-section";
+import { OpportunityScoreDisplay } from "./opportunity-score-display";
+import { RiskIndicatorDisplay } from "./risk-indicator-display";
 import { SavedOpportunityControl } from "./saved-opportunity-control";
+import { AIAnalysisSection } from "./ai-analysis-section";
+import { OpportunityHypothesisNotice } from "./opportunity-hypothesis-notice";
 
 function DetailSection({
   id,
@@ -34,11 +41,19 @@ function NotAvailable({ children }: { readonly children: ReactNode }) {
 export function OpportunityDetail({
   evidence,
   item,
+  opportunityScore,
+  riskAssessment,
   saveState,
+  isEntrepreneur,
+  isUmkmExisting,
 }: {
   readonly evidence: OpportunityEvidenceState;
   readonly item: OpportunityDetailDto;
+  readonly opportunityScore: OpportunityScoreDisplayState;
+  readonly riskAssessment: RiskAssessmentDisplayState;
   readonly saveState: OpportunitySaveState;
+  readonly isEntrepreneur?: boolean;
+  readonly isUmkmExisting?: boolean;
 }) {
   const titleId = `opportunity-detail-${item.id}`;
 
@@ -46,21 +61,21 @@ export function OpportunityDetail({
     <PageContainer>
       <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
         <Link
-          className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet transition-colors hover:text-midnight-wine hover:underline"
+          className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet transition-colors hover:text-midnight-wine hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
           href="/opportunities"
         >
           Kembali ke Opportunity Finder
         </Link>
 
-        <Card className="p-20 sm:p-24">
+        <Card className="border-[#ded8cb] bg-[#faf9f6] p-20 sm:p-24 shadow-2xs">
           <article aria-labelledby={titleId} className="grid gap-24">
             <header className="grid gap-12">
-              <p className="text-label-bold font-w460 text-royal-violet">Opportunity Intelligence</p>
+              <p className="text-label-bold font-w540 text-midnight-wine">Opportunity Intelligence</p>
               <div className="flex flex-wrap items-center gap-8">
                 <span className="wrap-anywhere text-label-bold font-w460 text-stone-gray">
                   {item.categoryName}
                 </span>
-                <span className="inline-flex min-h-28 items-center rounded-full border border-soft-mist bg-lilac-mist px-10 wrap-anywhere text-label-bold font-w460 text-ink-charcoal">
+                <span className="inline-flex min-h-28 items-center rounded-full border border-[#ded8cb] bg-warm-parchment px-10 wrap-anywhere text-label-bold font-w540 text-midnight-wine">
                   {item.opportunityType}
                 </span>
               </div>
@@ -73,6 +88,7 @@ export function OpportunityDetail({
               <p className="max-w-[76ch] wrap-anywhere text-body leading-body text-ink-charcoal">
                 {item.description}
               </p>
+              <OpportunityHypothesisNotice />
               <SavedOpportunityControl initialState={saveState} opportunityId={item.id} />
             </header>
 
@@ -100,7 +116,7 @@ export function OpportunityDetail({
             <DetailSection id={`${titleId}-trend`} title="Trend terkait">
               <p className="wrap-anywhere text-body-sm leading-body-sm text-stone-gray">
                 <Link
-                  className="font-w540 text-royal-violet underline-offset-2 hover:underline"
+                  className="font-w540 text-royal-violet underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet"
                   href={`/trends/${item.relatedTrend.id}`}
                 >
                   {item.relatedTrend.title}
@@ -112,7 +128,7 @@ export function OpportunityDetail({
               <dl className="grid gap-12 lg:grid-cols-3">
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Opportunity Score</dt>
-                  <dd className="text-body-sm text-stone-gray">Data belum cukup</dd>
+                  <dd className="min-w-0"><OpportunityScoreDisplay result={opportunityScore} /></dd>
                 </div>
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Fit Score</dt>
@@ -120,7 +136,7 @@ export function OpportunityDetail({
                 </div>
                 <div className="grid min-w-0 gap-4">
                   <dt className="text-body-sm font-w540 text-ink-charcoal">Risk</dt>
-                  <dd className="text-body-sm text-stone-gray">Data belum cukup</dd>
+                  <dd className="min-w-0"><RiskIndicatorDisplay result={riskAssessment} /></dd>
                 </div>
               </dl>
             </DetailSection>
@@ -128,11 +144,17 @@ export function OpportunityDetail({
             <EvidenceSection evidence={evidence} titleId={titleId} />
 
             <DetailSection id={`${titleId}-analysis`} title="AI Analysis">
-              <NotAvailable>AI Analysis belum tersedia.</NotAvailable>
+              <AIAnalysisSection opportunityId={item.id} />
             </DetailSection>
 
             <DetailSection id={`${titleId}-roadmap`} title="Roadmap">
-              <NotAvailable>Roadmap belum tersedia.</NotAvailable>
+              {isEntrepreneur ? (
+                <StartupRoadmapGenerateButton opportunityId={item.id} roadmapType="STARTUP" />
+              ) : isUmkmExisting ? (
+                <StartupRoadmapGenerateButton opportunityId={item.id} roadmapType="GROWTH" />
+              ) : (
+                <NotAvailable>Roadmap hanya tersedia setelah tipe akun dan profil selesai diverifikasi.</NotAvailable>
+              )}
             </DetailSection>
           </article>
         </Card>

@@ -43,6 +43,7 @@ function createRepository({
   const destroy = vi.fn().mockResolvedValue(1);
   const findOrCreate = vi.fn().mockResolvedValue([savedRow, false]);
   const findAll = vi.fn().mockResolvedValue(savedRows.map(() => ({ opportunity })));
+  const count = vi.fn().mockResolvedValue(savedRows.length);
   const opportunityModel = {
     associations: {},
     belongsTo: vi.fn(),
@@ -55,6 +56,7 @@ function createRepository({
     findOne: vi.fn().mockResolvedValue(savedRow),
     findOrCreate,
     findAll,
+    count,
     destroy,
   } as unknown as typeof SavedOpportunity;
   const repository = new SavedOpportunityRepository(
@@ -63,7 +65,7 @@ function createRepository({
     {} as typeof Trend,
     {} as typeof FnbCategory,
   );
-  return { repository, findOne, findOrCreate, findAll, destroy, savedModel, opportunityModel };
+  return { repository, findOne, findOrCreate, findAll, count, destroy, savedModel, opportunityModel };
 }
 
 describe("SavedOpportunityRepository", () => {
@@ -194,5 +196,51 @@ describe("SavedOpportunityRepository", () => {
     await repository.listVisibleForUser(userId, USER_TYPES.ENTREPRENEUR, 3);
 
     expect(findAll.mock.calls[0]?.[0]).toMatchObject({ limit: 3 });
+  });
+
+  it("counts only the authenticated user's eligible saved relations", async () => {
+    const { repository, count } = createRepository();
+
+    await expect(repository.countVisibleForUser(userId, USER_TYPES.ENTREPRENEUR)).resolves.toBe(1);
+
+    const options = count.mock.calls[0]?.[0] as {
+      readonly where: { readonly userId: string };
+      readonly distinct: boolean;
+      readonly col: string;
+      readonly include: readonly Record<string, unknown>[];
+    };
+    expect(options.where).toEqual({ userId });
+    expect(options.distinct).toBe(true);
+    expect(options.col).toBe("id");
+    expect(options.include[0]).toMatchObject({ as: "opportunity", required: true });
+  });
+
+  it("applies owner-scoped pagination with stable requested ordering", async () => {
+    const { repository, findAll } = createRepository();
+
+    await repository.listVisiblePageForUser(userId, USER_TYPES.ENTREPRENEUR, {
+      limit: 5,
+      offset: 10,
+      sort: "createdAt",
+      order: "ASC",
+    });
+
+    expect(findAll.mock.calls[0]?.[0]).toMatchObject({
+      where: { userId },
+      order: [["createdAt", "ASC"], ["id", "ASC"]],
+      limit: 5,
+      offset: 10,
+    });
+  });
+
+  it("reports whether an idempotent save created or reused a relationship", async () => {
+    const { repository, findOrCreate } = createRepository();
+    findOrCreate.mockResolvedValueOnce([savedRow, true]);
+    findOrCreate.mockResolvedValueOnce([savedRow, false]);
+
+    await expect(repository.saveVisibleForUserWithOutcome(userId, USER_TYPES.ENTREPRENEUR, opportunityId))
+      .resolves.toEqual({ saved: true, created: true });
+    await expect(repository.saveVisibleForUserWithOutcome(userId, USER_TYPES.ENTREPRENEUR, opportunityId))
+      .resolves.toEqual({ saved: true, created: false });
   });
 });

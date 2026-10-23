@@ -121,7 +121,8 @@ describe("DashboardPage", () => {
     const markup = renderDashboard(entrepreneurDashboard);
 
     expect(markup).toContain("Selamat datang kembali");
-    expect(markup).toContain("Ringkasan profil calon pengusaha Anda");
+    expect(markup).toContain("Profil calon pengusaha Anda");
+    expect(markup).not.toContain("Jalur Calon Pengusaha");
     expect(markup).toContain("Profil siap");
     expect(markup).toContain('href="/profile"');
     expect(markup).toContain("Edit profil");
@@ -133,24 +134,45 @@ describe("DashboardPage", () => {
     expect(markup).not.toContain("profileId");
   });
 
-  it("renders the UMKM summary with a product count and no product collection", () => {
+  it("renders the UMKM summary with a product count and Growth Roadmap access", () => {
     const markup = renderDashboard(businessDashboard);
 
-    expect(markup).toContain("Ringkasan bisnis Kedai Pagi");
-    expect(markup).toContain("Kategori bisnis");
+    expect(markup).toContain("Gambaran usaha Kedai Pagi");
+    expect(markup).toContain("Profil usaha Kedai Pagi");
+    expect(markup).toContain("Pelanggan utama");
+    expect(markup).toContain("Produk yang dijual");
+    expect(markup).not.toContain("Jalur UMKM Berjalan");
+    expect(markup).not.toContain("Ringkasan bisnis");
+    expect(markup).toContain("Bidang usaha");
     expect(markup).toContain("3 produk");
     expect(markup).toContain('href="/profile"');
     expect(markup).toContain("Edit profil");
     expect(markup).toContain("Jelajahi Peluang");
     expect(markup).not.toContain("productId");
     expect(markup).not.toContain("passwordHash");
+    expect(markup).toContain("Buka Roadmap");
+  });
+
+  it("links both account types to their saved Roadmaps", () => {
+    const markup = renderDashboard({
+      ...entrepreneurDashboard,
+      modules: { ...entrepreneurDashboard.modules, roadmap: { status: "AVAILABLE" } },
+    });
+    expect(markup).toContain('href="/roadmaps"');
+    expect(markup).toContain("Buka Roadmap");
+    const businessMarkup = renderDashboard({
+      ...businessDashboard,
+      modules: { ...businessDashboard.modules, roadmap: { status: "AVAILABLE" } },
+    });
+    expect(businessMarkup).toContain('href="/roadmaps"');
+    expect(businessMarkup).toContain("Buka Roadmap");
   });
 
   it("confirms a saved profile update alongside the current profile summary", () => {
     const markup = renderDashboard(entrepreneurDashboard, true);
 
     expect(markup).toContain("Profil berhasil diperbarui.");
-    expect(markup).toContain("Ringkasan ini menampilkan data terbaru.");
+    expect(markup).toContain("Informasi di bawah menampilkan data terbaru.");
     expect(markup).toContain("Jakarta Pusat");
   });
 
@@ -160,7 +182,7 @@ describe("DashboardPage", () => {
     expect(markup).toContain('href="/profile"');
     expect(markup).toContain("Edit profil");
     expect(markup).toContain("Profil berhasil diperbarui.");
-    expect(markup).toContain("Ringkasan ini menampilkan data terbaru.");
+    expect(markup).toContain("Informasi di bawah menampilkan data terbaru.");
     expect(markup).toContain("Kedai Pagi");
   });
 
@@ -175,8 +197,8 @@ describe("DashboardPage", () => {
   });
 
   it.each([
-    [entrepreneurDashboard, "92000000-0000-4000-8000-000000000001", "Menu praktis", "Ringkasan profil calon pengusaha Anda"],
-    [businessDashboard, "92000000-0000-4000-8000-000000000002", "Paket sarapan", "Ringkasan bisnis Kedai Pagi"],
+    [entrepreneurDashboard, "92000000-0000-4000-8000-000000000001", "Menu praktis", "Profil calon pengusaha Anda"],
+    [businessDashboard, "92000000-0000-4000-8000-000000000002", "Paket sarapan", "Gambaran usaha Kedai Pagi"],
   ] as const)("renders the neutral Opportunity preview and links for each Dashboard type", (dashboard, id, name, profileLabel) => {
     const markup = renderDashboard(withOpportunity(dashboard, id, name));
 
@@ -218,19 +240,19 @@ describe("DashboardPage", () => {
       },
     });
 
-    expect(empty).toContain("Belum ada peluang dengan Trend terpublikasi untuk tipe akun Anda.");
+    expect(empty).toContain("Buat hipotesis di Opportunity Finder untuk melihat ide Anda di sini.");
     expect(empty).toContain('href="/opportunities"');
-    expect(error).toContain("Katalog peluang belum dapat dimuat. Bagian Dashboard lainnya tetap tersedia.");
+    expect(error).toContain("Hipotesis belum dapat dimuat. Coba buka Opportunity Finder.");
     expect(error).toContain('href="/opportunities"');
-    expect(error).toContain("Ringkasan bisnis Kedai Pagi");
+    expect(error).toContain("Gambaran usaha Kedai Pagi");
     expect(error).toContain("Peluang tersimpan");
   });
 
   it("keeps the UMKM summary visible when the Trend section reports an error", () => {
     const markup = renderDashboard(businessTrendError);
 
-    expect(markup).toContain("Ringkasan bisnis Kedai Pagi");
-    expect(markup).toContain("Trend belum dapat dimuat saat ini. Ringkasan Dashboard tetap tersedia.");
+    expect(markup).toContain("Gambaran usaha Kedai Pagi");
+    expect(markup).toContain("Trend belum dapat dimuat saat ini. Bagian lain di Dashboard tetap tersedia.");
     expect(markup).toContain("Tidak dapat dimuat");
     expect(markup).toContain('href="/trends"');
   });
@@ -242,9 +264,9 @@ describe("DashboardPage", () => {
     const markup = renderDashboard(withSavedOpportunity(dashboard, id, name));
 
     expect(markup).toContain(name);
-    expect(markup).toContain("Peluang tersimpan yang masih sesuai untuk tipe akun Anda.");
+    expect(markup).toContain("Hipotesis pilihan Anda untuk ditinjau kembali.");
     expect(markup).toContain(`href="/opportunities/${id}"`);
-    expect(markup).toContain('href="/saved-opportunities"');
+    expect(markup).toContain('href="/saved"');
   });
 
   it("renders honest empty and error states with access to the saved-opportunities list", () => {
@@ -263,11 +285,11 @@ describe("DashboardPage", () => {
       },
     });
 
-    expect(empty).toContain("Belum ada peluang eligible yang tersimpan.");
-    expect(empty).toContain('href="/saved-opportunities"');
-    expect(error).toContain("Peluang tersimpan belum dapat dimuat saat ini. Ringkasan Dashboard tetap tersedia.");
-    expect(error).toContain('href="/saved-opportunities"');
-    expect(error).toContain("Ringkasan bisnis Kedai Pagi");
+    expect(empty).toContain("Simpan hipotesis yang ingin Anda lanjutkan dari Opportunity Finder.");
+    expect(empty).toContain('href="/saved"');
+    expect(error).toContain("Peluang tersimpan belum dapat dimuat saat ini. Bagian lain di Dashboard tetap tersedia.");
+    expect(error).toContain('href="/saved"');
+    expect(error).toContain("Gambaran usaha Kedai Pagi");
   });
 
   it("does not render raw ownership identifiers", () => {
@@ -275,5 +297,16 @@ describe("DashboardPage", () => {
     const markup = renderDashboard(entrepreneurDashboard);
 
     expect(markup).not.toContain(userId);
+  });
+});
+
+
+describe("exploration journey", () => {
+  it("orders the journey from trends to ideas, saved opportunities, then roadmap", () => {
+    const html = renderToStaticMarkup(<DashboardPage dashboard={businessDashboard} />);
+    const journey = html.slice(html.indexOf('aria-label="Perjalanan eksplorasi usaha"'));
+    const positions = ["Trend Radar", "Opportunity Finder", "Peluang tersimpan", "Growth Roadmap"].map(title => journey.indexOf(title));
+    expect(positions.every(position => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 });

@@ -34,31 +34,54 @@ export type EntrepreneurSummaryProps = {
 
 export function EntrepreneurSummary({ profile }: EntrepreneurSummaryProps) {
   return (
-    <dl className="grid gap-16 md:grid-cols-2">
-      <SummaryField label="Lokasi">{profile.location.text}</SummaryField>
-      <SummaryField label="Kisaran budget">
-        {formatRange(profile.budget.min, profile.budget.max)}
-      </SummaryField>
-      <SummaryField label="Tingkat pengalaman">
-        {getLabel(EXPERIENCE_LABELS, profile.experienceLevel)}
-      </SummaryField>
-      <SummaryField label="Komitmen waktu">
-        {getLabel(TIME_COMMITMENT_LABELS, profile.timeCommitment)}
-      </SummaryField>
-      {profile.preferredProductType ? (
-        <SummaryField label="Jenis produk pilihan">
-          {profile.preferredProductType}
+    <dl aria-label="Profil calon usaha" className="grid gap-10 bg-[#ded8cb] p-10 sm:grid-cols-2 lg:grid-cols-12">
+      <div className="grid gap-20 rounded-small-buttons bg-midnight-wine p-20 text-paper-white sm:col-span-2 lg:col-span-5">
+        <div>
+          <dt className="text-caption font-w540 text-paper-white/70">Jenis produk pilihan</dt>
+          <dd className="mt-6 break-words text-subheading font-w460 leading-tight">
+            {profile.preferredProductType ?? "Belum ditentukan"}
+          </dd>
+        </div>
+        <div className="grid gap-16 sm:grid-cols-2">
+          <div>
+            <dt className="text-caption font-w540 text-paper-white/70">Lokasi</dt>
+            <dd className="mt-4 break-words text-body-sm font-w540">{profile.location.text}</dd>
+          </div>
+          <div>
+            <dt className="text-caption font-w540 text-paper-white/70">Pengalaman</dt>
+            <dd className="mt-4 break-words text-body-sm font-w540">
+              {getLabel(EXPERIENCE_LABELS, profile.experienceLevel)}
+            </dd>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-10 sm:col-span-2 sm:grid-cols-2 lg:col-span-7">
+        <div className="rounded-small-buttons bg-[#faf9f6]">
+          <SummaryField label="Kisaran budget">
+            {formatRange(profile.budget.min, profile.budget.max)}
+          </SummaryField>
+        </div>
+        <div className="rounded-small-buttons bg-[#faf9f6]">
+          <SummaryField label="Komitmen waktu">
+            {getLabel(TIME_COMMITMENT_LABELS, profile.timeCommitment)}
+          </SummaryField>
+        </div>
+      </div>
+      <div className="rounded-small-buttons bg-[#faf9f6] lg:col-span-4">
+        <SummaryField label="Minat F&B">
+          <SummaryReferences items={profile.interests} />
         </SummaryField>
-      ) : null}
-      <SummaryField label="Minat F&B">
-        <SummaryReferences items={profile.interests} />
-      </SummaryField>
-      <SummaryField label="Segmen pelanggan">
-        <SummaryReferences items={profile.customerSegments} />
-      </SummaryField>
-      <SummaryField label="Saluran penjualan">
-        <SummaryReferences items={profile.salesChannels} />
-      </SummaryField>
+      </div>
+      <div className="rounded-small-buttons bg-[#faf9f6] lg:col-span-4">
+        <SummaryField label="Segmen pelanggan">
+          <SummaryReferences items={profile.customerSegments} />
+        </SummaryField>
+      </div>
+      <div className="rounded-small-buttons bg-[#faf9f6] lg:col-span-4">
+        <SummaryField label="Saluran penjualan">
+          <SummaryReferences items={profile.salesChannels} />
+        </SummaryField>
+      </div>
     </dl>
   );
 }

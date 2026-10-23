@@ -22,6 +22,8 @@ export class EntrepreneurProfile extends Model<
   declare locationText: string;
   declare city: string | null;
   declare province: string | null;
+  declare district: string | null;
+  declare subdistrict: string | null;
   declare countryCode: string;
   declare budgetMin: number;
   declare budgetMax: number;
@@ -47,6 +49,8 @@ export function getEntrepreneurProfileModel(): typeof EntrepreneurProfile {
       locationText: { type: DataTypes.STRING(255), allowNull: false, field: "location_text" },
       city: { type: DataTypes.STRING(120), allowNull: true },
       province: { type: DataTypes.STRING(120), allowNull: true },
+      district: { type: DataTypes.STRING(120), allowNull: true },
+      subdistrict: { type: DataTypes.STRING(120), allowNull: true },
       countryCode: { type: DataTypes.STRING(2), allowNull: false, defaultValue: "ID", field: "country_code" },
       budgetMin: { type: DataTypes.BIGINT, allowNull: false, field: "budget_min" },
       budgetMax: { type: DataTypes.BIGINT, allowNull: false, field: "budget_max" },

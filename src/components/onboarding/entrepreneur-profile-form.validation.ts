@@ -1,16 +1,24 @@
 import {
   entrepreneurProfileSchema,
+  type EntrepreneurProfileEditValues,
   type EntrepreneurProfileInput,
   type ExperienceLevel,
   type TimeCommitment,
 } from "../../profile/validation";
+import { OTHER_FNB_CATEGORY_ID } from "../../reference/constants";
 
 export type EntrepreneurFormStep = 1 | 2 | 3;
 
 export type EntrepreneurFormState = {
   readonly locationText: string;
   readonly city: string;
+  readonly cityId: string;
   readonly province: string;
+  readonly provinceId: string;
+  readonly district: string;
+  readonly districtId: string;
+  readonly subdistrict: string;
+  readonly subdistrictId: string;
   readonly interestCategoryIds: readonly string[];
   readonly budgetMin: string;
   readonly budgetMax: string;
@@ -35,7 +43,13 @@ export function createInitialEntrepreneurFormState(): EntrepreneurFormState {
   return {
     locationText: "",
     city: "",
+    cityId: "",
     province: "",
+    provinceId: "",
+    district: "",
+    districtId: "",
+    subdistrict: "",
+    subdistrictId: "",
     interestCategoryIds: [],
     budgetMin: "",
     budgetMax: "",
@@ -50,12 +64,18 @@ export function createInitialEntrepreneurFormState(): EntrepreneurFormState {
 }
 
 export function toEntrepreneurFormState(
-  profile: EntrepreneurProfileInput,
+  profile: EntrepreneurProfileEditValues,
 ): EntrepreneurFormState {
   return {
     locationText: profile.location.text,
     city: profile.location.city ?? "",
+    cityId: "",
     province: profile.location.province ?? "",
+    provinceId: "",
+    district: profile.location.district ?? "",
+    districtId: "",
+    subdistrict: profile.location.subdistrict ?? "",
+    subdistrictId: "",
     interestCategoryIds: profile.interestCategoryIds,
     budgetMin: String(profile.budget.min),
     budgetMax: String(profile.budget.max),
@@ -98,9 +118,21 @@ export function validateStep(
       const errors: Record<string, string> = {};
       const location = state.locationText.trim();
       if (!location) {
-        errors.locationText = "Masukkan lokasi utama yang akan menjadi konteks usaha.";
+        errors.locationText = "Masukkan alamat detail lokasi usaha.";
       } else if (location.length > 255) {
-        errors.locationText = "Lokasi utama maksimal 255 karakter.";
+        errors.locationText = "Alamat detail maksimal 255 karakter.";
+      }
+      if (!state.provinceId || !state.province) {
+        errors.province = "Pilih provinsi.";
+      }
+      if (!state.cityId || !state.city) {
+        errors.city = "Pilih kota atau kabupaten.";
+      }
+      if (!state.districtId || !state.district) {
+        errors.district = "Pilih kecamatan.";
+      }
+      if (!state.subdistrictId || !state.subdistrict) {
+        errors.subdistrict = "Pilih kelurahan.";
       }
       if (state.city.length > 120) {
         errors.city = "Kota/Kabupaten maksimal 120 karakter.";
@@ -108,8 +140,21 @@ export function validateStep(
       if (state.province.length > 120) {
         errors.province = "Provinsi maksimal 120 karakter.";
       }
+      if (state.district.length > 120) {
+        errors.district = "Kecamatan maksimal 120 karakter.";
+      }
+      if (state.subdistrict.length > 120) {
+        errors.subdistrict = "Kelurahan maksimal 120 karakter.";
+      }
       if (state.interestCategoryIds.length === 0) {
         errors.interestCategoryIds = "Pilih minimal satu kategori F&B.";
+      }
+      if (state.interestCategoryIds.includes(OTHER_FNB_CATEGORY_ID)) {
+        if (!state.preferredProductType.trim()) {
+          errors.preferredProductType = "Tuliskan jenis usaha lainnya.";
+        } else if (state.preferredProductType.trim().length > 100) {
+          errors.preferredProductType = "Jenis usaha maksimal 100 karakter.";
+        }
       }
       return errors;
     }
@@ -142,7 +187,9 @@ export function validateStep(
       if (!state.timeCommitment) {
         errors.timeCommitment = "Pilih komitmen waktu Anda.";
       }
-      if (state.preferredProductType.trim().length > 100) {
+      if (!state.preferredProductType.trim()) {
+        errors.preferredProductType = "Tuliskan produk yang ingin Anda eksplorasi.";
+      } else if (state.preferredProductType.trim().length > 100) {
         errors.preferredProductType = "Jenis produk maksimal 100 karakter.";
       }
       return errors;
@@ -160,6 +207,8 @@ export function toEntrepreneurProfilePayload(
       text: state.locationText,
       city: state.city,
       province: state.province,
+      district: state.district,
+      subdistrict: state.subdistrict,
     },
     budget: {
       min: parseAmount(state.budgetMin),
@@ -187,6 +236,8 @@ export function toEntrepreneurProfilePayload(
         text: result.data.location.text,
         city: result.data.location.city,
         province: result.data.location.province,
+        district: result.data.location.district,
+        subdistrict: result.data.location.subdistrict,
       },
     },
   };

@@ -75,7 +75,14 @@ const user: SafeUser = {
 };
 
 const storedProfile = {
-  location: { text: "Bandung", city: "Bandung", province: "Jawa Barat", countryCode: "ID" as const },
+  location: {
+    text: "Jl. Asia Afrika No. 10, Bandung",
+    city: "Bandung",
+    province: "Jawa Barat",
+    district: null,
+    subdistrict: null,
+    countryCode: "ID" as const,
+  },
   budget: { min: 2_000_000, max: 8_000_000 },
   experienceLevel: "SOME_EXPERIENCE" as const,
   timeCommitment: "FULL_TIME" as const,
@@ -127,7 +134,7 @@ describe("/profile page", () => {
     const markup = renderToStaticMarkup(await ProfilePage()).replace(/\s+/gu, " ");
 
     expect(markup).toContain("data-mode=\"edit\"");
-    expect(markup).toContain("data-location=\"Bandung\"");
+    expect(markup).toContain(`data-location="${storedProfile.location.text}"`);
     expect(mocks.userIds).toEqual([user.id]);
   });
 

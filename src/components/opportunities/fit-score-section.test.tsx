@@ -19,7 +19,11 @@ import type { OpportunityDetailDto } from "@/opportunity/dto";
 import type { OpportunityEvidenceState } from "@/opportunity/evidence-dto";
 import type { OpportunitySaveState } from "@/opportunity/saved-dto";
 import type { FitScoreApiDto } from "@/scoring/fit-score-api-dto";
+import type { OpportunityFinderResult } from "@/opportunity/service";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
 import { OpportunityDetail } from "./opportunity-detail";
+import { OpportunityFinder } from "./opportunity-finder";
 import { FitScoreSection } from "./fit-score-section";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -92,6 +96,24 @@ const opportunity: OpportunityDetailDto = {
 
 const emptyEvidence: OpportunityEvidenceState = { status: "EMPTY", items: [], limited: false };
 const unsaved: OpportunitySaveState = { status: "AVAILABLE", saved: false };
+const finderResult: OpportunityFinderResult = {
+  status: "AVAILABLE",
+  categories: [{ code: "BEVERAGES", name: "Minuman" }],
+  selectedCategory: null,
+  items: [{
+    id: opportunity.id,
+    name: opportunity.name,
+    categoryName: opportunity.categoryName,
+    summary: opportunity.description,
+    relatedTrend: opportunity.relatedTrend,
+  }],
+  page: 1,
+  pageSize: 10,
+  totalCount: 1,
+  totalPages: 1,
+};
+const finderOpportunityScore: OpportunityScoreDisplayState = { status: "ERROR" };
+const finderRisk: RiskAssessmentDisplayState = { status: "ERROR" };
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -106,6 +128,62 @@ afterEach(() => {
 
 describe("FitScoreSection", () => {
   it.each([
+    ["Entrepreneur", "ENTREPRENEUR_FIT" as const, "Entrepreneur Fit"],
+    ["UMKM", "BUSINESS_FIT" as const, "Business Fit"],
+  ] as const)("shows the same approved Fit result in Finder and Detail for %s", async (_userType, modelType, modelLabel) => {
+    const result = availableFitScore(modelType, 82.5);
+    fetchMock.mockResolvedValue(apiResponse(successEnvelope(result)));
+
+    const finder = render(
+      <OpportunityFinder
+        result={finderResult}
+        riskByOpportunityId={{ [opportunity.id]: finderRisk }}
+        scoreByOpportunityId={{ [opportunity.id]: finderOpportunityScore }}
+      />,
+    );
+
+    expect(await screen.findByLabelText("Fit Score 82,5")).toBeTruthy();
+    expect(screen.queryByText((_, element) =>
+      element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
+    )).toBeNull();
+    expect(screen.queryByText("Data belum cukup untuk menghitung Fit Score.")).toBeNull();
+    finder.unmount();
+
+    fetchMock.mockResolvedValue(apiResponse(successEnvelope(result)));
+    render(<OpportunityDetail
+      evidence={emptyEvidence}
+      item={opportunity}
+      opportunityScore={finderOpportunityScore}
+      riskAssessment={finderRisk}
+      saveState={unsaved}
+    />);
+
+    expect(await screen.findByLabelText("Fit Score 82,5")).toBeTruthy();
+    expect(screen.queryByText((_, element) =>
+      element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
+    )).toBeNull();
+    expect(screen.queryByText("Data belum cukup untuk menghitung Fit Score.")).toBeNull();
+    expect(fetchMock.mock.calls.filter(([input]) => String(input).endsWith("/fit-score"))).toHaveLength(2);
+  });
+
+  it("keeps Finder INSUFFICIENT_DATA explicit and never substitutes a number", async () => {
+    fetchMock.mockResolvedValue(apiResponse(successEnvelope(insufficientFitScore())));
+
+    render(
+      <OpportunityFinder
+        result={finderResult}
+        riskByOpportunityId={{ [opportunity.id]: finderRisk }}
+        scoreByOpportunityId={{ [opportunity.id]: finderOpportunityScore }}
+      />,
+    );
+
+    expect(await screen.findByText("Data belum cukup untuk menghitung Fit Score.")).toBeTruthy();
+    expect(screen.getByText("Komponen yang belum tersedia: Rentang harga, Kanal penjualan.")).toBeTruthy();
+    expect(screen.queryByLabelText(/Fit Score \d/u)).toBeNull();
+    expect(screen.queryByText(/0 \/ 100|50 \/ 100/u)).toBeNull();
+  });
+
+  it.each([
     ["Entrepreneur", "ENTREPRENEUR_FIT" as const, "Entrepreneur Fit", "Kecukupan modal"],
     ["UMKM", "BUSINESS_FIT" as const, "Business Fit", "Rentang harga"],
   ] as const)("renders the actual AVAILABLE result for %s", async (_userType, modelType, modelLabel, componentLabel) => {
@@ -114,10 +192,10 @@ describe("FitScoreSection", () => {
     render(<FitScoreSection opportunityId={opportunity.id} />);
 
     expect(await screen.findByText("MVP Heuristic Fit Score")).toBeTruthy();
-    expect(screen.getByText(/Versi kebijakan: FIT_MVP_HEURISTIC_V1/u)).toBeTruthy();
-    expect(screen.getByText((_, element) =>
+    expect(screen.queryByText(/Versi kebijakan: FIT_MVP_HEURISTIC_V1/u)).toBeNull();
+    expect(screen.queryByText((_, element) =>
       element?.tagName === "P" && (element.textContent?.includes(`Model: ${modelLabel}`) ?? false),
-    )).toBeTruthy();
+    )).toBeNull();
     expect(screen.getByText(componentLabel)).toBeTruthy();
     expect(screen.getByText("Batas anggaran mencukupi.")).toBeTruthy();
     expect(screen.getByText(DISCLAIMER)).toBeTruthy();
@@ -181,7 +259,7 @@ describe("FitScoreSection", () => {
 
     render(<FitScoreSection opportunityId={opportunity.id} />);
 
-    expect((await screen.findByRole("alert")).textContent).toContain("Detail Opportunity tetap tersedia.");
+    expect(await screen.findByText("Fit Score belum dapat dimuat. Detail Opportunity tetap tersedia.")).toBeTruthy();
     expect(screen.queryByText("private database exception")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
     expect(await screen.findByText("MVP Heuristic Fit Score")).toBeTruthy();
@@ -242,9 +320,9 @@ describe("OpportunityDetail Fit Score integration", () => {
   it("keeps existing Opportunity content visible when Fit Score fails", async () => {
     fetchMock.mockRejectedValue(new Error("sensitive infrastructure details"));
 
-    render(<OpportunityDetail evidence={emptyEvidence} item={opportunity} saveState={unsaved} />);
+    render(<OpportunityDetail evidence={emptyEvidence} item={opportunity} opportunityScore={{ status: "ERROR" }} riskAssessment={{ status: "ERROR" }} saveState={unsaved} />);
 
-    expect((await screen.findByRole("alert")).textContent).toContain("Detail Opportunity tetap tersedia.");
+    expect(await screen.findByText("Fit Score belum dapat dimuat. Detail Opportunity tetap tersedia.")).toBeTruthy();
     expect(screen.getByRole("heading", { name: opportunity.name })).toBeTruthy();
     expect(screen.getByText(opportunity.description)).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Evidence" })).toBeTruthy();

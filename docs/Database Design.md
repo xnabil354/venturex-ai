@@ -1,4 +1,13 @@
 # DATABASE DESIGN
+
+21 October recovery refinement: optional analysis.planningContext.timeCommitment preserves historical capacity; roadmap generatorVersion also accepts personalized-v3 and personalized-v4 (22 October text correction). Compare recovers from unavailable owner-scoped choices with a neutral notice. See Entrepreneur MVP Completion.md.
+21 October refinement: optional hypothesis.analysis.referenceLabels retains category/channel display names for new snapshots; optional startupRoadmap.generatorVersion identifies personalized-v2. Legacy JSON remains readable; no migration or historic rewrite. See Entrepreneur MVP Completion.md.
+
+Entrepreneur MVP completion (21 October 2026): optional validated hypothesis.startupRoadmap stores private-startup-v1, server createdAt, analysis sourceFingerprint and six bounded steps. Creation locks the compound owner/id/ENTREPRENEUR row, requires is_saved and valid numeric analyzed scores, returns an existing roadmap idempotently, and updates only additive roadmap metadata. Archived hypothesis.analysis is unchanged. Existing JSONB supports this extension without schema migration. No private hypothesis is promoted into global opportunities/roadmaps foreign keys. Archive queries page 12 rows plus lookahead by created_at DESC,id ASC; roadmap library filters the JSONB version. Legacy rows without metadata remain valid.
+
+Entrepreneur Analyze v2 amendment (21 October 2026): no table/column migration. Persist a bounded versioned decision snapshot at `user_generated_opportunities.hypothesis.analysis` within existing JSONB: derived requirements/reference IDs, score factors/provenance, summary trend statistics, bounded listing examples, risks, warnings, model, generated time and input HMAC. Read/update only by compound `{ id, userId, userType: ENTREPRENEUR }`; saved state and original hypothesis fields remain intact. No raw profile, prompt, full trend history or public catalog score snapshot is persisted. Invalid/unrecognized analysis snapshots fall back to reading the base hypothesis. See `Entrepreneur Deep Analysis.md`.
+
+Dashboard exploration amendment (21 October 2026): no schema or migration change. Previews read existing `user_generated_opportunities` rows using authenticated `user_id`; saved previews use the existing saved-only repository filter independently of the latest unsaved rows. Saved-roadmap availability uses the existing user-scoped roadmap repository. A single last related-query result per account may be retained in browser localStorage for preview only, including query metrics and retrieval/filter metadata; it contains no profile notes, financial profile values, credentials, or signed generation-source tokens. This browser snapshot is not stored in PostgreSQL or used as authoritative generation evidence.
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
 **Dokumen:** Database Design
@@ -38,7 +47,7 @@ Database tidak boleh menambahkan fitur bisnis baru di luar PRD/FSD.
 
 ### Trend MVP contract
 
-Trend Intelligence MVP uses an internal persistent curated catalog. Its minimal persistence is `trends` and `trend_evidences`, matching `db/migrations/008-create-trends.ts`. `dataset_versions` and the shared `evidences` table below are not part of this Trend path. The shared `evidences` design remains for planned Opportunity evidence and possible future reuse; do not treat its Trend relationship as the current Trend evidence store. The catalog requires real, human-reviewed evidence and must not be populated with fabricated Trend records.
+Trend Intelligence MVP uses an internal persistent curated catalog. Its core persistence is `trends` and `trend_evidences`, matching `db/migrations/008-create-trends.ts`. Migration `017-create-trend-evidence-provenances.ts` adds optional source metadata linked one-to-zero-or-one with a Trend Evidence row; it neither backfills historical records nor changes the user-facing Trend path. `dataset_versions` and the shared `evidences` table below are not part of this Trend path. The shared `evidences` design remains for planned Opportunity evidence and possible future reuse; do not treat its Trend relationship as the current Trend evidence store. The catalog requires real, human-reviewed evidence and must not be populated with fabricated Trend records.
 
 ---
 
@@ -195,6 +204,7 @@ timestamps: true
 | `business_profiles` | Profil UMKM existing |
 | `trends` | Curated Trend signal, lifecycle, and audience scope |
 | `trend_evidences` | Source and supporting detail for a curated Trend |
+| `trend_evidence_provenances` | Optional, bounded source and collection metadata for Trend Evidence |
 | `opportunities` | Peluang bisnis/menu |
 | `user_opportunity_analyses` | Score, fit, risk, AI analysis |
 | `evidences` | Planned shared evidence for Opportunity and future reuse; not used by Trend MVP |
@@ -246,6 +256,7 @@ erDiagram
     FNB_CATEGORIES o|--o{ TRENDS : categorizes
     TRENDS ||--o{ OPPORTUNITIES : produces
     TRENDS ||--o{ TREND_EVIDENCES : supported_by
+    TREND_EVIDENCES ||--o| TREND_EVIDENCE_PROVENANCES : provenance
     FNB_CATEGORIES ||--o{ OPPORTUNITIES : categorizes
 
     OPPORTUNITIES ||--o| OPPORTUNITY_FIT_REQUIREMENTS : requires
@@ -316,9 +327,11 @@ Menyimpan profile calon pengusaha.
 |---|---|---:|---|
 | `id` | UUID | No | PK |
 | `user_id` | UUID | No | FK, UNIQUE |
-| `location_text` | VARCHAR(255) | No | - |
-| `city` | VARCHAR(120) | Yes | - |
-| `province` | VARCHAR(120) | Yes | - |
+| `location_text` | VARCHAR(255) | No | Alamat detail untuk profile baru |
+| `city` | VARCHAR(120) | Yes | Wajib pada profile baru; nullable untuk profile lama |
+| `province` | VARCHAR(120) | Yes | Wajib pada profile baru; nullable untuk profile lama |
+| `district` | VARCHAR(120) | Yes | Kecamatan; wajib pada profile baru, nullable untuk profile lama |
+| `subdistrict` | VARCHAR(120) | Yes | Kelurahan; wajib pada profile baru, nullable untuk profile lama |
 | `country_code` | CHAR(2) | No | DEFAULT 'ID' |
 | `budget_min` | BIGINT | No | CHECK >= 0 |
 | `budget_max` | BIGINT | No | CHECK |
@@ -357,6 +370,8 @@ Menyimpan profile UMKM existing. Detail konfigurasi Business Profile MVP ditetap
 | `location_text` | VARCHAR(255) | No | - |
 | `city` | VARCHAR(120) | Yes | - |
 | `province` | VARCHAR(120) | Yes | - |
+| `district` | VARCHAR(120) | Yes | Kecamatan; nullable for existing profiles |
+| `subdistrict` | VARCHAR(120) | Yes | Kelurahan; nullable for existing profiles |
 | `country_code` | CHAR(2) | No | DEFAULT 'ID'; server-controlled |
 | `average_price_min` | BIGINT | No | CHECK >= 0 |
 | `average_price_max` | BIGINT | No | CHECK; `>= average_price_min` |
@@ -556,7 +571,7 @@ The current curated-catalog schema is defined by `db/migrations/008-create-trend
 | `created_at` | TIMESTAMPTZ | No | Defaults to current time; catalog record timestamp |
 | `updated_at` | TIMESTAMPTZ | No | Defaults to current time; catalog record timestamp |
 
-The database checks that `period_end` is not before `period_start` when both exist. The `category_code`, `direction`, `affected_user_types`, and `lifecycle_state` checks constrain allowed values. Empty `affected_user_types` and a missing relevance explanation are permitted on drafts; publication readiness is checked by the application. The schema does not store a dataset version, source mode, source retrieval time, numeric signal value, raw source payload, or reviewer identity.
+The database checks that `period_end` is not before `period_start` when both exist. The `category_code`, `direction`, `affected_user_types`, and `lifecycle_state` checks constrain allowed values. Empty `affected_user_types` and a missing relevance explanation are permitted on drafts; publication readiness is checked by the application. The `trends` row itself does not store a dataset version, source mode, source retrieval time, numeric signal value, raw source payload, or reviewer identity. Optional source retrieval metadata and explicitly described provider metrics belong only in `trend_evidence_provenances`.
 
 ## `trend_evidences`
 
@@ -573,6 +588,30 @@ The database checks that `period_end` is not before `period_start` when both exi
 | `updated_at` | TIMESTAMPTZ | No | Defaults to current time |
 
 At least one evidence row is required before validation/publication, but the database does not enforce a minimum child-row count. The service currently checks evidence presence and required relevance/audience fields; it cannot prove that a source is real or that an authorized person fact-checked it. Factual verification and reviewer authorization remain operational requirements, not persisted schema facts.
+
+## `trend_evidence_provenances`
+
+Added by migration `017-create-trend-evidence-provenances.ts` as an optional one-to-zero-or-one extension. No historical provenance is inferred or backfilled.
+
+| Column | Type | Null | Constraint / purpose |
+|---|---|---:|---|
+| `trend_evidence_id` | UUID | No | Primary key and FK to `trend_evidences(id)`; delete/update CASCADE; enforces at most one row per evidence |
+| `schema_version` | SMALLINT | No | Currently constrained to version `1` |
+| `source_id` | VARCHAR(80) | No | Restricted to Google Year in Search Indonesia 2025 or Google Trends Trending Now Indonesia |
+| `original_publisher` | VARCHAR(32) | No | Restricted to `GOOGLE`; publisher is separate from collection intermediary |
+| `transport_provider` | VARCHAR(32) | No | `BRIGHTDATA_SERP_API`, `UNKNOWN`, or `NOT_APPLICABLE`, with source-specific combinations constrained |
+| `source_product` | VARCHAR(64) | No | Approved product/method paired with `source_id` |
+| `collection_target_url` | TEXT | Yes | HTTPS target for the approved Google Trends/Bright Data combination; no embedded credentials |
+| `retrieved_at` | TIMESTAMPTZ | Yes | Retrieval time only; never an observation-period boundary |
+| `observation_period_status` | VARCHAR(24) | No | `KNOWN`, `NOT_PROVIDED`, `UNKNOWN`, or `NOT_APPLICABLE` |
+| `observation_period_start`, `observation_period_end` | DATE | Yes | Both required and ordered only when period status is `KNOWN`; otherwise both null |
+| `geography_code` | VARCHAR(2) | Yes | Approved `ID` code or unknown (`NULL`) |
+| `metrics_availability` | VARCHAR(16) | No | `AVAILABLE`, `PARTIAL`, `UNAVAILABLE`, or `UNKNOWN` |
+| `metrics` | JSONB | No | Bounded array (maximum three entries and 512 bytes); strict model validation limits metric names, fields, values, semantic/unit availability, and unknown keys |
+| `completeness` | VARCHAR(16) | No | `COMPLETE`, `PARTIAL`, or `UNKNOWN` |
+| `created_at`, `updated_at` | TIMESTAMPTZ | No | Metadata record timestamps |
+
+The linked `trend_evidences.source_reference` and `limitations` remain the source reference and evidence caveats; they are not duplicated. This table does not accept complete provider responses. Actual Bright Data output must not be persisted until licensing, retention, and attribution rights are separately approved. The existing lifecycle fingerprint deliberately excludes this relation; a future provenance-aware approval requires a versioned fingerprint/lifecycle change approved separately.
 
 ---
 
@@ -955,6 +994,7 @@ Recommended delete behavior:
 | categories | referenced data | RESTRICT |
 | trend | opportunities | RESTRICT |
 | trend | `trend_evidences` | CASCADE |
+| `trend_evidences` | `trend_evidence_provenances` | CASCADE |
 | opportunity | analysis | RESTRICT |
 | opportunity | saved | RESTRICT |
 | opportunity | roadmap | RESTRICT |
@@ -1027,6 +1067,14 @@ INDEX(trend_id)
 ```
 
 The child index supports loading evidence by Trend and parent-row maintenance.
+
+## `trend_evidence_provenances`
+
+```text
+PRIMARY KEY(trend_evidence_id)
+```
+
+The primary key is also the foreign key to `trend_evidences.id`; no additional index is required for the one-to-one optional relation.
 
 ## `opportunities`
 
@@ -1309,7 +1357,7 @@ Migration harus:
 
 # 38. Migration Order
 
-Repository migrations currently use the sequence below. Migration `008-create-trends.ts` creates `trends` and `trend_evidences`; earlier proposed numbering that assigned Trend to `007` and Opportunity to `008` is superseded. Number future module migrations after `008` when those schemas are approved.
+Repository migrations currently use the sequence below. Migration `008-create-trends.ts` creates `trends` and `trend_evidences`; migration `017-create-trend-evidence-provenances.ts` adds the optional provenance relation. Earlier proposed numbering that assigned Trend to `007` and Opportunity to `008` is superseded.
 
 ```text
 001-create-users.ts
@@ -1320,8 +1368,18 @@ Repository migrations currently use the sequence below. Migration `008-create-tr
 006-create-business-products.ts
 007-create-business-profile-junctions.ts
 008-create-trends.ts
-
-Future Opportunity and support-table migrations: number after 008
+009-create-opportunities.ts
+010-create-evidences.ts
+011-create-saved-opportunities.ts
+012-create-dataset-versions.ts
+013-create-scoring-models.ts
+014-create-user-opportunity-analyses.ts
+015-create-opportunity-fit-inputs.ts
+016-create-roadmaps.ts
+017-create-trend-evidence-provenances.ts
+018-create-private-opportunity-hypotheses.ts
+019-add-entrepreneur-location-details.ts
+020-add-business-location-details.ts
 ```
 
 ---
@@ -1739,7 +1797,7 @@ Schema dibuat agar keputusan tersebut tidak memerlukan redesign besar.
 | User Type | `users` |
 | Entrepreneur Profile | `entrepreneur_profiles` + junctions |
 | Business Profile | `business_profiles`, `business_products` + junctions |
-| Trend Radar MVP | `trends`, `trend_evidences` |
+| Trend Radar MVP | `trends`, `trend_evidences`; optional provenance in `trend_evidence_provenances` |
 | Opportunity Finder | `opportunities`, `opportunity_fit_requirements` |
 | Target Consumer | customer segment junctions |
 | Channel Fit | sales channel junctions |
@@ -1950,3 +2008,64 @@ Discover → Analyze → Grow
 ---
 
 **END OF DOCUMENT**
+
+## Product Owner decision amendment, 14 October 2026: private generated hypotheses
+
+Additive migration 018 introduces `user_generated_opportunities`, separate from the global `opportunities` catalog and `saved_opportunities` relation. Each row is owned by `user_id`, records the supported `user_type`, validated hypothesis JSON, a bounded source reference (Google Trends title, publisher, transport, source URL, retrieval time, and heuristic classification), provider/model metadata, generation time, and `is_saved`/`saved_at`. It stores no prompt, full profile, email, location, notes, raw Bright Data payload, business metrics, score, or risk result. Reads and save updates must filter by both row ID and authenticated `user_id`. Rows are generated only by an explicit, consented provider action and never enter the global Trend/Opportunity lifecycle.
+
+## Product Owner decision amendment, 18 October 2026: SearchApi hypothesis provenance
+
+The existing `source_reference` JSONB also accepts a bounded SearchApi Google Trends Explore variant containing the selected Top or Rising query, its source-specific metrics, profile query used for retrieval, geo, period, search property, retrieval time, Google Trends Explore URL, SearchApi transport, publisher attribution, and optional source ID, analysis-context version, prompt version, and keyed context fingerprint. This is a backward-compatible JSONB value and requires no migration or new column. The fingerprint is an HMAC of canonical server-built context; raw profile context and prompts are never stored. The full SearchApi result set and encrypted source-selection token are never stored. Historical Bright Data references remain valid and readable; the SearchApi variant does not enter the published Opportunity or Trend catalog.
+
+The `hypothesis` JSONB retains the original required fields for historical-row compatibility and accepts optional enrichment fields for opportunity type, profile alignment/references, evidence interpretation/references, evidence gaps, and limitations. New SearchApi-generated hypotheses require the complete enrichment contract before persistence. The `profileVersion` columns and onboarding version calculations are unchanged; the Finder’s context fingerprint separately covers consented profile values, including notes.
+
+
+### Trend Radar history and exploration journey (2026-10-21)
+
+Trend Radar retains up to 20 successful, schema-validated observations per authenticated account in this browser, subject to a bounded storage budget. Entries include product, geography, period, search property, observation time, original request options and available interest datasets. Failed requests do not replace history. Opening an entry restores its results and filters without calling SearchApi; the active observation is restored on returning to the page and supplies the Dashboard preview, including earlier products. Retrieval timestamps identify historical data. Previous single-result snapshots remain readable. Browser storage denial leaves current results usable; history is not synchronized across devices and can be lost when browser data is cleared.
+
+Dashboard exploration follows an ordered, responsive journey: Trend Radar, Opportunity Finder, saved opportunities, then the existing persona-specific roadmap. Numbers show navigation order only; they do not claim completed tasks or lock later steps. Existing private hypothesis previews remain owner-scoped. This amendment introduces no API endpoint, database table or migration, and adds no saved-detail or roadmap capability.
+
+
+## Entrepreneur review and permanent save amendment (21 October 2026)
+
+For private ENTREPRENEUR hypotheses, saving moves from Finder cards to the bottom of the score-detail page after Opportunity Score, Fit Score, target consumers, competition, risks, initial needs and evidence. Profile fields are loaded from the authenticated account; opening a detail page makes no paid inference request. Explicit consent and an analysis action remain required. The only optional financial input here is the concept's estimated minimum capital, displayed as Rp with Indonesian thousands separators and submitted as a whole numeric rupiah amount. It is separate from the account's available budget.
+
+PATCH /api/v1/opportunities/ideas keeps the existing {id, saved} fields and adds optional reviewed:true and analysisFingerprint (64 lowercase hexadecimal characters). Entrepreneur saves require reviewed:true, both numeric scores, structured concept requirements, and a current profile-bound analysis. The server compares the supplied fingerprint to the stored snapshot under a transaction row lock. Unknown/missing data is never replaced with invented scores to unlock saving. Conflicting or incomplete saves return 409 ANALYSIS_CHANGED or ANALYSIS_REQUIRED. Repeat saves are idempotent.
+
+Once an entrepreneur hypothesis is saved, isSaved cannot return to false, DELETE is rejected with 409 SAVED_PERMANENT, and its analysis snapshot is immutable. Existing saved entrepreneur records are preserved and protected. Unsubmitted hypotheses remain deletable. UMKM behavior is outside this change. Data stays in existing user_generated_opportunities JSONB and saved fields, with no migration or TTL added; no provider call is needed to reopen stored scores. This amendment supersedes earlier unsave/delete instructions for private entrepreneur hypotheses only.
+
+
+## Local competitor matching v2 (21 October 2026)
+
+Normalize administrative locality prefixes (including Kota/Kabupaten Administrasi), Jkt. aliases and directional Jakarta names before matching. Match complete locality names rather than arbitrary substrings, preserve Jakarta Utara/Selatan/Timur/Barat/Pusat distinctions, and reject street-only occurrences. Google Maps queries combine product, canonical city, profile province when present, and Indonesia. No guessed coordinates or automatic paid retries are added.
+
+## Billing Sandbox amendment
+
+Migration `023-create-billing.ts` adds `billing_accounts`, `billing_payments`, `credit_lots`, immutable `credit_ledger_entries`, and idempotency-oriented `billing_webhook_events`. Financial audit data is separated from general product records; no callback payload containing unnecessary payer data is persisted.
+
+Migration `024-create-admin-billing-controls.ts` separates operators into `admins`, disables the migrated legacy customer's login without deleting user-owned records, and adds versioned product/usage settings plus append-only operator audit logs. `billing_payments.granted_credits` is a payment-time entitlement snapshot used during settlement and scheduled-plan activation.
+
+Retain optional competitors.diagnostics in existing analysis JSONB: receivedCount, inspectedCount (maximum 20), invalidCount, outsideCityCount and duplicateCount. sampleCount is the unique locally matching count; at most five example places remain stored. Counters contain no extra raw addresses. The Competition disclosure shows these counters, distinguishes empty provider results from filtered results and keeps zero samples unknown. Old snapshots without diagnostics remain readable. Provider error envelopes are not treated as empty search evidence.
+
+The local Maps cache key moves to LOCAL_COMPETITOR_SAMPLE_V2, and input fingerprints include competitor matching version 2, preventing reuse of old empty samples for new analyses. Saved permanent snapshots stay immutable. Reanalysis applies only to unsaved hypotheses using existing consent and owner checks; the scoring formula and weights do not change.
+
+## Existing Pengusaha completion amendment (22 October 2026)
+
+The authorized UMKM_EXISTING improvement is specified in [Existing Business Completion.md](Existing%20Business%20Completion.md). This adds business-specific private hypothesis analysis, deterministic preliminary Opportunity Score and Business Fit, reasoned execution risk, owner-scoped Compare, five-stage private Growth Roadmap and 12-item paginated archives. It does not alter Entrepreneur behavior or provider configuration. Optional businessAnalysis and growthRoadmap snapshots use existing hypothesis JSONB; no catalog foreign key or migration is introduced. POST /api/v1/opportunities/ideas/{id}/analysis dispatches by authenticated persona; Existing accepts strict {consent:true,refresh?:boolean,proposedPrice?:{min:integer,max:integer}|null}. POST /api/v1/opportunities/ideas/{id}/roadmap creates or reopens the owner's Growth snapshot; a new snapshot requires saved state, complete and fresh business analysis. Existing saves remain reversible, and stored roadmaps remain readable after unsave.
+
+For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
+
+## Existing concept alignment guard (22 October 2026)
+
+The existing optional businessAnalysis JSONB snapshot may include conceptAlignmentVersion: business-concept-alignment-v1 after a successful independent semantic review. Existing request shapes and database columns are unchanged. Legacy snapshots remain stored but require reanalysis before new Compare/Growth use. See [Existing Business Completion.md](Existing%20Business%20Completion.md) for fail-closed, retry and compatibility rules.
+
+
+## Approved daily trend notification extension ? 22 October 2026
+
+The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+
+
+## Amendment: journey reports and roadmap completion (22 October 2026)
+
+See [Journey Reports](Journey%20Reports.md) for the authorized two-persona PDF/XLSX export, explicit stage completion gate, owner-scoped progress persistence/API, and device support acceptance contract.

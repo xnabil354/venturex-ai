@@ -25,13 +25,23 @@ describe("SavedOpportunitiesList", () => {
     expect(markup).toContain("Menu minuman");
     expect(markup).toContain("Trend eligible");
     expect(markup).toContain('href="/opportunities/60000000-0000-4000-8000-000000000001"');
+    expect(markup).toContain("Pilih untuk perbandingan");
+    expect(markup).toContain("Bandingkan (0/3)");
   });
 
   it("shows an honest empty state with a Finder link", () => {
     const empty: SavedOpportunityListResult = { status: "EMPTY", items: [] };
     const markup = renderToStaticMarkup(<SavedOpportunitiesList result={empty} />);
 
-    expect(markup).toContain("Belum ada simpanan");
+    expect(markup).toContain("Belum ada opportunity yang disimpan.");
     expect(markup).toContain('href="/opportunities"');
+  });
+
+  it("keeps persistence errors safe and offers a retry", () => {
+    const markup = renderToStaticMarkup(<SavedOpportunitiesList result={{ status: "ERROR" }} />);
+
+    expect(markup).toContain("Peluang tersimpan belum dapat dimuat");
+    expect(markup).toContain('href="/saved"');
+    expect(markup).not.toContain("database internals");
   });
 });

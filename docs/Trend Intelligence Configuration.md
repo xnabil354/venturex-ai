@@ -131,7 +131,17 @@ Do not treat an external source's index, count, or percentage as a VENTUREX metr
 
 ### MVP Data Architecture Decision
 
-The Hackathon MVP uses an **Internal Persistent Curated Trend Catalog**. The catalog stores reviewed Trend records and their traceable evidence. The MVP does not include external signal ingestion or an automated signal-processing pipeline.
+The user-facing Hackathon Trend MVP continues to use an **Internal Persistent Curated Trend Catalog**. It does not consume externally collected candidates in the published Trend catalog or Trend List; the optional candidate-collection extension below is not a dependency of that user-facing path.
+
+#### Approved Bright Data candidate-collection extension (Batch v1)
+
+The explicitly approved integration batch allows a server-only adapter to collect Google Trends Trending Now candidates for Indonesia through the Bright Data zone venturex_trends_serp. A deterministic keyword screener classifies each candidate as LIKELY_FNB, REVIEW_REQUIRED, or OUT_OF_SCOPE. This is ephemeral candidate triage only.
+
+The adapter is disabled by default. It reads BRIGHTDATA_TRENDS_ENABLED (true or false, default false), BRIGHTDATA_TRENDS_API_KEY (server-only and required only when enabled), and BRIGHTDATA_TRENDS_TIMEOUT_MS (default 10000; allowed range 250-30000). The zone, provider endpoint, and Google Trends target are fixed by this approved integration. The key must never use a NEXT_PUBLIC variable or appear in logs.
+
+The provider observations retain their original query, region, source metrics, related-query and category data, start time in Unix seconds, and provenance. The adapter retrieval timestamp is collection metadata; it is not the source date, catalog update time, or a freshness measure. Screening explanations state the matched terms or ambiguity. These outputs do not create a Trend record or lifecycle state, assign a Trend taxonomy category, verify evidence, or establish a factual market claim. A Data Curator must independently review the source and decide whether to create a DRAFT record.
+
+The adapter validates the response structure against the observed fields, and the keyword screener performs candidate triage only. Neither step validates whether source evidence supports a factual market claim. Factual evidence validation remains a separate human responsibility. The batch uses only mocked HTTP and synthetic fixtures; it makes no live provider requests and adds no scheduler, retry, polling, persistence, factual validation, or publication behavior.
 
 ```text
 Real-world source / evidence
@@ -149,7 +159,7 @@ Safe typed DTO
 Future user interface
 ```
 
-Curators may use real external sources as evidence, but they add and review catalog records through a trusted human process. The catalog remains provider-agnostic so a future ingestion mechanism can be considered without binding the MVP to a provider. Internal persistence does not authorize synthetic market data: fabricated trends, sources, or claims must never be published.
+Curators may use real external sources as evidence, but they add and review catalog records through a trusted human process. The Bright Data candidate collector remains separate from the catalog and does not create DRAFT records. The published catalog remains independent of any provider. Internal persistence does not authorize synthetic market data: fabricated trends, sources, or claims must never be published.
 
 ### Internal context
 
@@ -162,7 +172,7 @@ Internal profile data is not evidence that a market trend exists. It must not be
 
 ### External evidence
 
-Evidence may come from aggregated search-trend data, public market signals, published industry reports, and public aggregate social signals. These are possible source classes for human curation, not an ingestion pipeline or provider commitment. No provider, access method, coverage, reliability, license, or availability is selected here.
+Evidence may come from aggregated search-trend data, public market signals, published industry reports, and public aggregate social signals. These are source classes for human curation. The approved Bright Data collector is limited to candidate collection from Google Trends Trending Now for Indonesia; it does not establish broader provider coverage, reliability, licensing, or production availability. Candidate observations still require independent source review before they can support a Trend.
 
 ### Evidence quality gate
 
@@ -197,7 +207,7 @@ If evidence is missing, stale, conflicting, or insufficient, the result must sta
 
 ## 7. Trend Lifecycle and Ownership
 
-Only `PUBLISHED` trends are available for user discovery. The lifecycle has exactly four states; candidate intake creates a `DRAFT` record and is not a separate state. AI and automated processing cannot advance a lifecycle state.
+Only `PUBLISHED` trends are available for user discovery. The lifecycle has exactly four states; the Data Curator creates a `DRAFT` record only after manual review of a candidate. Provider collection and screening results are pre-lifecycle and do not create a lifecycle record. AI and automated processing cannot advance a lifecycle state.
 
 | State | Meaning |
 |---|---|
@@ -241,17 +251,17 @@ A Trend is not an Opportunity, a recommendation, or an action plan. A trend may 
 
 | Area | Decision |
 |---|---|
-| Database | The MVP persistence baseline is `trends` plus `trend_evidences` as described in `docs/Database Design.md` and the repository's Trend migration. `category_code` is the Trend taxonomy; nullable `fnb_category_id` is only the F&B subject area. The shared `evidences` design remains for future/shared domain use, including Opportunity, and is not the current Trend evidence store. The MVP schema has no dataset-version, source-mode, retrieval timestamp, or raw provider payload. |
+| Database | The core catalog remains `trends` plus `trend_evidences`, as described in `docs/Database Design.md` and migration 008. Additive migration 017 provides an optional, bounded `trend_evidence_provenances` relation for approved source identifiers, publisher/transport distinction, retrieval time, explicit observation-period state, geography, and validated metric metadata. It does not backfill historical rows, change catalog lifecycle behavior, store raw provider payloads, or authorize persistence of Bright Data output while licensing review is open. `category_code` is the Trend taxonomy; nullable `fnb_category_id` is only the F&B subject area. The shared `evidences` design remains for future/shared domain use, including Opportunity, and is not the current Trend evidence store. |
 | Server-side service and DTO | The current internal foundation has a server-side `TrendService` and typed `TrendDto`. Its published-list path resolves the current user, filters `PUBLISHED` records by persisted `userType` and `affectedUserTypes`, and does not load Entrepreneur or UMKM profile data. This is audience eligibility, not profile personalization. The DTO carries catalog identity, taxonomy/subject-area labels, signal, suitable evidence details, the general relevance explanation, affected user types, lifecycle state, and record timestamps. It excludes ORM objects, evidence IDs, and archive reason. `createdAt`/`updatedAt` are catalog record timestamps, not source freshness. |
 | API exposure | No Trend API endpoint is implemented or approved. The Trend paths and payloads in `docs/API Design.md` remain proposals only; no endpoint, filter, sorting rule, or API DTO is committed by this configuration. Do not add a Dashboard aggregation endpoint. |
 
-The selected data architecture, taxonomy distinction, server-side eligibility behavior, and current DTO boundary are recorded here. Profile-aware relevance and external API exposure remain future work. This reconciliation changes no runtime code, migration, model, repository, service, endpoint, UI, or AI integration.
+The selected data architecture, taxonomy distinction, server-side eligibility behavior, and current DTO boundary remain in effect. The optional provenance schema does not change the Trend service, DTO, API exposure, user-facing freshness, UI, or profile-personalization decisions. Profile-aware relevance and external API exposure remain future work.
 
 ## 11. Open Decisions
 
 The following remain unresolved and must not be treated as implementation facts:
 
-1. Future external provider(s), access method, licensing, geographic coverage, and availability; external ingestion is not part of this MVP.
+1. Additional external providers, source coverage, licensing, reliability, and any persistent or automated ingestion remain undecided. The approved Bright Data candidate collector is ephemeral and is not part of the user-facing Trend List data path.
 2. Assignment of the Data Curator, human reviewer, and Product/Data Owner; trusted server-side authorization and any audit trail for their actions.
 3. Operational evidence review details, including how uncertain or undated sources are recorded and whether reviewer identity must be persisted.
 4. Future derived source-freshness semantics and any threshold. List v1 date semantics are resolved in the approved contract; a source date is not the same as catalog `updatedAt`.
@@ -263,3 +273,39 @@ The following remain unresolved and must not be treated as implementation facts:
 10. Trend Detail and Trend-to-Opportunity relationship implementation, including relationship-query semantics and Opportunity openability; these target requirements remain deferred from List v1 and require separate approval.
 
 These decisions do not block the curated-catalog MVP decision. Resolve each before the related ingestion, publication workflow, profile personalization, freshness display, API, schema auditability, AI capability, or Trend Detail/Opportunity relationship is implemented.
+
+## 12. Batch 17E Authenticated Live Observation Slice
+
+The Product Owner approved a narrow additive `/trends` user flow for an authenticated, manually refreshed Bright Data Google Trends Indonesia observation preview. This is not the published Trend List and does not change the catalog lifecycle, catalog DTO, or public Trend API contract.
+
+- A user action may request a live refresh. Page rendering never calls Bright Data. The server keeps normalized snapshots in process memory with request coalescing, a bounded refresh interval, and no database persistence. Multi-instance deployments do not share this cache.
+- Only `LIKELY_FNB` and `REVIEW_REQUIRED` groups may be shown; `OUT_OF_SCOPE` groups remain excluded. Screening is a keyword heuristic, not factual validation. The view must show provider attribution, actual retrieval time, original source reference, metrics exactly as returned with `UNSPECIFIED` units, unknown observation period, partial response information, and evidence limitations.
+- An observation remains an unreviewed source signal. It is not a curated Trend, business Opportunity, recommendation, or catalog lifecycle state. It must not be automatically imported, validated, published, or persisted.
+- Bright Data's public agreement does not conclusively establish rights for VENTUREX to display the SERP API output or transmit it to the configured AI provider in this product. Those operations remain independently gated by `BRIGHTDATA_TRENDS_DISPLAY_RIGHTS_CONFIRMED` and `NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED`. Keep both `false` until applicable account/service terms or written permission are verified. Google Trends reuse requires Google attribution and compliance with Google's Terms of Service.
+- The new authenticated API paths are limited to the live observation preview and its user-consented analysis. They do not expose mutation or catalog lifecycle operations. The existing curated catalog remains the default published-content section.
+
+This exception implements the approved hackathon slice only. It does not resolve broad redistribution rights, automatic collection, persistent source caching, or general Trend API design.
+
+## 13. Product Owner live-first decision, 14 October 2026
+
+For the authenticated local hackathon website, the Product Owner self-attests permission for a manually requested, private Bright Data preview. The local `.env` opt-ins may be enabled for that scope. This is not independent verification of public redistribution rights and does not authorize public display, broad retention, or automated collection. The 2025 curated records and manifest remain unchanged as archive; Dashboard, Trend Radar, Opportunity Finder, and Saved Opportunities do not use them as current data or provider fallback.
+
+AI-generated ideas are stored only in the separate owner-scoped hypothesis table after explicit consent and successful secure 9Router inference. The configured 9Router endpoint is public plaintext HTTP. Until a verified HTTPS endpoint or SSH tunnel is configured, the application must reject real-profile inference before any outbound call. The normal Opportunity Analysis provider guard remains unchanged. No provider output is automatically validated or published as a catalog Trend or Opportunity.
+
+## 14. Product Owner Trend Radar relevance and time-window decision, 14 October 2026
+
+The authenticated local Trend Radar preview remains a manually requested Google Trends Trending Now source observation. The source request uses Indonesia (`geo=ID`) and may select only the supported 4, 24, 48, or 168 hour windows. The selected window is sent as the source's `hours` parameter and is shown with the retrieval time. This is a trending-query window, not a time-series observation period for each query.
+
+The current integrated Trending Now source is a general Google Search surge list. It does not provide a Bakso-specific query, F&B category, or alternate search-property filter in this integration. The user's primary product term (Entrepreneur preferred product type or the first UMKM product name) is used only as a local filter over the returned list; it is not sent to Google Trends. The F&B and term matching labels are VENTUREX heuristics, not source classifications or factual validation. An empty Bakso-filtered list means no matching item was found in that returned Trending Now list; it does not establish that Bakso has no search interest in Indonesia.
+
+The page may expose the loaded Trending Now rows as Google Trends source observations with source reference, retrieval time, source-provided metrics and explicit unknown units/limitations. It must not infer demand, popularity outside the returned source list, sales, revenue, or business viability. The current preview remains in-memory and manually refreshed; it does not persist provider content, import records, or change publication lifecycle. The prior local hackathon display-rights self-attestation and any required server-side opt-in remain in force. No unsupported category, query, date-range, or search-property parameter may be sent to the current Trending Now target.
+
+## 15. SearchApi evidence bridge for private Opportunity hypotheses
+
+The SearchApi Google Trends Explore integration is the source for new Opportunity Finder hypotheses. The Finder explicitly calls the existing related-query adapter only after a user presses **Muat Sinyal Google Trends**. It shares the existing adapter's normalized Top/Rising data, exact query/filter cache key, timeout, per-process request budget, and no-automatic-retry behavior. Page load and refresh do not spend SearchApi requests. Timeseries and region results are not used as hypothesis evidence.
+
+Trend Radar's `RELATED_QUERIES`, `TIMESERIES`, and `GEO_MAP` datasets have independent timeouts and report failures independently. `SEARCHAPI_RELATED_QUERIES_TIMEOUT_MS` defaults to 30000 (allowed 1000-30000), `SEARCHAPI_GEO_MAP_TIMEOUT_MS` defaults to 30000 (allowed 1000-30000), and `SEARCHAPI_TIMEOUT_MS` continues to govern `TIMESERIES` and other SearchApi calls. For Worldwide (`geo=""`), GEO_MAP requests use `region=COUNTRY`; a selected country or subregion uses `region=REGION`. If only regional interest times out, the user can retry that section without reloading related queries; successfully cached sibling interest data is reused when available. The retry is user-triggered and still subject to the existing per-process provider request budget. Trend Radar interest routes allow up to 45 seconds so the provider's 30-second limit can return a controlled response before the route ends.
+
+The source API returns short-lived AES-GCM encrypted references bound to the current owner and the adapter cache expiry. A strong non-template `AUTH_SECRET` must be configured before the SearchApi call so a source reference can be issued safely. Source tokens and SearchApi result sets remain transient. The private hypothesis table may store the selected row's bounded provenance in its existing JSONB `source_reference`; that record remains owner-scoped, and no schema migration or curated catalog mutation is introduced.
+
+Top interest indices are not growth percentages. Rising percentages and the Breakout label preserve SearchApi semantics; no F&B or demand classification is inferred. The user must select a row, provide explicit versioned consent, and press the generation button. SearchApi processing has a separate `NINEROUTER_SEARCHAPI_PROCESSING_CONFIRMED` opt-in, default `false`. Public plaintext HTTP is rejected for real-profile inference. Direct loopback HTTP is allowed only in development for `localhost`, `127.0.0.1`, or `::1` on port `20128` and path `/v1`, with no URL credentials, and with `NINEROUTER_ALLOW_LOOPBACK_HTTP_DEV_ONLY=true`. The legacy public-HTTP development flag is restricted to that same loopback destination for this flow. `NINEROUTER_LOOPBACK_TUNNEL_CONFIRMED=true` remains reserved for a verified encrypted tunnel. Existing Bright Data gates and consumers remain separate.

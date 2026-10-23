@@ -11,6 +11,7 @@ import {
   type UserType,
 } from "../auth/user-types";
 import type {
+  OpportunityCategoryOption,
   OpportunityDetailRecord,
   OpportunityPageRequest,
   OpportunityRecord,
@@ -52,10 +53,15 @@ const baseDetailRecord: OpportunityDetailRecord = {
 };
 
 class MemoryOpportunityRepository implements OpportunityRepositoryPort {
-  readonly countVisible = vi.fn(async (_userType: UserType) => this.records.length);
-  readonly listVisible = vi.fn(async (_userType: UserType, page: OpportunityPageRequest) =>
-    this.records.slice(page.offset, page.offset + page.limit),
+  readonly listActiveCategories = vi.fn(async () => this.categories);
+  readonly countVisible = vi.fn(async (_userType: UserType, categoryCode?: string) =>
+    this.recordsForCategory(categoryCode).length,
   );
+  readonly listVisible = vi.fn(async (
+    _userType: UserType,
+    page: OpportunityPageRequest,
+    categoryCode?: string,
+  ) => this.recordsForCategory(categoryCode).slice(page.offset, page.offset + page.limit));
   readonly listVisibleForTrend = vi.fn(async (_userType: UserType, relatedTrendId: string) =>
     this.records.filter(({ relatedTrend }) => relatedTrend.id === relatedTrendId),
   );
@@ -64,7 +70,17 @@ class MemoryOpportunityRepository implements OpportunityRepositoryPort {
   constructor(
     readonly records: readonly OpportunityRecord[],
     readonly detailRecord: OpportunityDetailRecord | null = null,
+    readonly categories: readonly OpportunityCategoryOption[] = [
+      { code: "BEVERAGES", name: "Minuman" },
+      { code: "SNACKS", name: "Camilan" },
+    ],
   ) {}
+
+  private recordsForCategory(categoryCode?: string): readonly OpportunityRecord[] {
+    if (!categoryCode) return this.records;
+    const selected = this.categories.find(({ code }) => code === categoryCode);
+    return selected ? this.records.filter(({ categoryName }) => categoryName === selected.name) : [];
+  }
 }
 
 describe("OpportunityService", () => {
@@ -136,6 +152,74 @@ describe("OpportunityService", () => {
       totalCount: 0,
       totalPages: 1,
     });
+    expect(repository.listVisible).not.toHaveBeenCalled();
+  });
+
+  it("filters by an active persisted category before calculating pages", async () => {
+    const records = Array.from({ length: 12 }, (_, index) => ({
+      ...baseRecord,
+      id: `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+      name: `Peluang camilan ${index + 1}`,
+      categoryName: "Camilan",
+    }));
+    const repository = new MemoryOpportunityRepository(records);
+    const service = new OpportunityService({
+      repository,
+      currentUserResolver: async () => entrepreneur,
+    });
+
+    const result = await service.list("2", "SNACKS");
+
+    expect(result).toMatchObject({
+      status: "AVAILABLE",
+      page: 2,
+      totalCount: 12,
+      totalPages: 2,
+      selectedCategory: { code: "SNACKS", name: "Camilan" },
+    });
+    expect(repository.countVisible).toHaveBeenCalledWith(USER_TYPES.ENTREPRENEUR, "SNACKS");
+    expect(repository.listVisible).toHaveBeenCalledWith(
+      USER_TYPES.ENTREPRENEUR,
+      { limit: 10, offset: 10 },
+      "SNACKS",
+    );
+  });
+
+  it("returns a filtered EMPTY state with its active category selected", async () => {
+    const repository = new MemoryOpportunityRepository([]);
+    const service = new OpportunityService({
+      repository,
+      currentUserResolver: async () => entrepreneur,
+    });
+
+    await expect(service.list(1, "SNACKS")).resolves.toMatchObject({
+      status: "EMPTY",
+      items: [],
+      selectedCategory: { code: "SNACKS", name: "Camilan" },
+      totalCount: 0,
+      totalPages: 1,
+    });
+    expect(repository.countVisible).toHaveBeenCalledWith(USER_TYPES.ENTREPRENEUR, "SNACKS");
+    expect(repository.listVisible).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["unknown persisted code", "NOT_A_CATEGORY"],
+    ["repeated query parameter", ["BEVERAGES", "SNACKS"]],
+    ["blank category value", "   "],
+  ])("fails closed for an %s without querying Opportunities", async (_case, categoryInput) => {
+    const repository = new MemoryOpportunityRepository([baseRecord]);
+    const service = new OpportunityService({
+      repository,
+      currentUserResolver: async () => entrepreneur,
+    });
+
+    await expect(service.list("2", categoryInput)).resolves.toMatchObject({
+      status: "INVALID_CATEGORY",
+      items: [],
+      selectedCategory: null,
+    });
+    expect(repository.countVisible).not.toHaveBeenCalled();
     expect(repository.listVisible).not.toHaveBeenCalled();
   });
 
@@ -300,6 +384,7 @@ describe("OpportunityService", () => {
     });
 
     await expect(service.list()).rejects.toBeInstanceOf(ErrorType);
+    expect(repository.listActiveCategories).not.toHaveBeenCalled();
     expect(repository.countVisible).not.toHaveBeenCalled();
     expect(repository.listVisible).not.toHaveBeenCalled();
   });

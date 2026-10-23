@@ -117,7 +117,7 @@ export class TrendRepository implements TrendRepositoryPort {
     return (await this.toRecords([updatedTrend]))[0] ?? null;
   }
 
-  async listPublished(): Promise<readonly TrendRecord[]> {
+    async listPublished(): Promise<readonly TrendRecord[]> {
     const trends = await this.trendModel.findAll({
       where: { lifecycleState: "PUBLISHED" },
       order: [["createdAt", "DESC"], ["id", "ASC"]],

@@ -39,18 +39,24 @@ const responseSchema = z.union([
 ]);
 
 type UserResponse = z.infer<typeof responseSchema>;
+type UserTypeSelectionProps = Readonly<{
+  initialUserType?: UserType | null;
+}>;
 
 const options: ReadonlyArray<{
+  audience: string;
   description: string;
   label: string;
   value: UserType;
 }> = [
   {
+    audience: "Calon pengusaha",
     description: "Untuk menyiapkan langkah awal usaha baru.",
     label: "Saya ingin memulai bisnis F&B",
     value: USER_TYPES.ENTREPRENEUR,
   },
   {
+    audience: "Usaha berjalan",
     description: "Untuk mengembangkan bisnis F&B yang sudah berjalan.",
     label: "Saya sudah memiliki bisnis F&B",
     value: USER_TYPES.UMKM_EXISTING,
@@ -67,13 +73,15 @@ async function readResponse(response: Response): Promise<UserResponse> {
   return responseSchema.parse(await response.json());
 }
 
-export function UserTypeSelection() {
+export function UserTypeSelection({
+  initialUserType = null,
+}: UserTypeSelectionProps) {
   const router = useRouter();
   const titleId = useId();
   const errorId = useId();
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(
-    null,
+    initialUserType,
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,6 +118,11 @@ export function UserTypeSelection() {
     event.preventDefault();
     if (!selectedUserType) {
       setFormError("Pilih salah satu opsi untuk melanjutkan.");
+      return;
+    }
+
+    if (selectedUserType === initialUserType && initialUserType) {
+      router.replace(destinationFor(initialUserType));
       return;
     }
 
@@ -168,51 +181,67 @@ export function UserTypeSelection() {
   return (
     <section
       aria-labelledby={titleId}
-      className="border-t border-soft-mist pt-20 sm:pt-24"
+      className="grid gap-32"
     >
-      <header>
-        <p className="text-caption font-w540 uppercase tracking-[0.08em] text-stone-gray">
-          Account setup
+      <header className="text-left">
+        <p className="text-caption font-w540 uppercase tracking-[0.12em] text-stone-gray">
+          Pilih jalur
         </p>
       </header>
 
-      <form className="mt-24 grid gap-24" onSubmit={handleSubmit}>
+      <form className="grid gap-24" onSubmit={handleSubmit}>
         <fieldset
           aria-describedby={formError ? errorId : undefined}
           aria-invalid={formError ? "true" : undefined}
-          className="grid gap-12"
+          className="grid gap-16"
         >
           <legend
-            className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal"
+            className="max-w-[24ch] text-left text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal"
             id={titleId}
           >
             Apa tujuan Anda menggunakan VENTUREX?
           </legend>
-          <p className="-mt-4 max-w-[48ch] text-body-sm leading-body-sm text-stone-gray">
+          <p className="-mt-4 max-w-[42ch] text-left text-body-sm leading-body-sm text-stone-gray">
             Pilihan ini menentukan jalur persiapan profil Anda berikutnya.
           </p>
-          {options.map((option) => {
+          {options.map((option, index) => {
             const isSelected = selectedUserType === option.value;
             return (
               <label
                 className={cx(
-                  "flex min-h-button cursor-pointer items-start gap-12 border bg-paper-white px-16 py-12 transition-[background-color,border-color] duration-150 hover:border-stone-gray focus-within:border-royal-violet focus-within:ring-2 focus-within:ring-royal-violet/40",
+                  "group grid min-h-[9rem] cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-start gap-16 rounded-cards border px-16 py-16 transition-[background-color,border-color,transform] duration-200 ease-out active:translate-y-px focus-within:ring-2 focus-within:ring-royal-violet/40 focus-within:ring-offset-2 focus-within:ring-offset-paper-white motion-reduce:transition-none sm:px-20 sm:py-20",
                   isSelected
-                    ? "border-midnight-wine bg-lilac-mist/50"
-                    : "border-soft-mist",
+                    ? "border-midnight-wine bg-lilac-mist/40"
+                    : "border-soft-mist bg-warm-parchment hover:-translate-y-0.5 hover:border-stone-gray",
                 )}
                 key={option.value}
               >
                 <input
                   checked={isSelected}
-                  className="mt-4 size-4 shrink-0 accent-midnight-wine"
+                  className="peer sr-only focus-visible:outline-none"
                   name="userType"
                   onChange={() => selectUserType(option.value)}
                   type="radio"
                   value={option.value}
                 />
-                <span className="grid gap-4">
-                  <span className="text-body font-w540 text-ink-charcoal">
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    "mt-2 grid size-5 shrink-0 place-items-center rounded-full border transition-colors",
+                    isSelected
+                      ? "border-midnight-wine bg-midnight-wine"
+                      : "border-soft-mist bg-paper-white group-hover:border-stone-gray",
+                  )}
+                >
+                  {isSelected ? (
+                    <span className="size-2 rounded-full bg-paper-white" />
+                  ) : null}
+                </span>
+                <span className="grid gap-8">
+                  <span className="text-caption font-w540 tracking-[0.08em] text-stone-gray">
+                    {String(index + 1).padStart(2, "0")} / {option.audience}
+                  </span>
+                  <span className="text-body font-w540 leading-body text-ink-charcoal">
                     {option.label}
                   </span>
                   <span className="text-body-sm leading-body-sm text-stone-gray">
@@ -237,8 +266,27 @@ export function UserTypeSelection() {
           </div>
         ) : null}
 
-        <Button disabled={!selectedUserType} loading={isSubmitting} type="submit">
+        <Button
+          className="group w-full justify-between px-20 sm:w-auto sm:min-w-48"
+          disabled={!selectedUserType}
+          loading={isSubmitting}
+          type="submit"
+        >
           Lanjutkan
+          <svg
+            aria-hidden="true"
+            className="size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+            fill="none"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M3 8h10M8.5 3.5 13 8l-4.5 4.5"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+            />
+          </svg>
         </Button>
       </form>
     </section>

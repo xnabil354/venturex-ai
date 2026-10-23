@@ -1,10 +1,12 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button, Input } from "@/components/ui";
+import { EyeIcon, EyeOffIcon } from "./auth-icons";
+import { consumeRegisteredEmail } from "./registered-email";
 
 type LoginFormProps = {
   registered?: boolean;
@@ -39,6 +41,7 @@ function validate(values: LoginValues): FieldErrors {
 export function LoginForm({ registered = false }: LoginFormProps) {
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [values, setValues] = useState<LoginValues>(initialValues);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -46,9 +49,16 @@ export function LoginForm({ registered = false }: LoginFormProps) {
   const errorSummaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const registeredEmail = consumeRegisteredEmail();
+    if (registeredEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setValues((current) => ({
+        ...current,
+        email: current.email || registeredEmail,
+      }));
+    }
     // This state is an intentional guard: native submission must stay disabled
     // until React has attached the client-side authentication handler.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsReady(true);
   }, []);
 
@@ -98,7 +108,8 @@ export function LoginForm({ registered = false }: LoginFormProps) {
         return;
       }
 
-      router.replace("/dashboard");
+      const session = await getSession();
+      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/transactions" : "/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError("Terjadi kendala saat masuk. Silakan coba lagi.");
@@ -111,56 +122,78 @@ export function LoginForm({ registered = false }: LoginFormProps) {
   }
 
   return (
-    <div className="grid gap-16">
+    <div className="grid gap-20">
       {registered ? (
         <p
           aria-live="polite"
-          className="border-l-2 border-deep-lagoon bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal"
+          className="border-l-2 border-deep-lagoon bg-warm-parchment px-12 py-10 text-body-sm font-w460 text-ink-charcoal"
           role="status"
-        >
-          Akun berhasil dibuat. Silakan masuk untuk melanjutkan.
-        </p>
+        >Akun berhasil dibuat. Silakan masuk untuk melanjutkan.</p>
       ) : null}
       {formError ? (
         <div
           aria-live="assertive"
-          className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal"
+          className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-10 text-body-sm font-w460 text-ink-charcoal"
           ref={errorSummaryRef}
           role="alert"
           tabIndex={-1}
-        >
-          {formError}
-        </div>
+        >{formError}</div>
       ) : null}
       {!isReady ? (
-        <p aria-live="polite" className="text-body-sm text-stone-gray" role="status">
+        <p aria-live="polite" className="text-body-sm text-stone-gray animate-pulse" role="status">
           Menyiapkan formulir masuk…
         </p>
       ) : null}
       <form className="grid gap-16" method="post" noValidate onSubmit={handleSubmit}>
         <Input
-          autoComplete="email"
+          autoComplete="username"
           disabled={!isReady}
+          enterKeyHint="next"
           error={fieldErrors.email}
           id="login-email"
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
+          placeholder="nama@perusahaan.com"
+          required
           type="email"
           value={values.email}
         />
         <Input
           autoComplete="current-password"
           disabled={!isReady}
+          enterKeyHint="done"
           error={fieldErrors.password}
           id="login-password"
           label="Password"
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
-          type="password"
+          placeholder="••••••••"
+          required
+          type={showPassword ? "text" : "password"}
           value={values.password}
+          suffix={
+            <button
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              className="inline-flex h-28 w-28 items-center justify-center rounded-sm text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
+              disabled={!isReady}
+              onClick={() => setShowPassword((prev) => !prev)}
+              type="button"
+            >
+              {showPassword ? (
+                <EyeOffIcon className="h-16 w-16" />
+              ) : (
+                <EyeIcon className="h-16 w-16" />
+              )}
+            </button>
+          }
         />
-        <Button disabled={!isReady} loading={isSubmitting} type="submit">
+        <Button
+          className="w-full justify-center shadow-sm mt-4"
+          disabled={!isReady}
+          loading={isSubmitting}
+          type="submit"
+        >
           Masuk
         </Button>
       </form>

@@ -20,10 +20,16 @@ describe("Trend List navigation", () => {
 
   it("exposes Saved Opportunities and marks its route active", () => {
     expect(appNavigation).toContainEqual({
-      href: "/saved-opportunities",
+      href: "/saved",
       label: "Saved Opportunities",
     });
-    expect(isNavigationActive("/saved-opportunities", "/saved-opportunities")).toBe(true);
-    expect(getNavigationLabel("/saved-opportunities")).toBe("Saved Opportunities");
+    expect(isNavigationActive("/saved", "/saved")).toBe(true);
+    expect(getNavigationLabel("/saved")).toBe("Saved Opportunities");
+  });
+
+  it("exposes the saved Roadmap route and marks detail pages active", () => {
+    expect(appNavigation).toContainEqual({ href: "/roadmaps", label: "Roadmaps" });
+    expect(isNavigationActive("/roadmaps/60000000-0000-4000-8000-000000000001", "/roadmaps")).toBe(true);
+    expect(getNavigationLabel("/roadmaps/60000000-0000-4000-8000-000000000001")).toBe("Roadmaps");
   });
 });

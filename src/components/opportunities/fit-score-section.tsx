@@ -135,7 +135,13 @@ function errorForStatus(status: number): Extract<FitScoreViewState, { status: "E
   return "TEMPORARY";
 }
 
-export function FitScoreSection({ opportunityId }: { readonly opportunityId: string }) {
+export function FitScoreSection({
+  opportunityId,
+  compact = false,
+}: {
+  readonly opportunityId: string;
+  readonly compact?: boolean;
+}) {
   const [retryKey, setRetryKey] = useState(0);
   const [state, setState] = useState<FitScoreViewState>({
     opportunityId,
@@ -207,34 +213,32 @@ export function FitScoreSection({ opportunityId }: { readonly opportunityId: str
         <div className="grid min-w-0 gap-12">
           <div className="grid gap-4">
             <p className="text-label-bold font-w540 text-ink-charcoal">{visibleState.result.label}</p>
-            <p className="wrap-anywhere text-heading-lg font-w460 text-ink-charcoal" aria-label={`Fit Score ${formatScore(visibleState.result.value)}`}>
+            <p className={`${compact ? "text-heading-sm" : "text-heading-lg"} wrap-anywhere font-w460 text-ink-charcoal`} aria-label={`Fit Score ${formatScore(visibleState.result.value)}`}>
               {formatScore(visibleState.result.value)}
               <span className="ml-4 text-body-sm font-w400 text-stone-gray">/ 100</span>
             </p>
-            <p className="wrap-anywhere text-caption text-stone-gray">
-              Model: {visibleState.result.modelType === "ENTREPRENEUR_FIT" ? "Entrepreneur Fit" : "Business Fit"}
-              <span className="mx-4" aria-hidden="true">·</span>
-              Versi kebijakan: {visibleState.result.policyVersion}
-            </p>
+
           </div>
 
-          <ul className="grid gap-8">
-            {visibleState.result.breakdown.map((item) => (
-              <li className="grid min-w-0 gap-4 border-l border-soft-mist pl-12 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" key={item.component}>
-                <div className="grid min-w-0 gap-2">
-                  <span className="wrap-anywhere text-body-sm font-w540 text-ink-charcoal">
-                    {COMPONENT_LABELS[item.component]}
+          {!compact ? (
+            <ul className="grid gap-8">
+              {visibleState.result.breakdown.map((item) => (
+                <li className="grid min-w-0 gap-4 border-l border-soft-mist pl-12 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" key={item.component}>
+                  <div className="grid min-w-0 gap-2">
+                    <span className="wrap-anywhere text-body-sm font-w540 text-ink-charcoal">
+                      {COMPONENT_LABELS[item.component]}
+                    </span>
+                    <span className="wrap-anywhere text-caption leading-body-sm text-stone-gray">
+                      {item.interpretation}
+                    </span>
+                  </div>
+                  <span className="text-body-sm text-stone-gray">
+                    {formatScore(item.value)} <span className="text-caption">(kontribusi {formatScore(item.weightedContribution)})</span>
                   </span>
-                  <span className="wrap-anywhere text-caption leading-body-sm text-stone-gray">
-                    {item.interpretation}
-                  </span>
-                </div>
-                <span className="text-body-sm text-stone-gray">
-                  {formatScore(item.value)} <span className="text-caption">(kontribusi {formatScore(item.weightedContribution)})</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           <p className="max-w-[76ch] text-caption leading-body-sm text-stone-gray">
             {visibleState.result.disclaimer}

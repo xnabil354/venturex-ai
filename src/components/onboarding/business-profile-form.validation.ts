@@ -22,12 +22,18 @@ export type BusinessFormState = {
   readonly businessDescription: string;
   readonly businessName: string;
   readonly city: string;
+  readonly cityId: string;
   readonly customerSegmentIds: readonly string[];
+  readonly district: string;
+  readonly districtId: string;
   readonly locationText: string;
   readonly notes: string;
   readonly products: readonly BusinessProductForm[];
   readonly province: string;
+  readonly provinceId: string;
   readonly salesChannelIds: readonly string[];
+  readonly subdistrict: string;
+  readonly subdistrictId: string;
 };
 
 type PayloadResult =
@@ -44,12 +50,18 @@ export function createInitialBusinessFormState(): BusinessFormState {
     businessDescription: "",
     businessName: "",
     city: "",
+    cityId: "",
     customerSegmentIds: [],
+    district: "",
+    districtId: "",
     locationText: "",
     notes: "",
     products: [createInitialBusinessProduct("product-1")],
     province: "",
+    provinceId: "",
     salesChannelIds: [],
+    subdistrict: "",
+    subdistrictId: "",
   };
 }
 
@@ -65,7 +77,10 @@ export function toBusinessFormState(profile: BusinessProfileInput): BusinessForm
     businessDescription: profile.businessDescription ?? "",
     businessName: profile.businessName,
     city: profile.location.city ?? "",
+    cityId: "",
     customerSegmentIds: profile.customerSegmentIds,
+    district: profile.location.district ?? "",
+    districtId: "",
     locationText: profile.location.text,
     notes: profile.notes ?? "",
     products: profile.products.map((product, index) => ({
@@ -75,7 +90,10 @@ export function toBusinessFormState(profile: BusinessProfileInput): BusinessForm
       price: product.price === null ? "" : String(product.price),
     })),
     province: profile.location.province ?? "",
+    provinceId: "",
     salesChannelIds: profile.salesChannelIds,
+    subdistrict: profile.location.subdistrict ?? "",
+    subdistrictId: "",
   };
 }
 
@@ -150,6 +168,12 @@ export function validateStep(
       if (state.province.trim().length > 120) {
         errors.province = "Provinsi maksimal 120 karakter.";
       }
+      if (state.district.trim().length > 120) {
+        errors.district = "Kecamatan maksimal 120 karakter.";
+      }
+      if (state.subdistrict.trim().length > 120) {
+        errors.subdistrict = "Kelurahan maksimal 120 karakter.";
+      }
       if (state.businessDescription.trim().length > 1000) {
         errors.businessDescription = "Deskripsi bisnis maksimal 1000 karakter.";
       }
@@ -223,7 +247,9 @@ export function toBusinessProfilePayload(state: BusinessFormState): PayloadResul
     customerSegmentIds: state.customerSegmentIds,
     location: {
       city: state.city,
+      district: state.district,
       province: state.province,
+      subdistrict: state.subdistrict,
       text: state.locationText,
     },
     notes: state.notes,

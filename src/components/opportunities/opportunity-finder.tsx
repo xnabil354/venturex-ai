@@ -1,7 +1,17 @@
+"use client";
+
 import Link from "next/link";
 
-import { Card, EmptyState, PageContainer } from "@/components/ui";
+import { Button, Card, EmptyState, PageContainer } from "@/components/ui";
 import type { OpportunityFinderResult } from "@/opportunity/service";
+import type { OpportunityCategoryOption } from "@/opportunity/domain";
+import type { OpportunityScoreDisplayState } from "@/scoring/opportunity-score-service";
+import type { RiskAssessmentDisplayState } from "@/scoring/risk-assessment-service";
+import { OpportunityScoreDisplay } from "./opportunity-score-display";
+import { RiskIndicatorDisplay } from "./risk-indicator-display";
+import { OpportunityComparisonPanel, useOpportunityCompare } from "./opportunity-comparison";
+import { FitScoreSection } from "./fit-score-section";
+import { OpportunityHypothesisNotice } from "./opportunity-hypothesis-notice";
 
 function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" }) {
   const copy = status === "ERROR"
@@ -17,7 +27,58 @@ function StatusMessage({ status }: { readonly status: "ERROR" | "UNAVAILABLE" })
   return <EmptyState description={copy.description} title={copy.title} />;
 }
 
-export function OpportunityFinder({ result }: { readonly result: OpportunityFinderResult }) {
+function CategoryFilter({
+  categories,
+  selectedCategory,
+}: {
+  readonly categories: readonly OpportunityCategoryOption[];
+  readonly selectedCategory: OpportunityCategoryOption | null;
+}) {
+  return (
+    <form action="/opportunities" className="grid max-w-[520px] gap-8 border-b border-soft-mist pb-20" method="get">
+      <label className="text-body-sm font-w540 text-ink-charcoal" htmlFor="opportunity-category">
+        Filter kategori F&amp;B
+      </label>
+      <div className="flex flex-col gap-8 sm:flex-row sm:items-end">
+        <select
+          className="min-h-button min-w-0 flex-1 rounded-small-buttons border border-soft-mist bg-paper-white px-12 text-body-sm text-ink-charcoal"
+          defaultValue={selectedCategory?.code ?? ""}
+          id="opportunity-category"
+          name="category"
+        >
+          <option value="">Semua kategori</option>
+          {categories.map((category) => (
+            <option key={category.code} value={category.code}>{category.name}</option>
+          ))}
+        </select>
+        <Button type="submit" variant="secondary">Terapkan filter</Button>
+      </div>
+    </form>
+  );
+}
+
+function pageHref(page: number, categoryCode: string | null): string {
+  const query = new URLSearchParams({ page: String(page) });
+  if (categoryCode) query.set("category", categoryCode);
+  return `/opportunities?${query.toString()}`;
+}
+
+export function OpportunityFinder({
+  result,
+  scoreByOpportunityId,
+  riskByOpportunityId,
+}: {
+  readonly result: OpportunityFinderResult;
+  readonly scoreByOpportunityId: Readonly<Record<string, OpportunityScoreDisplayState>>;
+  readonly riskByOpportunityId: Readonly<Record<string, RiskAssessmentDisplayState>>;
+}) {
+  const compareState = useOpportunityCompare();
+  const catalog = result.status === "AVAILABLE" ||
+    result.status === "EMPTY" ||
+    result.status === "INVALID_CATEGORY"
+    ? result
+    : null;
+
   return (
     <PageContainer>
       <div className="grid gap-32 py-32 sm:py-48 lg:py-64">
@@ -31,8 +92,13 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
           </p>
         </header>
 
+        {catalog ? (
+          <CategoryFilter categories={catalog.categories} selectedCategory={catalog.selectedCategory} />
+        ) : null}
+
         {result.status === "AVAILABLE" ? (
           <>
+            <OpportunityHypothesisNotice />
             <ul aria-label="Katalog peluang F&B" className="grid gap-16">
               {result.items.map((item) => (
                 <li key={item.id}>
@@ -59,19 +125,31 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
                         </p>
                       </header>
 
+                      <label className="flex min-h-button w-fit items-center gap-8 text-body-sm text-ink-charcoal">
+                        <input
+                          aria-label={`Pilih ${item.name} untuk perbandingan`}
+                          checked={compareState.selected.some(({ id }) => id === item.id)}
+                          className="size-16 accent-royal-violet"
+                          disabled={compareState.loading}
+                          onChange={() => compareState.toggle({ id: item.id, name: item.name })}
+                          type="checkbox"
+                        />
+                        Pilih untuk perbandingan
+                      </label>
+
                       <section aria-label={`Indikator untuk ${item.name}`} className="grid gap-8 border-t border-soft-mist pt-12 sm:grid-cols-3">
-                        <p className="grid gap-4 text-body-sm text-stone-gray">
+                        <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Opportunity Score</span>
-                          Data belum cukup
-                        </p>
-                        <p className="grid gap-4 text-body-sm text-stone-gray">
+                          <OpportunityScoreDisplay compact result={scoreByOpportunityId[item.id] ?? { status: "ERROR" }} />
+                        </div>
+                        <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Fit Score</span>
-                          Data belum cukup
-                        </p>
-                        <p className="grid gap-4 text-body-sm text-stone-gray">
+                          <FitScoreSection compact opportunityId={item.id} />
+                        </div>
+                        <div className="grid min-w-0 gap-4 text-body-sm text-stone-gray">
                           <span className="font-w540 text-ink-charcoal">Risiko</span>
-                          Data belum cukup
-                        </p>
+                          <RiskIndicatorDisplay compact result={riskByOpportunityId[item.id] ?? { status: "ERROR" }} />
+                        </div>
                       </section>
 
                       <p className="border-t border-soft-mist pt-12 text-body-sm text-stone-gray">
@@ -89,11 +167,13 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
               ))}
             </ul>
 
+            <OpportunityComparisonPanel compareState={compareState} />
+
             <nav aria-label="Navigasi halaman katalog peluang" className="flex flex-wrap items-center justify-between gap-12 border-t border-soft-mist pt-16">
               {result.page > 1 ? (
                 <Link
                   className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                  href={`/opportunities?page=${result.page - 1}`}
+                  href={pageHref(result.page - 1, result.selectedCategory?.code ?? null)}
                 >
                   Sebelumnya
                 </Link>
@@ -104,7 +184,7 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
               {result.page < result.totalPages ? (
                 <Link
                   className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                  href={`/opportunities?page=${result.page + 1}`}
+                  href={pageHref(result.page + 1, result.selectedCategory?.code ?? null)}
                 >
                   Berikutnya
                 </Link>
@@ -116,13 +196,28 @@ export function OpportunityFinder({ result }: { readonly result: OpportunityFind
             action={(
               <Link
                 className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
-                href="/trends"
+                href={result.selectedCategory ? "/opportunities" : "/trends"}
               >
-                Lihat Trend Radar
+                {result.selectedCategory ? "Hapus filter kategori" : "Lihat Trend Radar"}
               </Link>
             )}
-            description="Belum ada peluang tersimpan dengan tren terpublikasi untuk jenis akun ini."
-            title="Belum ada peluang"
+            description={result.selectedCategory
+              ? `Belum ada peluang yang tersedia pada kategori ${result.selectedCategory.name} untuk jenis akun ini.`
+              : "Belum ada peluang tersimpan dengan tren terpublikasi untuk jenis akun ini."}
+            title={result.selectedCategory ? "Belum ada peluang pada kategori ini" : "Belum ada peluang"}
+          />
+        ) : result.status === "INVALID_CATEGORY" ? (
+          <EmptyState
+            action={(
+              <Link
+                className="inline-flex min-h-button items-center text-body-sm font-w540 text-royal-violet hover:underline"
+                href="/opportunities"
+              >
+                Hapus filter
+              </Link>
+            )}
+            description="Pilih kategori F&B aktif dari daftar yang tersedia."
+            title="Kategori tidak tersedia"
           />
         ) : (
           <StatusMessage status={result.status} />

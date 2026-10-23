@@ -1,5 +1,5 @@
-import { FoundationSpecimen } from "@/components/foundation-specimen";
+import { LandingPage } from "@/components/landing";
 
 export default function HomePage() {
-  return <FoundationSpecimen />;
+  return <LandingPage />;
 }

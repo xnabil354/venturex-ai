@@ -13,6 +13,7 @@ import {
 import type { OpportunityRecord } from "./domain";
 import {
   SavedOpportunityAccessContextError,
+  SavedOpportunityInvalidQueryError,
   SavedOpportunityService,
   SavedOpportunityUnauthenticatedError,
 } from "./saved-service";
@@ -40,8 +41,11 @@ const visibleRecord: OpportunityRecord = {
 
 class MemorySavedRepository implements SavedOpportunityRepositoryPort {
   readonly listVisibleForUser = vi.fn(async (_userId: SafeUser["id"], _userType: UserType) => this.records);
+  readonly countVisibleForUser = vi.fn(async (_userId: SafeUser["id"], _userType: UserType) => this.records.length);
+  readonly listVisiblePageForUser = vi.fn(async (_userId: SafeUser["id"], _userType: UserType, page: { readonly limit: number; readonly offset: number }) => this.records.slice(page.offset, page.offset + page.limit));
   readonly getVisibleSavedState = vi.fn(async () => this.saved);
   readonly saveVisibleForUser = vi.fn(async () => this.saved);
+  readonly saveVisibleForUserWithOutcome = vi.fn(async () => ({ saved: true as const, created: true }));
   readonly removeVisibleForUser = vi.fn(async () => this.removed);
 
   constructor(
@@ -117,6 +121,46 @@ describe("SavedOpportunityService", () => {
       }],
     });
     expect(repository.listVisibleForUser).toHaveBeenCalledWith(user.id, user.userType, 3);
+  });
+
+  it("returns paginated eligible records and clamps pages beyond the end", async () => {
+    const { service, repository } = createService();
+
+    await expect(service.listPageForCurrentUser({ page: 4, pageSize: 1, sort: "createdAt", order: "asc" }))
+      .resolves.toMatchObject({
+        status: "AVAILABLE",
+        page: 1,
+        pageSize: 1,
+        totalCount: 1,
+        totalPages: 1,
+        sort: "createdAt",
+        order: "asc",
+        items: [{ id: opportunityId }],
+      });
+    expect(repository.countVisibleForUser).toHaveBeenCalledWith(user.id, user.userType);
+    expect(repository.listVisiblePageForUser).toHaveBeenCalledWith(user.id, user.userType, {
+      limit: 1,
+      offset: 0,
+      sort: "createdAt",
+      order: "ASC",
+    });
+  });
+
+  it("rejects invalid pagination instead of silently changing sort options", async () => {
+    const { service, repository } = createService();
+
+    await expect(service.listPageForCurrentUser({ page: 0, pageSize: 100, sort: "name", order: "sideways" }))
+      .rejects.toBeInstanceOf(SavedOpportunityInvalidQueryError);
+    expect(repository.countVisibleForUser).not.toHaveBeenCalled();
+  });
+
+  it("uses the current authenticated user when returning save creation outcome", async () => {
+    const { service, repository } = createService();
+
+    await expect(service.saveForCurrentUser(opportunityId)).resolves.toEqual({ saved: true, created: true });
+    expect(repository.saveVisibleForUserWithOutcome).toHaveBeenCalledWith(user.id, user.userType, opportunityId);
+    await expect(service.saveForCurrentUser("invalid")).resolves.toBeNull();
+    expect(repository.saveVisibleForUserWithOutcome).toHaveBeenCalledTimes(1);
   });
 
   it("returns null for invalid IDs and hidden or ineligible Opportunities", async () => {

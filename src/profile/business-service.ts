@@ -96,6 +96,8 @@ function hasSemanticChange(
     existing.locationText !== input.location.text ||
     existing.city !== input.location.city ||
     existing.province !== input.location.province ||
+    existing.district !== (input.location.district?.trim() || null) ||
+    existing.subdistrict !== (input.location.subdistrict?.trim() || null) ||
     existing.averagePriceMin !== input.averagePrice.min ||
     existing.averagePriceMax !== input.averagePrice.max ||
     existing.businessDescription !== input.businessDescription ||
@@ -112,6 +114,8 @@ function toProfileValues(input: BusinessProfileInput, profileVersion: number) {
     locationText: input.location.text,
     city: input.location.city,
     province: input.location.province,
+    district: input.location.district?.trim() || null,
+    subdistrict: input.location.subdistrict?.trim() || null,
     countryCode: "ID" as const,
     averagePriceMin: input.averagePrice.min,
     averagePriceMax: input.averagePrice.max,
@@ -184,6 +188,8 @@ export class BusinessProfileService {
           text: profile.locationText,
           city: profile.city,
           province: profile.province,
+          district: profile.district,
+          subdistrict: profile.subdistrict,
         },
         averagePrice: {
           min: profile.averagePriceMin,
