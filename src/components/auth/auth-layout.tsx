@@ -6,14 +6,14 @@ import { ArrowLeftIcon } from "./auth-icons";
 
 export function AuthLayout({ children }: Readonly<{ children: ReactNode }>) {
     return (
-        <main className="min-h-screen bg-warm-parchment text-ink-charcoal selection:bg-lilac-mist">
-            <div className="grid min-h-screen lg:grid-cols-12">
+        <main className="min-h-[100dvh] bg-warm-parchment text-ink-charcoal selection:bg-lilac-mist">
+            <div className="grid min-h-[100dvh] lg:grid-cols-12">
                 {/* Left Form Column */}
-                <section className="flex flex-col justify-between px-16 py-24 sm:px-32 sm:py-36 lg:col-span-7 xl:col-span-6 lg:px-48 lg:py-40">
+                <section className="flex min-h-[100dvh] flex-col px-16 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] sm:px-32 sm:pb-36 sm:pt-36 lg:col-span-7 lg:justify-between lg:px-48 lg:py-40 xl:col-span-6">
                     {/* Header Bar */}
                     <header className="flex items-center justify-between">
                         <Link
-                            className="inline-flex items-center gap-6 text-body-sm font-w460 text-stone-gray transition-colors hover:text-midnight-wine"
+                            className="inline-flex min-h-[44px] items-center gap-6 rounded-small-buttons text-body-sm font-w460 text-stone-gray transition-colors hover:text-midnight-wine focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
                             href="/"
                         >
                             <ArrowLeftIcon className="h-16 w-16" />
@@ -22,10 +22,12 @@ export function AuthLayout({ children }: Readonly<{ children: ReactNode }>) {
                     </header>
 
                     {/* Form Container */}
-                    <div className="mx-auto w-full max-w-[460px] py-28 sm:py-40">{children}</div>
+                    <div className="mx-auto flex w-full max-w-[460px] flex-1 items-center py-32 sm:py-40 lg:py-28">
+                        <div className="w-full">{children}</div>
+                    </div>
 
                     {/* Centered Editorial Footnote */}
-                    <footer className="border-t border-soft-mist/60 pt-16 text-center text-caption text-stone-gray">
+                    <footer className="mt-auto border-t border-soft-mist/60 pt-16 text-center text-caption text-stone-gray lg:mt-0">
                         <p>VENTUREX AI &copy; 2026 &middot; Platform Intelijen Keputusan Bisnis Kuliner Presisi</p>
                     </footer>
                 </section>

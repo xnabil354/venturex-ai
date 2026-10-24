@@ -179,7 +179,7 @@ export function RegisterForm() {
       {formError ? (
         <div
           aria-live="assertive"
-          className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-10 text-body-sm font-w460 text-ink-charcoal"
+          className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-10 text-body-sm font-w540 text-red-800"
           ref={errorSummaryRef}
           role="alert"
           tabIndex={-1}
@@ -194,7 +194,7 @@ export function RegisterForm() {
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
-          placeholder="nama@perusahaan.com"
+          placeholder="Masukan email"
           required
           type="email"
           value={values.email}
@@ -203,19 +203,19 @@ export function RegisterForm() {
           autoComplete="new-password"
           enterKeyHint="next"
           error={fieldErrors.password}
-          hint="Minimal 8 karakter."
+
           id="register-password"
           label="Password"
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
-          placeholder="••••••••"
+          placeholder="Masukan password"
           required
           type={showPassword ? "text" : "password"}
           value={values.password}
           suffix={
             <button
               aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-              className="inline-flex h-28 w-28 items-center justify-center rounded-sm text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
+              className="inline-flex size-44 items-center justify-center rounded-small-buttons text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
               onClick={() => setShowPassword((prev) => !prev)}
               type="button"
             >
@@ -237,14 +237,14 @@ export function RegisterForm() {
           onChange={(event) =>
             updateField("passwordConfirmation", event.target.value)
           }
-          placeholder="••••••••"
+          placeholder=""
           required
           type={showConfirmation ? "text" : "password"}
           value={values.passwordConfirmation}
           suffix={
             <button
               aria-label={showConfirmation ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
-              className="inline-flex h-28 w-28 items-center justify-center rounded-sm text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
+              className="inline-flex size-44 items-center justify-center rounded-small-buttons text-stone-gray transition-colors hover:text-ink-charcoal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-royal-violet"
               onClick={() => setShowConfirmation((prev) => !prev)}
               type="button"
             >
