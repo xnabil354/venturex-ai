@@ -296,9 +296,9 @@ export function BusinessProfileForm({
             {formError}
           </div>
         ) : null}
-        <div className={`flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center ${step > 1 ? "sm:justify-between" : "sm:justify-end"}`}>
-          {step > 1 ? <Button className="w-full sm:w-auto" disabled={isSubmitting} onClick={handleBack} type="button" variant="ghost">Sebelumnya</Button> : null}
-          <Button className="w-full sm:w-auto" loading={isSubmitting} type="submit">
+        <div className={`flex flex-row items-center gap-12 border-t border-soft-mist pt-24 ${step > 1 ? "justify-between" : "justify-end"}`}>
+          {step > 1 ? <Button className="w-auto" disabled={isSubmitting} onClick={handleBack} type="button" variant="ghost">Sebelumnya</Button> : null}
+          <Button className="w-auto" loading={isSubmitting} type="submit">
             {step < 3 ? "Selanjutnya" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
           </Button>
         </div>

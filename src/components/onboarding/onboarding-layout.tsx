@@ -21,12 +21,12 @@ export function OnboardingLayout({
   return (
     <main className="min-h-dvh bg-warm-parchment text-ink-charcoal selection:bg-lilac-mist">
       <OnboardingProgressProvider>
-        <PageContainer className="pb-[max(32px,env(safe-area-inset-bottom))] pt-[max(20px,env(safe-area-inset-top))] sm:pb-48 sm:pt-32 lg:max-w-[1360px] lg:pb-64 lg:pt-48">
+        <PageContainer className="pb-40 pt-32 sm:pb-64 sm:pt-48 lg:max-w-[1360px]">
           <section
             aria-label="Persiapan profil usaha"
-            className="grid gap-20 lg:grid-cols-[minmax(17rem,26rem)_minmax(0,1fr)] lg:items-stretch lg:gap-32"
+            className="relative grid lg:grid-cols-[minmax(17rem,26rem)_minmax(0,1fr)] lg:items-stretch lg:gap-32"
           >
-            <aside className="hidden lg:sticky lg:top-24 lg:col-start-1 lg:row-start-1 lg:block lg:self-start">
+            <div className="lg:sticky lg:top-24 lg:col-start-1 lg:row-start-1 lg:self-start">
               <OnboardingProgressSlot
                 className="mb-24 w-full max-w-[30rem] md:mx-auto lg:mx-0"
                 tone="paper"
@@ -59,13 +59,12 @@ export function OnboardingLayout({
                   </p>
                 </div>
               </div>
-            </aside>
+            </div>
 
-            <div className="relative z-10 w-full rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-32 lg:col-start-2 lg:row-start-1 lg:self-start lg:p-36 xl:p-40">
-              <OnboardingProgressSlot className="mb-24 lg:hidden" tone="paper" />
+            <div className="relative z-10 mx-12 -mt-40 mb-16 rounded-cards border border-soft-mist bg-paper-white p-20 sm:mx-24 sm:p-32 lg:col-start-2 lg:row-start-1 lg:mx-0 lg:my-0 lg:w-full lg:max-w-none lg:justify-self-stretch lg:self-start lg:p-36 xl:p-40">
               {showBackToSelection ? (
                 <Link
-                  className="mb-24 inline-flex min-h-[44px] items-center gap-8 rounded-small-buttons text-body-sm font-w540 text-stone-gray transition-colors hover:text-midnight-wine focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet"
+                  className="mb-24 inline-flex min-h-button-sm items-center gap-8 text-body-sm font-w540 text-stone-gray transition-colors hover:text-midnight-wine"
                   href="/onboarding?reselect=1"
                 >
                   <svg

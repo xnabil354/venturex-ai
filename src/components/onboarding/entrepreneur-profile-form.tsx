@@ -404,13 +404,13 @@ export function EntrepreneurProfileForm({
 
         <div
           className={cx(
-            "flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center",
-            step > 1 ? "sm:justify-between" : "sm:justify-end",
+            "flex flex-row items-center gap-12 border-t border-soft-mist pt-24",
+            step > 1 ? "justify-between" : "justify-end",
           )}
         >
           {step > 1 ? (
             <Button
-              className="w-full sm:w-auto"
+              className="w-auto"
               disabled={isSubmitting}
               onClick={handleBack}
               type="button"
@@ -419,7 +419,7 @@ export function EntrepreneurProfileForm({
               Sebelumnya
             </Button>
           ) : null}
-          <Button className="w-full sm:w-auto" loading={isSubmitting} type="submit">
+          <Button className="w-auto" loading={isSubmitting} type="submit">
             {step < 3 ? "Selanjutnya" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}
           </Button>
         </div>
