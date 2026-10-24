@@ -5,6 +5,7 @@ import { syntheticDemoProviderOutputSchema, type SyntheticDemoExecution, type Sy
 import type { SyntheticDemoFixture } from "./fixtures";
 import type { SyntheticDemoProvider } from "./provider";
 import { generateNineRouterJson, NineRouterError, type NineRouterConfig } from "../ninerouter";
+import { consumeProcessRequestBudget } from "../../lib/process-request-budget";
 
 export const MAX_LIVE_NINEROUTER_REQUESTS_PER_PROCESS = 1;
 export const syntheticNineRouterLimits = Object.freeze({
@@ -20,11 +21,10 @@ export interface NineRouterRequestBudget {
 
 export class ProcessNineRouterRequestBudget implements NineRouterRequestBudget {
   consume(): boolean {
-    const processState = globalThis as typeof globalThis & { __venturexSyntheticNineRouterRequestCount?: number };
-    const current = processState.__venturexSyntheticNineRouterRequestCount ?? 0;
-    if (current >= MAX_LIVE_NINEROUTER_REQUESTS_PER_PROCESS) return false;
-    processState.__venturexSyntheticNineRouterRequestCount = current + 1;
-    return true;
+    return consumeProcessRequestBudget(
+      "__venturexSyntheticNineRouterRequestCount",
+      MAX_LIVE_NINEROUTER_REQUESTS_PER_PROCESS,
+    );
   }
 }
 

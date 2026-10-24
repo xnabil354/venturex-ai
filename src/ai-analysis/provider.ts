@@ -17,7 +17,6 @@ import {
   type NineRouterConfig,
 } from "./ninerouter";
 
-export const NINEROUTER_SOURCE_PROCESSING_FLAG = "NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED";
 export type AIAnalysisProviderConfig = NineRouterConfig;
 
 export function readAIAnalysisProviderConfig(

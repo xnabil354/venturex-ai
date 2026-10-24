@@ -6,6 +6,7 @@ import {
   type TimeCommitment,
 } from "../../profile/validation";
 import { OTHER_FNB_CATEGORY_ID } from "../../reference/constants";
+import { fieldErrorsFromIssues } from "../../lib/field-errors";
 
 export type EntrepreneurFormStep = 1 | 2 | 3;
 
@@ -96,17 +97,6 @@ function parseAmount(value: string): number | null {
 
   const amount = Number(value);
   return Number.isSafeInteger(amount) ? amount : null;
-}
-
-function getPayloadErrors(
-  issues: readonly { path: readonly PropertyKey[]; message: string }[],
-): Readonly<Record<string, string>> {
-  const errors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = issue.path.map(String).join(".") || "form";
-    errors[field] ??= issue.message;
-  }
-  return errors;
 }
 
 export function validateStep(
@@ -225,7 +215,7 @@ export function toEntrepreneurProfilePayload(
   });
 
   if (!result.success) {
-    return { success: false, errors: getPayloadErrors(result.error.issues) };
+    return { success: false, errors: fieldErrorsFromIssues(result.error.issues) };
   }
 
   return {

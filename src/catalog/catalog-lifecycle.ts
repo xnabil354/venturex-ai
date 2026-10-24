@@ -1,105 +1,23 @@
 import { createHash, randomUUID } from "node:crypto";
-import { open, readFile, mkdir, unlink } from "node:fs/promises";
+import { mkdir, open, unlink } from "node:fs/promises";
 import path from "node:path";
-import { z } from "zod";
-
+import { canonicalJson } from "../lib/canonical-json";
 import type { TrendLifecycleState } from "../trend/domain";
 import type { CuratedCatalogManifest } from "./catalog-manifest";
+import { JsonlCatalogAuditLedger } from "./catalog-audit-ledger";
+import {
+  CatalogLifecycleError,
+  type CatalogDecision,
+  type CatalogLifecycleAuditEvent,
+  type CatalogLifecycleSnapshot,
+} from "./catalog-lifecycle-contract";
+
+export { defaultCatalogAuditPath, JsonlCatalogAuditLedger, type CatalogAuditPathEnvironment } from "./catalog-audit-ledger";
+export * from "./catalog-lifecycle-contract";
 
 export const APPROVED_CATALOG_MANIFEST_ID = "venturex-curated-fnb-google-yis-2025-v1";
 export const APPROVED_CATALOG_MANIFEST_SHA256 = "EBFADE3A6371DD95D5A78C10327EE8C9EFE1A86093650924EE9ADE135E077A85";
 
-const sha256Schema = z.string().regex(/^[A-F0-9]{64}$/);
-const actorSchema = z.object({
-  osAccount: z.string().trim().min(1).max(180),
-  role: z.enum(["FACTUAL_REVIEWER", "PRODUCT_DATA_OWNER", "OPERATOR"]),
-  identityAssurance: z.literal("LOCAL_OS_ACCOUNT_WITH_SELF_ATTESTED_ROLE"),
-}).strict();
-const transitionSchema = z.object({
-  id: z.string().uuid(),
-  from: z.enum(["DRAFT", "VALIDATED", "PUBLISHED", "ARCHIVED"]),
-  to: z.enum(["DRAFT", "VALIDATED", "PUBLISHED", "ARCHIVED"]),
-}).strict();
-
-export const catalogLifecycleAuditEventSchema = z.object({
-  schemaVersion: z.literal(1),
-  sequence: z.number().int().positive(),
-  id: z.string().uuid(),
-  recordedAt: z.string().datetime(),
-  action: z.enum([
-    "FACTUAL_REVIEW",
-    "PUBLICATION_APPROVAL",
-    "TRANSITION_STARTED",
-    "TRANSITION_SUCCEEDED",
-    "TRANSITION_FAILED",
-  ]),
-  manifestId: z.string().min(1).max(100),
-  manifestSha256: sha256Schema,
-  trendId: z.string().uuid(),
-  contentSha256: sha256Schema,
-  actor: actorSchema,
-  decision: z.enum(["APPROVED", "REJECTED", "NOT_APPLICABLE"]),
-  rationale: z.string().trim().min(10).max(2000),
-  evidenceLimitations: z.array(z.string().trim().min(1).max(2000)).max(12),
-  transition: transitionSchema.nullable(),
-  previousHash: sha256Schema.nullable(),
-  hash: sha256Schema,
-}).strict();
-
-export type CatalogLifecycleAuditEvent = z.infer<typeof catalogLifecycleAuditEventSchema>;
-export type CatalogDecision = "APPROVED" | "REJECTED";
-
-export type CatalogLifecycleSnapshot = {
-  readonly trend: {
-    readonly id: string;
-    readonly title: string;
-    readonly categoryCode: string;
-    readonly subjectAreaCode: string | null;
-    readonly signalSummary: string;
-    readonly signalDescription: string;
-    readonly direction: string | null;
-    readonly periodStart: string | null;
-    readonly periodEnd: string | null;
-    readonly businessRelevanceExplanation: string | null;
-    readonly affectedUserTypes: readonly string[];
-    readonly lifecycleState: TrendLifecycleState;
-    readonly evidence: readonly {
-      readonly id: string;
-      readonly sourceName: string;
-      readonly sourceReference: string;
-      readonly supportingDetail: string;
-      readonly sourceDate: string | null;
-      readonly limitations: string | null;
-    }[];
-  };
-  readonly opportunities: readonly {
-    readonly id: string;
-    readonly relatedTrendId: string;
-    readonly fnbCategoryCode: string | null;
-    readonly name: string;
-    readonly description: string;
-    readonly opportunityType: string;
-    readonly targetConsumerSummary: string | null;
-    readonly competitionLevel: string | null;
-    readonly competitionSummary: string | null;
-    readonly executionFeasibility: string | number | null;
-    readonly marketSustainability: string | number | null;
-    readonly additionalAttributes: Record<string, unknown>;
-  }[];
-};
-
-export class CatalogLifecycleError extends Error {
-  override readonly name = "CatalogLifecycleError";
-}
-
-function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value !== null && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex").toUpperCase();
@@ -195,129 +113,6 @@ export function assertManifestContentMatches(
 
 export function fingerprintCatalogContent(snapshot: CatalogLifecycleSnapshot): string {
   return sha256(canonicalJson(normalizeSnapshot(snapshot)));
-}
-
-function auditHash(eventWithoutHash: Omit<CatalogLifecycleAuditEvent, "hash">): string {
-  return sha256(canonicalJson(eventWithoutHash));
-}
-
-interface CatalogAuditPathEnvironment {
-  [key: string]: string | undefined;
-  USERPROFILE?: string;
-  VENTUREX_CATALOG_AUDIT_PATH?: string;
-  LOCALAPPDATA?: string;
-}
-
-function ledgerPathFromEnvironment(env: CatalogAuditPathEnvironment = process.env): string {
-  const userProfile = env.USERPROFILE?.trim();
-  if (!userProfile || !path.isAbsolute(userProfile)) {
-    throw new CatalogLifecycleError("An absolute USERPROFILE is required for the private local catalog audit ledger.");
-  }
-
-  const expectedPath = path.resolve(userProfile, "VENTUREX-private-audit", "catalog-lifecycle-audit.jsonl");
-  const configuredPath = env.VENTUREX_CATALOG_AUDIT_PATH?.trim();
-  if (configuredPath) {
-    if (!path.isAbsolute(configuredPath)) {
-      throw new CatalogLifecycleError("VENTUREX_CATALOG_AUDIT_PATH must be an absolute path to the private catalog audit ledger.");
-    }
-    const normalizeForComparison = (value: string) => {
-      const resolved = path.resolve(value);
-      return process.platform === "win32" ? resolved.toLocaleLowerCase("en-US") : resolved;
-    };
-    if (normalizeForComparison(configuredPath) !== normalizeForComparison(expectedPath)) {
-      throw new CatalogLifecycleError("VENTUREX_CATALOG_AUDIT_PATH must match the private per-user catalog audit location.");
-    }
-  }
-
-  return expectedPath;
-}
-
-export class JsonlCatalogAuditLedger {
-  constructor(
-    readonly filePath: string = ledgerPathFromEnvironment(),
-    private readonly clock: () => Date = () => new Date(),
-    private readonly newId: () => string = randomUUID,
-  ) {}
-
-  async readVerified(): Promise<readonly CatalogLifecycleAuditEvent[]> {
-    let content: string;
-    try {
-      content = await readFile(this.filePath, "utf8");
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-      throw error;
-    }
-    if (content.length > 8_000_000) throw new CatalogLifecycleError("Audit ledger exceeds the supported size; manual review is required.");
-    if (content !== "" && !content.endsWith("\n")) throw new CatalogLifecycleError("Audit ledger has an incomplete final record.");
-    const lines = content.split("\n").filter((line) => line.length > 0);
-    const events: CatalogLifecycleAuditEvent[] = [];
-    let previousHash: string | null = null;
-    for (let index = 0; index < lines.length; index += 1) {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(lines[index]!);
-      } catch {
-        throw new CatalogLifecycleError(`Audit ledger record ${index + 1} is not valid JSON.`);
-      }
-      const result = catalogLifecycleAuditEventSchema.safeParse(parsed);
-      if (!result.success) throw new CatalogLifecycleError(`Audit ledger record ${index + 1} does not match the supported schema.`);
-      const event = result.data;
-      const { hash, ...withoutHash } = event;
-      if (
-        event.sequence !== index + 1 ||
-        event.previousHash !== previousHash ||
-        auditHash(withoutHash) !== hash
-      ) {
-        throw new CatalogLifecycleError(`Audit ledger hash chain failed at record ${index + 1}.`);
-      }
-      events.push(event);
-      previousHash = hash;
-    }
-    return events;
-  }
-
-  async append(input: Omit<CatalogLifecycleAuditEvent, "schemaVersion" | "sequence" | "id" | "recordedAt" | "previousHash" | "hash">): Promise<CatalogLifecycleAuditEvent> {
-    const directory = path.dirname(this.filePath);
-    await mkdir(directory, { recursive: true, mode: 0o700 });
-    const lockPath = `${this.filePath}.lock`;
-    let lock;
-    try {
-      lock = await open(lockPath, "wx", 0o600);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
-        throw new CatalogLifecycleError("Audit ledger is locked or has a stale lock; inspect before retrying.");
-      }
-      throw error;
-    }
-
-    try {
-      await lock.writeFile(`${this.newId()}\n`, "utf8");
-      const existing = await this.readVerified();
-      const prior = existing.at(-1)?.hash ?? null;
-      const withoutHash = {
-        schemaVersion: 1 as const,
-        sequence: existing.length + 1,
-        id: this.newId(),
-        recordedAt: this.clock().toISOString(),
-        ...input,
-        previousHash: prior,
-      };
-      const event = catalogLifecycleAuditEventSchema.parse({ ...withoutHash, hash: auditHash(withoutHash) });
-      const output = await open(this.filePath, "a", 0o600);
-      try {
-        await output.writeFile(`${JSON.stringify(event)}\n`, "utf8");
-        await output.sync();
-      } finally {
-        await output.close();
-      }
-      return event;
-    } finally {
-      await lock.close();
-      await unlink(lockPath).catch((error: NodeJS.ErrnoException) => {
-        if (error.code !== "ENOENT") throw error;
-      });
-    }
-  }
 }
 
 export type CatalogLifecyclePort = {
@@ -549,8 +344,4 @@ export class CatalogLifecycleService {
       rationale: `Trend lifecycle changed from ${from} to ${to} through the guarded local lifecycle command.`,
     });
   }
-}
-
-export function defaultCatalogAuditPath(env: CatalogAuditPathEnvironment = process.env): string {
-  return ledgerPathFromEnvironment(env);
 }

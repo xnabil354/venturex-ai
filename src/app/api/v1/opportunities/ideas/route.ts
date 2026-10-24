@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { isSameOriginRequest } from "@/lib/http-request";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/auth/current-user";
@@ -23,21 +24,6 @@ function json(data: unknown, status: number, requestId: string, isError = false,
   });
   if (retryAfter && retryAfter > 0) headers.set("Retry-After", String(retryAfter));
   return Response.json(isError ? { error: data, requestId } : { data, ...metadata, requestId }, { status, headers });
-}
-
-function sameOriginMutation(request: Request): boolean {
-  const originValue = request.headers.get("origin");
-  const hostValue = request.headers.get("host");
-  if (!originValue || !hostValue) return false;
-  try {
-    const origin = new URL(originValue);
-    return (origin.protocol === "http:" || origin.protocol === "https:")
-      && origin.host === hostValue
-      && origin.pathname === "/"
-      && !origin.username && !origin.password && !origin.search && !origin.hash;
-  } catch {
-    return false;
-  }
 }
 
 function isLoopbackHost(host: string): boolean {
@@ -140,7 +126,7 @@ export async function GET(request: Request): Promise<Response> {
 export async function POST(request: Request): Promise<Response> {
   const requestId = randomUUID();
   if (!isAllowedRequestHost(request)) return json({ code: "FORBIDDEN", message: "Fitur ini hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
-  if (!sameOriginMutation(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
+  if (!isSameOriginRequest(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
   try {
     const user = await getCurrentUser();
     if (!user) throw new PrivateOpportunityError("UNAUTHENTICATED");
@@ -162,7 +148,7 @@ export async function POST(request: Request): Promise<Response> {
 export async function PATCH(request: Request): Promise<Response> {
   const requestId = randomUUID();
   if (!isAllowedRequestHost(request)) return json({ code: "FORBIDDEN", message: "Fitur ini hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
-  if (!sameOriginMutation(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
+  if (!isSameOriginRequest(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
   try {
     const body = await readBody(request);
     if (typeof body !== "object" || body === null || Array.isArray(body)) throw new PrivateOpportunityError("INVALID_REQUEST");
@@ -179,7 +165,7 @@ export async function PATCH(request: Request): Promise<Response> {
 export async function DELETE(request: Request): Promise<Response> {
   const requestId = randomUUID();
   if (!isAllowedRequestHost(request)) return json({ code: "FORBIDDEN", message: "Fitur ini hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
-  if (!sameOriginMutation(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
+  if (!isSameOriginRequest(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
   try {
     const body = await readBody(request);
     if (typeof body !== "object" || body === null || Array.isArray(body)) throw new PrivateOpportunityError("INVALID_REQUEST");

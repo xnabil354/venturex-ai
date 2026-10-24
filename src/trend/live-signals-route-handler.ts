@@ -5,6 +5,7 @@ import { GOOGLE_TRENDS_TIME_WINDOWS_HOURS, type GoogleTrendsTimeWindowHours } fr
 import { TrendSignalAnalysisError, type TrendSignalAnalysisService } from "../ai-analysis/trend-signal-analysis";
 import { ONBOARDING_STATUSES, isUserType, type SafeUser } from "../auth/user-types";
 import { BillingError } from "../billing/errors";
+import { isSameOriginRequest, readBoundedRequestText } from "../lib/http-request";
 
 const MAX_ANALYSIS_REQUEST_BYTES = 2_048;
 type UserResolver = () => Promise<SafeUser | null>;
@@ -27,20 +28,6 @@ function isLoopbackRequest(request: Request): boolean {
     return false;
   }
 }
-function isSameOriginPost(request: Request): boolean {
-  const originHeader = request.headers.get("origin");
-  const hostHeader = request.headers.get("host");
-  if (!originHeader || !hostHeader) return false;
-  try {
-    const origin = new URL(originHeader);
-    return (origin.protocol === "http:" || origin.protocol === "https:")
-      && origin.host === hostHeader
-      && !origin.username && !origin.password && origin.pathname === "/" && !origin.search && !origin.hash;
-  } catch {
-    return false;
-  }
-}
-
 function isLiveSignalsError(error: unknown): error is LiveSignalsError {
   return error instanceof LiveSignalsError || (typeof error === "object" && error !== null && (error as Error).name === "LiveSignalsError" && "code" in error);
 }
@@ -126,45 +113,13 @@ function messageForAnalysisError(code: TrendSignalAnalysisError["code"]): string
   }
 }
 
-async function boundedRequestText(request: Request): Promise<string | null> {
-  const length = request.headers.get("content-length");
-  if (length && (!/^\d+$/u.test(length) || Number(length) > MAX_ANALYSIS_REQUEST_BYTES)) return null;
-  if (!request.body) return null;
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > MAX_ANALYSIS_REQUEST_BYTES) {
-        await reader.cancel();
-        return null;
-      }
-      chunks.push(value);
-    }
-    const body = new Uint8Array(size);
-    let offset = 0;
-    for (const chunk of chunks) {
-      body.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return new TextDecoder("utf-8", { fatal: true }).decode(body);
-  } catch {
-    return null;
-  } finally {
-    reader.releaseLock();
-  }
-}
-
 export function createLiveTrendSignalsRefreshPOST(dependencies: {
   readonly resolveUser: UserResolver;
   readonly service: Pick<LiveTrendSignalsService, "refresh">;
 }) {
   return async function POST(request: Request): Promise<Response> {
     const requestId = `req_${randomUUID()}`;
-    if (!isSameOriginPost(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
+    if (!isSameOriginRequest(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
     if (process.env.NODE_ENV !== "test" && !isLoopbackRequest(request)) return json({ code: "LIVE_PREVIEW_DISABLED", message: "Observasi Google Trends hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
     const requestedHours = new URL(request.url).searchParams.get("hours");
     const timeWindowHours = requestedHours === null ? 24 : Number(requestedHours);
@@ -191,7 +146,7 @@ export function createLiveTrendSignalsAnalysisPOST(dependencies: {
 }) {
   return async function POST(request: Request): Promise<Response> {
     const requestId = `req_${randomUUID()}`;
-    if (!isSameOriginPost(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
+    if (!isSameOriginRequest(request)) return json({ code: "FORBIDDEN", message: "Permintaan lintas origin ditolak." }, 403, requestId, true);
     if (process.env.NODE_ENV !== "test" && !isLoopbackRequest(request)) return json({ code: "LIVE_PREVIEW_DISABLED", message: "Observasi Google Trends hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
     try {
       const user = await dependencies.resolveUser();
@@ -202,7 +157,7 @@ export function createLiveTrendSignalsAnalysisPOST(dependencies: {
       if (request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() !== "application/json") {
         return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true);
       }
-      const text = await boundedRequestText(request);
+      const text = await readBoundedRequestText(request, MAX_ANALYSIS_REQUEST_BYTES);
       if (!text) return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true);
       let body: unknown;
       try { body = JSON.parse(text) as unknown; } catch { return json({ code: "INVALID_REQUEST", message: "Permintaan analisis tidak valid." }, 400, requestId, true); }

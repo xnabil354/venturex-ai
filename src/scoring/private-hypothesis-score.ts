@@ -20,18 +20,6 @@ export const PRIVATE_OPPORTUNITY_SCORE_POLICY = {
   rounding: { mode: "HALF_UP", decimalPlaces: 2 },
 } as const satisfies OpportunityScorePolicy;
 
-export const PRIVATE_SCORE_FACTOR_LABELS = {
-  trendMomentum: "Arah pertumbuhan pencarian",
-  demandSignal: "Minat pencarian relatif",
-  competition: "Kondisi persaingan",
-  consumerRelevance: "Respons calon pembeli",
-  executionFeasibility: "Kelayakan pelaksanaan",
-  marketSustainability: "Ketahanan minat pasar",
-  budgetFit: "Modal",
-  interestFit: "Kategori minat",
-  channelFit: "Kanal penjualan",
-} as const;
-
 export type PrivateFitProfile = Readonly<{
   budget: Readonly<{ min: number; max: number }>;
   interestCategoryIds: readonly string[];

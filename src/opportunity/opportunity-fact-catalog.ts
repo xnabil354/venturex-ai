@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 import { userIdSchema, type SafeUser } from "../auth/user-types";
+import { canonicalJson } from "../lib/canonical-json";
 import type {
   BuiltOpportunityProfileContext,
   OpportunityProfileField,
@@ -255,17 +256,8 @@ export class OpportunityFactCatalogError extends Error {
   }
 }
 
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (value !== null && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
 function digest(prefix: string, value: unknown): string {
-  return `${prefix}_${createHash("sha256").update(stableJson(value)).digest("hex").slice(0, 24)}`;
+  return `${prefix}_${createHash("sha256").update(canonicalJson(value)).digest("hex").slice(0, 24)}`;
 }
 
 function ownerScope(ownerId: SafeUser["id"]): string {
@@ -500,14 +492,14 @@ export function buildOpportunityFactCatalog(input: Readonly<{
     }
   }
   const evidenceKeys = evidenceParsed.data.map((item) => [item.sourceType, item.position, item.query]);
-  if (new Set(evidenceKeys.map(stableJson)).size !== evidenceKeys.length) throw new OpportunityFactCatalogError("DUPLICATE_EVIDENCE");
+  if (new Set(evidenceKeys.map(canonicalJson)).size !== evidenceKeys.length) throw new OpportunityFactCatalogError("DUPLICATE_EVIDENCE");
 
   const personScope = ownerScope(ownerId.data);
   const catalogId = digest("catalog", [OPPORTUNITY_FACT_CATALOG_VERSION, personScope, projection.data, evidenceParsed.data]);
   const sources: OpportunityCatalogSource[] = [];
   const sourceIds = new Map<string, string>();
   const profileSourceRef = (field: ProfileSourceField, subjectId: string): string => {
-    const key = stableJson([field, subjectId]);
+    const key = canonicalJson([field, subjectId]);
     const existing = sourceIds.get(key);
     if (existing) return existing;
     const id = digest("src", [catalogId, "PROFILE", projection.data.profile.persona, field, subjectId]);

@@ -9,6 +9,7 @@ import {
 
 import { isSyntheticDemoEnabled, type SyntheticDemoEnvironment } from "./access";
 import { BRIGHTDATA_DEMO_SOURCE_CONTEXT, type BrightDataDemoSourcePreview } from "./source-preview-contract";
+import { consumeProcessRequestBudget } from "../../lib/process-request-budget";
 
 export const BRIGHTDATA_DEMO_LIVE_AUTHORIZED_FLAG = "VENTUREX_LOCAL_DEMO_BRIGHTDATA_LIVE_AUTHORIZED";
 export const BRIGHTDATA_DEMO_PRECHECK_CONFIRMED_FLAG = "VENTUREX_LOCAL_DEMO_BRIGHTDATA_PRECHECK_CONFIRMED";
@@ -20,11 +21,10 @@ export interface BrightDataDemoRequestBudget {
 
 export class ProcessBrightDataDemoRequestBudget implements BrightDataDemoRequestBudget {
   consume(): boolean {
-    const globalState = globalThis as typeof globalThis & { __venturexLocalDemoBrightDataRequestCount?: number };
-    const current = globalState.__venturexLocalDemoBrightDataRequestCount ?? 0;
-    if (current >= MAX_BRIGHTDATA_DEMO_REQUESTS_PER_PROCESS) return false;
-    globalState.__venturexLocalDemoBrightDataRequestCount = current + 1;
-    return true;
+    return consumeProcessRequestBudget(
+      "__venturexLocalDemoBrightDataRequestCount",
+      MAX_BRIGHTDATA_DEMO_REQUESTS_PER_PROCESS,
+    );
   }
 }
 

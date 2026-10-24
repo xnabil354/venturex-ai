@@ -10,13 +10,9 @@ type TrendRadarQueryRow = TrendRadarResponse["top"][number];
 export const notificationPreferenceSchema = z
   .object({ enabled: z.boolean() })
   .strict();
-export type NotificationPreference = z.infer<
-  typeof notificationPreferenceSchema
->;
 
 export const NOTIFICATION_CATEGORY = "Food & Drink";
 export const NOTIFICATION_SCOPE = "Worldwide";
-export const NOTIFICATION_TIMEZONE = "Asia/Jakarta";
 export const NOTIFICATION_SCHEDULE_LABEL = "Setiap Senin, 12.00 WIB";
 
 export type Digest = {

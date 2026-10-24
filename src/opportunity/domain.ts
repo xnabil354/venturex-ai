@@ -43,11 +43,6 @@ export type OpportunityFitInputOpportunityRecord = {
   };
 };
 
-export type OpportunityRepositoryPage = {
-  readonly items: readonly OpportunityRecord[];
-  readonly totalCount: number;
-};
-
 export type OpportunityPageRequest = {
   readonly limit: number;
   readonly offset: number;

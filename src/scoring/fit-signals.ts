@@ -44,15 +44,6 @@ export type NormalizableFitSignalComponent = {
 export type FitSignalRelationFor<Component extends NormalizableFitSignalComponent> =
   (typeof FIT_SIGNAL_RELATIONS)[Component][number];
 
-export type FitSignalReason =
-  | "BUDGET_AFFORDABILITY_COMPARISON"
-  | "INCLUSIVE_RANGE_COMPARISON"
-  | "EXACT_REFERENCE_ID_COMPARISON"
-  | "LITERAL_VALUE_COMPARISON"
-  | "REQUIRED_INPUT_MISSING"
-  | "INVALID_INPUT_VALUE"
-  | "NO_COMPARISON_CONTRACT";
-
 type BudgetAffordabilityFitSignal = {
   readonly component: "budgetAffordability";
   readonly status: "OBSERVED";

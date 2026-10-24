@@ -20,8 +20,6 @@ export const credentialsSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-export type CredentialsInput = z.infer<typeof credentialsSchema>;
-
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -32,5 +30,3 @@ export const userTypeSelectionSchema = z.object({
 });
 
 export const userTypeSwitchSchema = userTypeSelectionSchema.strict();
-
-export type UserTypeSelectionInput = z.infer<typeof userTypeSelectionSchema>;

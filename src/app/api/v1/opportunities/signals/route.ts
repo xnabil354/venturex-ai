@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
+import { isSameOriginRequest } from "@/lib/http-request";
 
 import { getCurrentUser } from "@/auth/current-user";
 import { ONBOARDING_STATUSES, USER_TYPES } from "@/auth/user-types";
@@ -24,24 +25,6 @@ function json(data: unknown, status: number, requestId: string, isError = false)
       "X-Request-Id": requestId,
     },
   });
-}
-
-function sameOriginPost(request: Request): boolean {
-  const originValue = request.headers.get("origin");
-  const hostValue = request.headers.get("host");
-  if (!originValue || !hostValue) return false;
-  try {
-    const origin = new URL(originValue);
-    return (origin.protocol === "http:" || origin.protocol === "https:")
-      && origin.host === hostValue
-      && origin.pathname === "/"
-      && !origin.username
-      && !origin.password
-      && !origin.search
-      && !origin.hash;
-  } catch {
-    return false;
-  }
 }
 
 function isLoopbackHost(host: string): boolean {
@@ -120,7 +103,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!isAllowedRequestHost(request)) {
     return json({ code: "FORBIDDEN_HOST", message: "Fitur ini hanya tersedia dari aplikasi lokal." }, 403, requestId, true);
   }
-  if (!sameOriginPost(request)) {
+  if (!isSameOriginRequest(request)) {
     return json({ code: "FORBIDDEN_ORIGIN", message: "Permintaan harus berasal dari aplikasi ini." }, 403, requestId, true);
   }
 

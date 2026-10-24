@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { isSameOriginRequest } from "../lib/http-request";
 
 import { ONBOARDING_STATUSES, isUserType, type SafeUser } from "@/auth/user-types";
 
@@ -36,24 +37,6 @@ function errorResponse(requestId: string, code: string, message: string, status:
     error: { code, message },
     requestId,
   });
-}
-
-function isSameOriginPost(request: Request): boolean {
-  const originHeader = request.headers.get("origin");
-  const hostHeader = request.headers.get("host");
-  if (!originHeader || !hostHeader) return false;
-  try {
-    const origin = new URL(originHeader);
-    return (origin.protocol === "http:" || origin.protocol === "https:")
-      && origin.host === hostHeader
-      && !origin.username
-      && !origin.password
-      && origin.pathname === "/"
-      && !origin.search
-      && !origin.hash;
-  } catch {
-    return false;
-  }
 }
 
 function mapError(error: unknown, requestId: string, operation: "related_queries" | "interest"): Response {
@@ -97,7 +80,7 @@ export function createTrendRadarRelatedQueriesPOST(dependencies: {
 }): (request: Request) => Promise<Response> {
   return async (request: Request): Promise<Response> => {
     const requestId = "req_" + randomUUID();
-    if (!isSameOriginPost(request)) {
+    if (!isSameOriginRequest(request)) {
       return errorResponse(requestId, "FORBIDDEN_ORIGIN", "Permintaan harus berasal dari aplikasi ini.", 403);
     }
 
@@ -144,7 +127,7 @@ export function createTrendRadarInterestPOST(dependencies: {
 }): (request: Request) => Promise<Response> {
   return async (request: Request): Promise<Response> => {
     const requestId = "req_" + randomUUID();
-    if (!isSameOriginPost(request)) {
+    if (!isSameOriginRequest(request)) {
       return errorResponse(requestId, "FORBIDDEN_ORIGIN", "Permintaan harus berasal dari aplikasi ini.", 403);
     }
 

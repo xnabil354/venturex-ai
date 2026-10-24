@@ -5,6 +5,7 @@ import {
   normalizeProductName,
   type BusinessProfileInput,
 } from "../../profile/business-validation";
+import { fieldErrorsFromIssues } from "../../lib/field-errors";
 
 export type BusinessFormStep = 1 | 2 | 3;
 
@@ -109,17 +110,6 @@ function parseAmount(value: string): number | null {
 
   const amount = Number(normalized);
   return Number.isSafeInteger(amount) ? amount : null;
-}
-
-function getPayloadErrors(
-  issues: readonly { readonly path: readonly PropertyKey[]; readonly message: string }[],
-): Readonly<Record<string, string>> {
-  const errors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = issue.path.map(String).join(".") || "form";
-    errors[field] ??= issue.message;
-  }
-  return errors;
 }
 
 function validateProduct(product: BusinessProductForm, index: number): Record<string, string> {
@@ -262,7 +252,7 @@ export function toBusinessProfilePayload(state: BusinessFormState): PayloadResul
   });
 
   if (!result.success) {
-    return { errors: getPayloadErrors(result.error.issues), success: false };
+    return { errors: fieldErrorsFromIssues(result.error.issues), success: false };
   }
 
   return { data: result.data, success: true };

@@ -11,8 +11,6 @@ export const opportunityComparisonRequestSchema = z.object({
   }
 });
 
-export type OpportunityComparisonRequest = z.infer<typeof opportunityComparisonRequestSchema>;
-
 export type OpportunityComparisonSource = {
   readonly id: string;
   readonly name: string;

@@ -78,8 +78,6 @@ export const opportunitySearchApiSourceReferenceSchema = searchApiOpportunityEvi
   contextFingerprint: z.string().regex(/^hmac-sha256-v1:[a-f0-9]{64}$/u).optional(),
 }).strict();
 
-export type OpportunitySearchApiSourceReference = z.infer<typeof opportunitySearchApiSourceReferenceSchema>;
-
 function isGoogleTrendsExploreUrl(value: string): boolean {
   try {
     const url = new URL(value);

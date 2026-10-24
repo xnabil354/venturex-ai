@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { trendRadarRequestSchema, type TrendRadarRequest, type TrendRadarResponse } from "./trend-radar-contract";
+import { trendRadarRequestSchema } from "./trend-radar-contract";
 
 export type TrendTimePoint = {
   readonly timestamp: number;
@@ -81,8 +81,5 @@ export const trendRadarInterestResponseSchema = z.object({
 }).strict();
 
 export type TrendRadarInterestResponse = z.infer<typeof trendRadarInterestResponseSchema>;
-export type TrendRadarInterestRequest = TrendRadarRequest;
-
-export type TrendInterestAppliedFilters = TrendRadarResponse["appliedFilters"];
 
 export const trendRadarInterestRequestSchema = trendRadarRequestSchema;

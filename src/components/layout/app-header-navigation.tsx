@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { createPortal } from "react-dom";
 
@@ -25,6 +25,10 @@ const mobileLinkClasses =
 const headerNavigation = primaryNavigation.filter((item) => item.href !== "/billing");
 const mobileNavigation = appNavigation;
 
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 type AppHeaderNavigationProps = {
   userEmail?: string;
   availableCredits?: number;
@@ -32,7 +36,11 @@ type AppHeaderNavigationProps = {
 
 export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNavigationProps) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -40,10 +48,6 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileActionRef = useRef<HTMLAnchorElement>(null);
   const firstMobileLinkRef = useRef<HTMLAnchorElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isMenuOpen) {

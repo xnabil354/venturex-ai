@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readBoundedRequestText } from "../../lib/http-request";
 import { syntheticDemoRequestSchema } from "./contracts";
 import {
   getSyntheticDemoPostBlockReason,
@@ -22,39 +23,6 @@ function json(body: unknown, status: number, requestId: string): Response {
   });
 }
 
-async function readBoundedBody(request: Request): Promise<string | null> {
-  const contentLength = request.headers.get("content-length");
-  if (contentLength && (!/^\d+$/u.test(contentLength) || Number(contentLength) > MAX_REQUEST_BYTES)) return null;
-  if (!request.body) return null;
-
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > MAX_REQUEST_BYTES) {
-        await reader.cancel();
-        return null;
-      }
-      chunks.push(value);
-    }
-    const body = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-      body.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return new TextDecoder("utf-8", { fatal: true }).decode(body);
-  } catch {
-    return null;
-  } finally {
-    reader.releaseLock();
-  }
-}
-
 export function createSyntheticDemoPOST(dependencies: {
   readonly env: SyntheticDemoEnvironment;
   readonly service: Pick<SyntheticDemoService, "generate">;
@@ -67,7 +35,7 @@ export function createSyntheticDemoPOST(dependencies: {
       return json({ error: "INVALID_REQUEST" }, 415, requestId);
     }
 
-    const bodyText = await readBoundedBody(request);
+    const bodyText = await readBoundedRequestText(request, MAX_REQUEST_BYTES);
     if (bodyText === null) return json({ error: "INVALID_REQUEST" }, 413, requestId);
 
     let body: unknown;

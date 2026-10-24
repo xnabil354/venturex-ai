@@ -1,5 +1,5 @@
 import type { UserType } from "../auth/user-types";
-import type { AnalysisScoreStatus, ScoringModelType } from "./persistence-types";
+import type { ScoringModelType } from "./persistence-types";
 
 export const ENTREPRENEUR_FIT_COMPONENTS = [
   "budgetFit",
@@ -53,11 +53,6 @@ export type FitScoreBreakdownItem = {
 export type FitScoreInsufficientReason =
   | "CONFIGURATION_UNAVAILABLE"
   | "COMPONENTS_UNAVAILABLE";
-
-export type FitScoreCalculationStatus = Extract<
-  AnalysisScoreStatus,
-  "AVAILABLE" | "INSUFFICIENT_DATA"
->;
 
 export type FitScoreCalculationResult =
   | {

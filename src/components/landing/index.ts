@@ -5,7 +5,6 @@ export { HeroSection } from "./hero-section";
 export { TrustMetricsStrip } from "./trust-metrics-strip";
 export { TrendRadarBento } from "./trend-radar-bento";
 export { SuiteTabStrip } from "./suite-tab-strip";
-export { CoreCapabilities } from "./core-capabilities";
 export { InteractiveSpecimen } from "./interactive-specimen";
 export { RoadmapBento } from "./roadmap-bento";
 export { AtmosphericCta } from "./atmospheric-cta";

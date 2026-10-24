@@ -5,7 +5,6 @@ export const ROADMAP_GENERATION_VERSION = "startup-validation-v1" as const;
 export const ROADMAP_GENERATION_METHOD = "MVP_STRUCTURED_VALIDATION" as const;
 export const GROWTH_ROADMAP_GENERATION_VERSION = "growth-roadmap-v1" as const;
 export const GROWTH_ROADMAP_GENERATION_METHOD = "MVP_STRUCTURED_GROWTH_PLANNING" as const;
-export const GROWTH_ROADMAP_TYPE = "GROWTH" as const;
 
 export const ROADMAP_STAGES = [
   "Market Validation",
