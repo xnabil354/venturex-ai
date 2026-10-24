@@ -41,6 +41,18 @@ export type AdminTransaction = {
   readonly paidAt: Date | null;
 };
 
+export type AdminDashboardSummary = {
+  readonly windowStart: Date;
+  readonly windowEnd: Date;
+  readonly transactionCounts: Readonly<Record<BillingPaymentStatus, number>>;
+  readonly paidAmount: number;
+  readonly activeUsers: number;
+  readonly activeTrialUsers: number;
+  readonly activePremiumUsers: number;
+  readonly activeProUsers: number;
+  readonly recentTransactions: ReadonlyArray<AdminTransaction>;
+};
+
 export class BillingAdminError extends Error {
   override readonly name = "BillingAdminError";
   constructor(readonly code: "NOT_FOUND" | "VERSION_CONFLICT", message: string) {
@@ -50,6 +62,117 @@ export class BillingAdminError extends Error {
 
 function productMetadata(code: BillingProductCode) {
   return BILLING_PRODUCTS[code];
+}
+
+/**
+ * Admin-only operational read model. The enclosing /admin layout verifies the
+ * authenticated ADMIN session before this function can be rendered.
+ * ASVS 1.2.4: every runtime value is passed through a bound SQL parameter.
+ */
+export async function getAdminDashboardSummary(now: Date = new Date()): Promise<AdminDashboardSummary> {
+  const windowEnd = new Date(now);
+  const windowStart = new Date(windowEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const database = getSequelize();
+  const [transactionRows, accountRows, recentRows] = await Promise.all([
+    database.query<{ status: BillingPaymentStatus; count: string; paid_amount: string }>(
+      `SELECT status, COUNT(*)::text AS count,
+        COALESCE(SUM(amount) FILTER (WHERE status = 'PAID'), 0)::text AS paid_amount
+       FROM billing_payments
+       WHERE created_at >= $1 AND created_at < $2
+       GROUP BY status`,
+      { bind: [windowStart, windowEnd], type: QueryTypes.SELECT },
+    ),
+    database.query<{
+      active_users: string;
+      active_trial_users: string;
+      active_premium_users: string;
+      active_pro_users: string;
+    }>(
+      `SELECT
+        COUNT(*) FILTER (WHERE u.login_disabled_at IS NULL)::text AS active_users,
+        COUNT(*) FILTER (
+          WHERE u.login_disabled_at IS NULL
+            AND ba.active_plan = 'FREE'
+            AND EXISTS (
+              SELECT 1 FROM credit_lots cl
+              WHERE cl.user_id = u.id
+                AND cl.source = 'TRIAL'
+                AND cl.state = 'ACTIVE'
+                AND cl.remaining_credits > 0
+                AND (cl.expires_at IS NULL OR cl.expires_at > $1)
+            )
+        )::text AS active_trial_users,
+        COUNT(*) FILTER (
+          WHERE u.login_disabled_at IS NULL
+            AND ba.active_plan = 'PREMIUM'
+            AND ba.plan_ends_at > $1
+        )::text AS active_premium_users,
+        COUNT(*) FILTER (
+          WHERE u.login_disabled_at IS NULL
+            AND ba.active_plan = 'PRO'
+            AND ba.plan_ends_at > $1
+        )::text AS active_pro_users
+       FROM users u
+       LEFT JOIN billing_accounts ba ON ba.user_id = u.id`,
+      { bind: [windowEnd], type: QueryTypes.SELECT },
+    ),
+    database.query<{
+      merchant_order_id: string;
+      email: string;
+      product_code: BillingProductCode;
+      amount: number;
+      granted_credits: number;
+      status: BillingPaymentStatus;
+      payment_method: string | null;
+      duitku_reference: string | null;
+      created_at: Date;
+      paid_at: Date | null;
+    }>(
+      `SELECT p.merchant_order_id, u.email, p.product_code, p.amount, p.granted_credits,
+        p.status, p.payment_method, p.duitku_reference, p.created_at, p.paid_at
+       FROM billing_payments p
+       JOIN users u ON u.id = p.user_id
+       ORDER BY p.created_at DESC, p.id DESC
+       LIMIT 5`,
+      { type: QueryTypes.SELECT },
+    ),
+  ]);
+
+  const transactionCounts: Record<BillingPaymentStatus, number> = {
+    PENDING: 0,
+    PAID: 0,
+    FAILED: 0,
+    EXPIRED: 0,
+  };
+  let paidAmount = 0;
+  for (const row of transactionRows) {
+    transactionCounts[row.status] = Number(row.count);
+    paidAmount += Number(row.paid_amount);
+  }
+
+  const accounts = accountRows[0];
+  return {
+    windowStart,
+    windowEnd,
+    transactionCounts,
+    paidAmount,
+    activeUsers: Number(accounts?.active_users ?? 0),
+    activeTrialUsers: Number(accounts?.active_trial_users ?? 0),
+    activePremiumUsers: Number(accounts?.active_premium_users ?? 0),
+    activeProUsers: Number(accounts?.active_pro_users ?? 0),
+    recentTransactions: recentRows.map((row) => ({
+      merchantOrderId: row.merchant_order_id,
+      email: row.email,
+      productCode: row.product_code,
+      amount: row.amount,
+      grantedCredits: row.granted_credits,
+      status: row.status,
+      paymentMethod: row.payment_method,
+      duitkuReference: row.duitku_reference,
+      createdAt: row.created_at,
+      paidAt: row.paid_at,
+    })),
+  };
 }
 
 export async function getBillingSettings(): Promise<{ readonly products: ReadonlyArray<AdminProductSetting>; readonly usage: ReadonlyArray<AdminUsageSetting> }> {

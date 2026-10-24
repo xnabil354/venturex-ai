@@ -15,7 +15,7 @@ import { createDuitkuPopInvoice } from "./checkout";
 describe("createDuitkuPopInvoice", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("uses Duitku's documented sandbox inquiry endpoint and required payment method", async () => {
+  it("uses Duitku's documented sandbox inquiry endpoint and BCA virtual account method", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       paymentUrl: "https://sandbox.duitku.com/topup/topupdirectv2.aspx?ref=reference-1",
       reference: "reference-1",
@@ -42,7 +42,7 @@ describe("createDuitkuPopInvoice", () => {
       merchantCode: "D1234",
       merchantOrderId: "VX-123",
       paymentAmount: 20_000,
-      paymentMethod: "VC",
+      paymentMethod: "BC",
       productDetails: "10 kredit",
       email: "user@example.com",
       customerVaName: "VENTUREX",

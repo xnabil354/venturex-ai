@@ -109,7 +109,7 @@ export function LoginForm({ registered = false }: LoginFormProps) {
       }
 
       const session = await getSession();
-      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/transactions" : "/dashboard");
+      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/dashboard" : "/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError("Terjadi kendala saat masuk. Silakan coba lagi.");

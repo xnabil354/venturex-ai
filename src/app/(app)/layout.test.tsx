@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
+  currentAdmin: vi.fn(),
   summaryForUser: vi.fn(),
   redirect: vi.fn((destination: string): never => {
     throw new Error(`REDIRECT:${destination}`);
@@ -10,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
+vi.mock("@/auth/current-admin", () => ({ getCurrentAdmin: mocks.currentAdmin }));
 vi.mock("@/billing/service", () => ({
   BillingService: class {
     summaryForUser(...args: unknown[]) { return mocks.summaryForUser(...args); }
@@ -37,6 +39,7 @@ describe("authenticated app layout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.summaryForUser.mockResolvedValue({ availableCredits: 5 });
+    mocks.currentAdmin.mockResolvedValue(null);
     mocks.redirect.mockImplementation((destination: string): never => {
       throw new Error(`REDIRECT:${destination}`);
     });
@@ -47,6 +50,14 @@ describe("authenticated app layout", () => {
 
     await expect(AppLayout({ children: "protected" })).rejects.toThrow("REDIRECT:/login");
     expect(redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("redirects an authenticated admin to the operator dashboard", async () => {
+    mocks.currentUser.mockResolvedValue(null);
+    mocks.currentAdmin.mockResolvedValue({ id: "admin-id", email: "operator@example.com" });
+
+    await expect(AppLayout({ children: "protected" })).rejects.toThrow("REDIRECT:/admin/dashboard");
+    expect(redirect).toHaveBeenCalledWith("/admin/dashboard");
   });
 
   it("redirects users with incomplete onboarding", async () => {
