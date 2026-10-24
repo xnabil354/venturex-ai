@@ -13,7 +13,9 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3000"
-      APP_URL: ${APP_URL:?Set APP_URL in .env}
+      # Keep Auth.js redirects on the public origin behind the Nginx proxy.
+      AUTH_URL: ${APP_URL:?Set APP_URL in .env.production}
+      APP_URL: ${APP_URL:?Set APP_URL in .env.production}
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}

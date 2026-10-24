@@ -92,7 +92,7 @@ docker compose -f compose.yaml -f compose.dev.yaml stop postgres
 
 The production Compose setup runs the app and PostgreSQL. It publishes the app only on `127.0.0.1:3000` by default for a host-installed Nginx reverse proxy; set `APP_PORT` if that port is already in use. PostgreSQL has no published port.
 
-1. Copy `.env.production.example` to `.env.production` on the VPS. Set `APP_URL` to the HTTPS domain Nginx will serve, generate unique `AUTH_SECRET` and `POSTGRES_PASSWORD` values, and put the same database password in `DATABASE_URL`. The database host in that URL must remain `postgres`. For a fresh database, set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters. Migration 024 uses it for the initial admin account `adminventurex@gmail.com`.
+1. Copy `.env.production.example` to `.env.production` on the VPS. Set `APP_URL` to the HTTPS domain Nginx will serve; Compose also passes it to Auth.js as `AUTH_URL` so redirects use the public origin behind the proxy. Generate unique `AUTH_SECRET` and `POSTGRES_PASSWORD` values, and put the same database password in `DATABASE_URL`. The database host in that URL must remain `postgres`. For a fresh database, set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters. Migration 024 uses it for the initial admin account `adminventurex@gmail.com`.
 2. Build the production image, apply pending migrations, and seed reference data:
 
    ```bash
