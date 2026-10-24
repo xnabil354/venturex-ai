@@ -13,7 +13,7 @@ type InvoiceResponse = {
 };
 
 const DUITKU_SANDBOX_INQUIRY_URL = "https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry";
-const DUITKU_SANDBOX_TEST_PAYMENT_METHOD = "VC";
+const DUITKU_SANDBOX_PAYMENT_METHOD = "BC";
 
 export async function createDuitkuPopInvoice(input: {
   readonly merchantOrderId: string;
@@ -39,9 +39,9 @@ export async function createDuitkuPopInvoice(input: {
         paymentAmount: input.amount,
         merchantOrderId: input.merchantOrderId,
         productDetails: input.productDetails,
-        // VC is an active sandbox channel for this MVP. It directs to Duitku's
-        // hosted page, where their documented test card can be used.
-        paymentMethod: DUITKU_SANDBOX_TEST_PAYMENT_METHOD,
+        // ASVS 2.3.1: the server, never the browser, selects the enabled
+        // payment channel for this financial workflow. BC is Duitku's BCA VA.
+        paymentMethod: DUITKU_SANDBOX_PAYMENT_METHOD,
         customerVaName: "VENTUREX",
         email: input.email,
         itemDetails: [{ name: input.productDetails, price: input.amount, quantity: 1 }],

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/auth/current-user";
+import { getCurrentAdmin } from "@/auth/current-admin";
 import { resolveOnboardingDestination } from "@/auth/routing";
 import { ONBOARDING_STATUSES } from "@/auth/user-types";
 import { BillingService } from "@/billing/service";
@@ -12,6 +13,9 @@ export default async function AppLayout({
 }: Readonly<{ children: ReactNode }>) {
   const user = await getCurrentUser();
   if (!user) {
+    if (await getCurrentAdmin()) {
+      redirect("/admin/dashboard");
+    }
     redirect("/login");
   }
 

@@ -194,7 +194,8 @@ export function RegisterForm() {
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
-          
+
+          placeholder="Masukkan email Anda"
           required
           type="email"
           value={values.email}
@@ -209,6 +210,7 @@ export function RegisterForm() {
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
 
+          placeholder="Masukkan password Anda"
           required
           type={showPassword ? "text" : "password"}
           value={values.password}
@@ -237,7 +239,7 @@ export function RegisterForm() {
           onChange={(event) =>
             updateField("passwordConfirmation", event.target.value)
           }
-          placeholder=""
+          placeholder="konfirmasi password Anda"
           required
           type={showConfirmation ? "text" : "password"}
           value={values.passwordConfirmation}

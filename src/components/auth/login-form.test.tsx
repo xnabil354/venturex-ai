@@ -119,6 +119,20 @@ describe("LoginForm hydration security", () => {
     expect(window.location.search).toBe("");
   });
 
+  it("sends an authenticated admin to the operator dashboard", async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { accountType: "ADMIN" } } as never);
+    render(<LoginForm />);
+    const email = screen.getByRole("textbox", { name: "Email" });
+    const password = screen.getByLabelText("Password");
+    await waitFor(() => expect(email).toHaveProperty("disabled", false));
+
+    fireEvent.change(email, { target: { value: "operator@example.test" } });
+    fireEvent.change(password, { target: { value: "synthetic-test-password" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Masuk" }).closest("form")!);
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/admin/dashboard"));
+  });
+
   it("preserves the generic invalid-credentials message", async () => {
     vi.mocked(signIn).mockResolvedValue({
       ...signInResponse,

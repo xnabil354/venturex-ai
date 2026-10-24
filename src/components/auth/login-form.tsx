@@ -109,7 +109,7 @@ export function LoginForm({ registered = false }: LoginFormProps) {
       }
 
       const session = await getSession();
-      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/transactions" : "/dashboard");
+      router.replace(session?.user?.accountType === "ADMIN" ? "/admin/dashboard" : "/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         setFormError("Terjadi kendala saat masuk. Silakan coba lagi.");
@@ -154,7 +154,7 @@ export function LoginForm({ registered = false }: LoginFormProps) {
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
-          
+          placeholder="Masukkan email Anda"
           required
           type="email"
           value={values.email}
@@ -168,7 +168,7 @@ export function LoginForm({ registered = false }: LoginFormProps) {
           label="Password"
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
-
+          placeholder="Masukkan password Anda"
           required
           type={showPassword ? "text" : "password"}
           value={values.password}

@@ -23,7 +23,7 @@ Pembelian plan sebelum periode aktif berakhir dijadwalkan sesudah periode terseb
 
 Provider adalah Duitku **sandbox** dengan model POP. Browser hanya mengirim `productCode`; harga, kredit, order ID, status, dan user pemilik semuanya ditentukan server.
 
-- Checkout: server membuat `billing_payments` berstatus `PENDING`, lalu memanggil `https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry`. Pada MVP sandbox, channel `VC` (kartu kredit) dipilih server-side dan pengguna menyelesaikan pembayaran pada halaman hosted Duitku dengan kartu uji yang didokumentasikan Duitku.
+- Checkout: server membuat `billing_payments` berstatus `PENDING`, lalu memanggil `https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry`. Pada MVP sandbox, channel `BC` (BCA Virtual Account) dipilih server-side dan pengguna menyelesaikan pembayaran pada halaman hosted Duitku. Channel Virtual Account harus aktif pada project merchant.
 - Return page hanya memberi tahu bahwa pembayaran sedang diverifikasi; ia tidak mengubah status lokal.
 - Callback: `POST /api/v1/billing/duitku/callback`, memakai HMAC-SHA256 pada `merchantCode + amount + merchantOrderId`, dibandingkan secara constant-time. Duplikasi dan callback terlambat aman terhadap idempotensi.
 - Secret hanya disimpan pada environment server: `DUITKU_MERCHANT_CODE`, `DUITKU_API_KEY`, dan `APP_URL`.
