@@ -1,13 +1,13 @@
 import "server-only";
 
-import type { SafeUser } from "@/auth/user-types";
+import type { SafeUser, UserType } from "@/auth/user-types";
 import { PrivateOpportunityHypothesisRepository } from "@/opportunity/private-hypothesis-repository";
 import type { PrivateOpportunityIdeaDto } from "@/opportunity/private-hypothesis";
 import type { DashboardModules, DashboardTrendModuleState } from "./dto";
 import { normalizeRadarProduct, radarContext, radarMetric } from "./radar-preview";
 
 type ExplorationDependencies = {
-  readonly listIdeas: (userId: string, savedOnly?: boolean) => Promise<readonly PrivateOpportunityIdeaDto[]>;
+  readonly listIdeas: (userId: string, userType: UserType, savedOnly?: boolean) => Promise<readonly PrivateOpportunityIdeaDto[]>;
   readonly listRoadmaps: () => Promise<{ readonly totalCount: number }>;
 };
 
@@ -16,13 +16,15 @@ export async function loadDashboardExploration(
   productQuery: string,
   dependencies?: ExplorationDependencies,
 ): Promise<DashboardModules> {
-  const listIdeas = dependencies?.listIdeas ?? ((userId: string, savedOnly = false) => new PrivateOpportunityHypothesisRepository().listForUser(userId, savedOnly));
+  const userType = user.userType;
+  if (!userType) throw new Error("Dashboard exploration requires a selected user type.");
+  const listIdeas = dependencies?.listIdeas ?? ((userId: string, type: UserType, savedOnly = false) => new PrivateOpportunityHypothesisRepository().listForUser(userId, type, savedOnly));
   const listRoadmaps = dependencies?.listRoadmaps ?? (async () => user.userType === "ENTREPRENEUR"
     ? { totalCount: (await new PrivateOpportunityHypothesisRepository().listPageForUser(user.id, 1, true, true)).items.length }
     : { totalCount: (await new PrivateOpportunityHypothesisRepository().listBusinessPage(user.id, 1, false, true)).items.length });
   const [ideasResult, savedResult, roadmapsResult] = await Promise.allSettled([
-    Promise.resolve().then(() => listIdeas(user.id)),
-    Promise.resolve().then(() => listIdeas(user.id, true)),
+    Promise.resolve().then(() => listIdeas(user.id, userType, false)),
+    Promise.resolve().then(() => listIdeas(user.id, userType, true)),
     Promise.resolve().then(listRoadmaps),
   ]);
   const ideas = ideasResult.status === "fulfilled"

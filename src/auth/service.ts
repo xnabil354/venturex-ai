@@ -5,11 +5,14 @@ import { UniqueConstraintError } from "sequelize";
 import {
   CurrentUserNotFoundError,
   EmailAlreadyExistsError,
+  UserTypeAlreadyActiveError,
   UserTypeAlreadySelectedError,
+  UserTypeSwitchNotAllowedError,
 } from "./errors";
 import { hashPassword, verifyPassword } from "./password";
 import {
   toSafeUser,
+  ONBOARDING_STATUSES,
   type SafeUser,
   type UserId,
 } from "./user-types";
@@ -18,6 +21,7 @@ import {
   normalizeEmail,
   registrationSchema,
   userTypeSelectionSchema,
+  userTypeSwitchSchema,
 } from "./validation";
 import {
   UserRepository,
@@ -88,6 +92,28 @@ export class AuthService {
     }
 
     throw new UserTypeAlreadySelectedError();
+  }
+
+  async switchUserType(
+    input: unknown,
+    userId: UserId,
+  ): Promise<SafeUser> {
+    const data = userTypeSwitchSchema.parse(input);
+    const userRepository = this.getUserRepository();
+    const updatedUser = await userRepository.switchUserType(userId, data.userType);
+
+    if (updatedUser) {
+      return toSafeUser(updatedUser);
+    }
+
+    const currentUser = await userRepository.findById(userId);
+    if (!currentUser) {
+      throw new CurrentUserNotFoundError();
+    }
+    if (currentUser.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED) {
+      throw new UserTypeSwitchNotAllowedError();
+    }
+    throw new UserTypeAlreadyActiveError();
   }
 
   async validateCredentials(input: unknown): Promise<AuthenticatedAccount | null> {

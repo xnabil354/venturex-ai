@@ -2,10 +2,11 @@ import { notFound, redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/auth/current-user";
 import { resolveOnboardingDestination } from "@/auth/routing";
-import { ONBOARDING_STATUSES, USER_TYPES } from "@/auth/user-types";
+import { ONBOARDING_STATUSES, USER_TYPES, type UserType } from "@/auth/user-types";
 import { BusinessProfileForm } from "@/components/onboarding/business-profile-form";
 import { EntrepreneurProfileForm } from "@/components/onboarding/entrepreneur-profile-form";
 import { ProfileSurface } from "@/components/profile/profile-surface";
+import { UserTypeSwitcher } from "@/components/profile/user-type-switcher";
 import {
   BusinessProfileForbiddenError,
   BusinessProfileNotFoundError,
@@ -41,6 +42,7 @@ export default async function ProfilePage() {
       <ProfileLayout
         description="Perbarui konteks usaha yang dipakai VENTUREX untuk menyusun peluang, analisis, dan langkah berikutnya."
         title="Profil entrepreneur"
+        userType={user.userType}
       >
         <EntrepreneurProfileForm initialValues={initialValues} mode="edit" />
       </ProfileLayout>
@@ -68,6 +70,7 @@ export default async function ProfilePage() {
       <ProfileLayout
         description="Tinjau identitas, produk, dan cara Anda melayani pelanggan agar konteks usaha tetap akurat."
         title={initialValues.businessName || "Profil bisnis"}
+        userType={user.userType}
       >
         <BusinessProfileForm initialValues={initialValues} mode="edit" />
       </ProfileLayout>
@@ -81,10 +84,12 @@ function ProfileLayout({
   children,
   description,
   title,
+  userType,
 }: {
   readonly children: React.ReactNode;
   readonly description: string;
   readonly title: string;
+  readonly userType: UserType;
 }) {
   return (
     <ProfileSurface>
@@ -98,6 +103,7 @@ function ProfileLayout({
           <div className="rounded-small-buttons border border-white/15 bg-white/10 p-14">
             <p className="text-caption font-w540 uppercase tracking-[0.12em] text-lilac-mist">Pembaruan profil</p>
             <p className="mt-5 text-body-sm leading-relaxed text-paper-white/80">Lengkapi setiap bagian, lalu simpan perubahan pada langkah terakhir.</p>
+            <UserTypeSwitcher currentUserType={userType} />
           </div>
         </header>
         <div className="mt-24">{children}</div>

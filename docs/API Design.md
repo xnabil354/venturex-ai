@@ -768,6 +768,7 @@ POST /api/v1/auth/register
 ```text
 GET   /api/v1/me
 PATCH /api/v1/me/user-type
+POST  /api/v1/me/user-type/switch
 ```
 
 ## Profiles
@@ -1033,19 +1034,54 @@ current userType = null
 
 → allowed.
 
-Jika user sudah selesai onboarding dan ingin mengganti type:
+Jika user sudah selesai onboarding dan ingin mengganti type, gunakan endpoint `POST /api/v1/me/user-type/switch`.
+
+`PATCH` tetap hanya untuk first selection ketika `current userType = null`. Endpoint switch tidak menghapus profile/histori lama dan mengubah `onboardingStatus` menjadi `USER_TYPE_SELECTED` dalam satu update database atomik.
+
+## 30.1 POST `/api/v1/me/user-type/switch`
+
+### Auth and Request Security
+
+- authenticated user only;
+- same-origin mutation;
+- strict JSON body maksimum 256 bytes;
+- body tepat `{ "userType": "ENTREPRENEUR" | "UMKM_EXISTING" }`;
+- target harus berbeda dari persona aktif.
+
+### Eligibility and Behavior
+
+User harus memiliki `onboardingStatus = COMPLETED`. Server menggunakan identitas dan state dari session/database, bukan user ID atau persona yang dikirim client. Update bersyarat mengubah:
 
 ```text
-Should Have / Open Product Decision
+users.user_type = target
+users.onboarding_status = USER_TYPE_SELECTED
 ```
 
-Baseline MVP:
+Profile entrepreneur/business yang sudah ada tetap dipertahankan. Client diarahkan ke onboarding persona baru; halaman onboarding membaca profile target bila tersedia untuk prefill dan konfirmasi.
 
-```text
-409 CONFLICT
+### Success
+
+`200 OK`, `Cache-Control: private, no-store`
+
+```json
+{
+  "success": true,
+  "data": {
+    "userType": "UMKM_EXISTING",
+    "onboardingStatus": "USER_TYPE_SELECTED"
+  },
+  "requestId": "req_..."
+}
 ```
 
-dan perubahan dilakukan hanya jika feature Change User Type telah diaktifkan.
+### Errors
+
+- `400 VALIDATION_ERROR` — body invalid, unknown field, or oversized;
+- `401 UNAUTHORIZED` — no authenticated session;
+- `403 FORBIDDEN` — missing/invalid Origin;
+- `404 RESOURCE_NOT_FOUND` — current account no longer exists;
+- `409 CONFLICT` — onboarding belum selesai atau target persona sudah aktif;
+- `500 INTERNAL_ERROR` — unexpected persistence error.
 
 ## Database
 
@@ -2355,7 +2391,9 @@ src/app/api/
     ├── me/
     │   ├── route.ts
     │   └── user-type/
-    │       └── route.ts
+    │       ├── route.ts
+    │       └── switch/
+    │           └── route.ts
     │
     ├── profile/
     │   ├── route.ts
@@ -3228,7 +3266,7 @@ Traceability records future product requirements, not implemented endpoints. His
 | Endpoint | Main Tables |
 |---|---|
 | Register | `users` |
-| User Type | `users` |
+| User Type / Persona Switch | `users` |
 | Entrepreneur Profile | `entrepreneur_profiles` + junctions |
 | Business Profile | `business_profiles`, products + junctions |
 | References | reference tables |
@@ -3236,7 +3274,7 @@ Traceability records future product requirements, not implemented endpoints. His
 | Opportunities | `opportunities`, fit/target tables |
 | Score | `scoring_models`, `user_opportunity_analyses` |
 | AI Analysis | `user_opportunity_analyses` |
-| Save | `saved_opportunities` |
+| Save | `saved_opportunities` dengan scope `user_id + user_type` |
 | Compare | opportunities + analyses |
 | Roadmaps | `roadmaps`, `roadmap_steps` |
 
@@ -3258,7 +3296,6 @@ Masih perlu ditetapkan sebelum API freeze:
 10. exact external trend provider;
 11. cache TTL;
 12. whether Compare remains final MVP;
-13. whether user type change is enabled;
 14. exact pagination default if product changes it.
 
 Kontrak utama tetap dapat dikembangkan tanpa menunggu seluruh keputusan tersebut.

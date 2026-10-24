@@ -186,6 +186,44 @@ export class EntrepreneurProfileService {
     });
   }
 
+  async getForOnboarding(userId: UserId): Promise<EntrepreneurProfileEditValues | null> {
+    return this.sequelize.transaction(async (transaction) => {
+      const currentUser = await this.userRepository.findById(userId, transaction);
+      if (!currentUser) throw new CurrentUserNotFoundError();
+      if (currentUser.userType !== USER_TYPES.ENTREPRENEUR) {
+        throw new EntrepreneurProfileForbiddenError();
+      }
+      if (currentUser.onboardingStatus !== ONBOARDING_STATUSES.USER_TYPE_SELECTED
+        && currentUser.onboardingStatus !== ONBOARDING_STATUSES.PROFILE_IN_PROGRESS
+        && currentUser.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED) {
+        throw new EntrepreneurProfileStateError();
+      }
+
+      const profile = await this.profileRepository.findByUserId(userId, transaction);
+      if (!profile) return null;
+      const selections = await this.profileRepository.loadSelectionIds(profile.id, transaction);
+      return entrepreneurProfileReadSchema.parse({
+        location: {
+          text: profile.locationText,
+          city: profile.city,
+          province: profile.province,
+          district: profile.district,
+          subdistrict: profile.subdistrict,
+          countryCode: profile.countryCode,
+        },
+        budget: { min: profile.budgetMin, max: profile.budgetMax },
+        experienceLevel: profile.experienceLevel,
+        timeCommitment: profile.timeCommitment,
+        interestCategoryIds: selections.interestCategoryIds,
+        customerSegmentIds: selections.customerSegmentIds,
+        salesChannelIds: selections.salesChannelIds,
+        preferredProductType: profile.preferredProductType,
+        businessObjective: profile.businessObjective,
+        notes: profile.notes,
+      });
+    });
+  }
+
   async save(input: unknown, userId: UserId): Promise<EntrepreneurProfileSaveResult> {
     const data = entrepreneurProfileSchema.parse(input);
     const [categories, segments, channels] = await Promise.all([

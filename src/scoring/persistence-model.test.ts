@@ -74,6 +74,7 @@ describe("scoring persistence models", () => {
     const UserOpportunityAnalysis = getUserOpportunityAnalysisModel();
     const analysis = UserOpportunityAnalysis.build({
       userId: parseUserId("10000000-0000-4000-8000-000000000001"),
+      userType: "ENTREPRENEUR" as const,
       opportunityId: "20000000-0000-4000-8000-000000000001",
       datasetVersionId: null,
       scoringModelId: null,
@@ -106,6 +107,7 @@ describe("scoring persistence models", () => {
     const UserOpportunityAnalysis = getUserOpportunityAnalysisModel();
     const base = {
       userId: parseUserId("10000000-0000-4000-8000-000000000001"),
+      userType: "ENTREPRENEUR" as const,
       opportunityId: "20000000-0000-4000-8000-000000000001",
       datasetVersionId: null,
       scoringModelId: null,

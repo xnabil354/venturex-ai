@@ -297,7 +297,7 @@ describe("Private hybrid SearchApi opportunity flow", () => {
 
     await service.removeForUser(user, hypothesisId);
 
-    expect(mocks.removeForUser).toHaveBeenCalledWith(user.id, hypothesisId);
+    expect(mocks.removeForUser).toHaveBeenCalledWith(user.id, user.userType, hypothesisId);
     expect(mocks.generate).not.toHaveBeenCalled();
   });
 

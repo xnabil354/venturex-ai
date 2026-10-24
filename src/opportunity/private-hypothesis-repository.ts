@@ -72,9 +72,9 @@ export class PrivateOpportunityHypothesisRepository {
     return rows.map(toDto).filter((item): item is PrivateOpportunityIdeaDto => item !== null);
   }
 
-  async listForUser(userId: string, savedOnly = false): Promise<readonly PrivateOpportunityIdeaDto[]> {
+  async listForUser(userId: string, userType: "ENTREPRENEUR" | "UMKM_EXISTING", savedOnly = false): Promise<readonly PrivateOpportunityIdeaDto[]> {
     const rows = await this.model.findAll({
-      where: { userId, ...(savedOnly ? { isSaved: true } : {}) },
+      where: { userId, userType, ...(savedOnly ? { isSaved: true } : {}) },
       order: [["createdAt", "DESC"], ["id", "ASC"]],
       limit: 50,
     });
@@ -156,9 +156,9 @@ export class PrivateOpportunityHypothesisRepository {
     return changed === 1;
   }
 
-  async setSaved(userId: string, id: string, saved: boolean, now = new Date(), analysisFingerprint?: string): Promise<PrivateOpportunityIdeaDto | null> {
+  async setSaved(userId: string, userType: "ENTREPRENEUR" | "UMKM_EXISTING", id: string, saved: boolean, now = new Date(), analysisFingerprint?: string): Promise<PrivateOpportunityIdeaDto | null> {
     return getSequelize().transaction(async transaction => {
-      const row = await this.model.findOne({ where: { id, userId }, transaction, lock: transaction.LOCK.UPDATE });
+      const row = await this.model.findOne({ where: { id, userId, userType }, transaction, lock: transaction.LOCK.UPDATE });
       if (!row) return null;
       if (row.userType === "ENTREPRENEUR") {
         if (!saved) throw new PrivateHypothesisStateError("SAVED_PERMANENT");
@@ -172,9 +172,9 @@ export class PrivateOpportunityHypothesisRepository {
     });
   }
 
-  async removeForUser(userId: string, id: string): Promise<void> {
+  async removeForUser(userId: string, userType: "ENTREPRENEUR" | "UMKM_EXISTING", id: string): Promise<void> {
     await getSequelize().transaction(async transaction => {
-      const row = await this.model.findOne({ where: { id, userId }, transaction, lock: transaction.LOCK.UPDATE });
+      const row = await this.model.findOne({ where: { id, userId, userType }, transaction, lock: transaction.LOCK.UPDATE });
       if (!row) return;
       if (row.userType === "ENTREPRENEUR" && row.isSaved) throw new PrivateHypothesisStateError("SAVED_PERMANENT");
       await row.destroy({ transaction });

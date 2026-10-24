@@ -8,6 +8,7 @@ import {
 } from "sequelize";
 
 import type { Opportunity } from "./opportunity.model";
+import type { UserType } from "../../auth/user-types";
 import { getSequelize } from "../sequelize";
 
 declare global {
@@ -20,6 +21,7 @@ export class SavedOpportunity extends Model<
 > {
   declare id: CreationOptional<string>;
   declare userId: string;
+  declare userType: UserType;
   declare opportunityId: string;
   declare createdAt: CreationOptional<Date>;
   declare opportunity: NonAttribute<Opportunity> | undefined;
@@ -34,6 +36,12 @@ export function getSavedOpportunityModel(): typeof SavedOpportunity {
     {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
       userId: { type: DataTypes.UUID, allowNull: false, field: "user_id" },
+      userType: {
+        type: DataTypes.STRING(32),
+        allowNull: false,
+        field: "user_type",
+        validate: { isIn: [["ENTREPRENEUR", "UMKM_EXISTING"]] },
+      },
       opportunityId: { type: DataTypes.UUID, allowNull: false, field: "opportunity_id" },
       createdAt: {
         type: DataTypes.DATE,

@@ -11,9 +11,10 @@ describe("OpportunityAnalysisRepository", () => {
     const findOne = vi.fn().mockResolvedValue(null);
     const repo = new OpportunityAnalysisRepository({ findOne } as never);
     const fingerprint = "a".repeat(64);
-    await repo.findLatest(parseUserId("10000000-0000-4000-8000-000000000001"), "60000000-0000-4000-8000-000000000001", fingerprint);
+    await repo.findLatest(parseUserId("10000000-0000-4000-8000-000000000001"), "ENTREPRENEUR", "60000000-0000-4000-8000-000000000001", fingerprint);
     const options = findOne.mock.calls[0]?.[0];
     expect(options.where.userId).toBe("10000000-0000-4000-8000-000000000001");
+    expect(options.where.userType).toBe("ENTREPRENEUR");
     expect(options.where.opportunityId).toBe("60000000-0000-4000-8000-000000000001");
     expect(options.where.aiAnalysis[Op.contains]).toEqual({ contextFingerprint: fingerprint });
     expect(options.order).toEqual([["generatedAt", "DESC"], ["id", "ASC"]]);
@@ -39,6 +40,7 @@ describe("OpportunityAnalysisRepository", () => {
     const repo = new OpportunityAnalysisRepository({ create } as never);
     const input = {
       userId: created.userId,
+      userType: "ENTREPRENEUR" as const,
       opportunityId: created.opportunityId,
       datasetVersionId: null,
       scoringModelId: null,

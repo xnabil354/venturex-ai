@@ -7,7 +7,7 @@ import {
   type NonAttribute,
 } from "sequelize";
 
-import type { UserId } from "../../auth/user-types";
+import type { UserId, UserType } from "../../auth/user-types";
 import type {
   AnalysisConfidenceLevel,
   AnalysisRiskLevel,
@@ -40,6 +40,7 @@ export class UserOpportunityAnalysis extends Model<
 > {
   declare id: CreationOptional<string>;
   declare userId: UserId;
+  declare userType: UserType;
   declare opportunityId: string;
   declare datasetVersionId: string | null;
   declare scoringModelId: string | null;
@@ -72,6 +73,12 @@ export function getUserOpportunityAnalysisModel(): typeof UserOpportunityAnalysi
     {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
       userId: { type: DataTypes.UUID, allowNull: false, field: "user_id" },
+      userType: {
+        type: DataTypes.STRING(32),
+        allowNull: false,
+        field: "user_type",
+        validate: { isIn: [["ENTREPRENEUR", "UMKM_EXISTING"]] },
+      },
       opportunityId: { type: DataTypes.UUID, allowNull: false, field: "opportunity_id" },
       datasetVersionId: { type: DataTypes.UUID, allowNull: true, field: "dataset_version_id" },
       scoringModelId: { type: DataTypes.UUID, allowNull: true, field: "scoring_model_id" },
@@ -143,8 +150,8 @@ export function getUserOpportunityAnalysisModel(): typeof UserOpportunityAnalysi
       underscored: true,
       indexes: [
         {
-          name: "user_opportunity_analyses_user_opportunity_generated_at_idx",
-          fields: ["userId", "opportunityId", { name: "generatedAt", order: "DESC" }],
+          name: "user_opportunity_analyses_user_type_opportunity_generated_at_idx",
+          fields: ["userId", "userType", "opportunityId", { name: "generatedAt", order: "DESC" }],
         },
         {
           name: "user_opportunity_analyses_user_generated_at_idx",

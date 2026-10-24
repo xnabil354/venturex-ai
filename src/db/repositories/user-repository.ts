@@ -22,6 +22,7 @@ export interface UserRepositoryPort {
   findByEmail(email: string): Promise<UserRecord | null>;
   create(input: CreateUserInput): Promise<UserRecord>;
   setInitialUserType(id: UserId, userType: UserType): Promise<UserRecord | null>;
+  switchUserType(id: UserId, userType: UserType): Promise<UserRecord | null>;
 }
 
 export interface UserProfileRepositoryPort {
@@ -82,6 +83,29 @@ export class UserRepository implements UserRepositoryPort, UserProfileRepository
         where: {
           id,
           onboardingStatus: { [Op.ne]: ONBOARDING_STATUSES.COMPLETED },
+        },
+      },
+    );
+
+    const updatedUser = updatedUsers[0];
+    return updatedUser ? toUserRecord(updatedUser) : null;
+  }
+
+  async switchUserType(
+    id: UserId,
+    userType: UserType,
+  ): Promise<UserRecord | null> {
+    const [, updatedUsers] = await this.model.update(
+      {
+        userType,
+        onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED,
+      },
+      {
+        returning: true,
+        where: {
+          id,
+          userType: { [Op.ne]: userType },
+          onboardingStatus: ONBOARDING_STATUSES.COMPLETED,
         },
       },
     );

@@ -14,6 +14,22 @@ export class UserTypeAlreadySelectedError extends Error {
   }
 }
 
+export class UserTypeSwitchNotAllowedError extends Error {
+  override readonly name = "UserTypeSwitchNotAllowedError";
+
+  constructor() {
+    super("User type hanya dapat diganti setelah onboarding selesai.");
+  }
+}
+
+export class UserTypeAlreadyActiveError extends Error {
+  override readonly name = "UserTypeAlreadyActiveError";
+
+  constructor() {
+    super("User type tersebut sudah aktif.");
+  }
+}
+
 export class CurrentUserNotFoundError extends Error {
   override readonly name = "CurrentUserNotFoundError";
 

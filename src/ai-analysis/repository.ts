@@ -3,11 +3,12 @@ import "server-only";
 import { Op } from "sequelize";
 import type { AnalysisRiskLevel, AnalysisScoreStatus } from "../scoring/persistence-types";
 import { getUserOpportunityAnalysisModel, type UserOpportunityAnalysis } from "../db/models/user-opportunity-analysis.model";
-import type { UserId } from "../auth/user-types";
+import type { UserId, UserType } from "../auth/user-types";
 
 export type OpportunityAnalysisRecord = {
   readonly id: string;
   readonly userId: UserId;
+  readonly userType: UserType;
   readonly opportunityId: string;
   readonly profileVersion: number;
   readonly opportunityScore: string | null;
@@ -31,7 +32,7 @@ export type OpportunityAnalysisCreateValues = Omit<OpportunityAnalysisRecord, "i
 };
 
 export interface OpportunityAnalysisRepositoryPort {
-  findLatest(userId: UserId, opportunityId: string, contextFingerprint: string): Promise<OpportunityAnalysisRecord | null>;
+  findLatest(userId: UserId, userType: UserType, opportunityId: string, contextFingerprint: string): Promise<OpportunityAnalysisRecord | null>;
   create(values: OpportunityAnalysisCreateValues): Promise<OpportunityAnalysisRecord>;
 }
 
@@ -39,6 +40,7 @@ function toRecord(model: UserOpportunityAnalysis): OpportunityAnalysisRecord {
   return {
     id: model.id,
     userId: model.userId,
+    userType: model.userType,
     opportunityId: model.opportunityId,
     profileVersion: model.profileVersion,
     opportunityScore: model.opportunityScore,
@@ -60,9 +62,9 @@ export class OpportunityAnalysisRepository implements OpportunityAnalysisReposit
     this.model = model;
   }
 
-  async findLatest(userId: UserId, opportunityId: string, contextFingerprint: string): Promise<OpportunityAnalysisRecord | null> {
+  async findLatest(userId: UserId, userType: UserType, opportunityId: string, contextFingerprint: string): Promise<OpportunityAnalysisRecord | null> {
     const model = await this.model.findOne({
-      where: { userId, opportunityId, aiAnalysis: { [Op.contains]: { contextFingerprint } as never } },
+      where: { userId, userType, opportunityId, aiAnalysis: { [Op.contains]: { contextFingerprint } as never } },
       order: [["generatedAt", "DESC"], ["id", "ASC"]],
     });
     return model ? toRecord(model) : null;

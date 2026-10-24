@@ -4,7 +4,9 @@ vi.mock("server-only", () => ({}));
 
 import {
   EmailAlreadyExistsError,
+  UserTypeAlreadyActiveError,
   UserTypeAlreadySelectedError,
+  UserTypeSwitchNotAllowedError,
 } from "./errors";
 import { AuthService } from "./service";
 import {
@@ -49,6 +51,17 @@ class MemoryUserRepository implements UserRepositoryPort {
       onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED,
       updatedAt: new Date(),
     };
+    return this.user;
+  }
+
+  async switchUserType(
+    id: UserRecord["id"],
+    userType: UserType,
+  ): Promise<UserRecord | null> {
+    if (!this.user || this.user.id !== id || this.user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || this.user.userType === userType) {
+      return null;
+    }
+    this.user = { ...this.user, userType, onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED, updatedAt: new Date() };
     return this.user;
   }
 
@@ -165,5 +178,38 @@ describe("AuthService", () => {
     await expect(service.register(registration)).rejects.toBeInstanceOf(
       EmailAlreadyExistsError,
     );
+  });
+
+  it("switches a completed account and sends it back to target onboarding", async () => {
+    const existingUser: UserRecord = {
+      id: parseUserId("00000000-0000-4000-8000-000000000006"),
+      email: "owner@example.com",
+      passwordHash: "stored-hash",
+      userType: USER_TYPES.ENTREPRENEUR,
+      onboardingStatus: ONBOARDING_STATUSES.COMPLETED,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const service = new AuthService(new MemoryUserRepository(existingUser));
+
+    const user = await service.switchUserType({ userType: USER_TYPES.UMKM_EXISTING }, existingUser.id);
+
+    expect(user.userType).toBe(USER_TYPES.UMKM_EXISTING);
+    expect(user.onboardingStatus).toBe(ONBOARDING_STATUSES.USER_TYPE_SELECTED);
+  });
+
+  it("does not switch an incomplete account or the already active persona", async () => {
+    const incomplete: UserRecord = {
+      id: parseUserId("00000000-0000-4000-8000-000000000007"),
+      email: "incomplete@example.com",
+      passwordHash: "stored-hash",
+      userType: USER_TYPES.ENTREPRENEUR,
+      onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await expect(new AuthService(new MemoryUserRepository(incomplete)).switchUserType({ userType: USER_TYPES.UMKM_EXISTING }, incomplete.id)).rejects.toBeInstanceOf(UserTypeSwitchNotAllowedError);
+    const completed: UserRecord = { ...incomplete, onboardingStatus: ONBOARDING_STATUSES.COMPLETED };
+    await expect(new AuthService(new MemoryUserRepository(completed)).switchUserType({ userType: USER_TYPES.ENTREPRENEUR }, completed.id)).rejects.toBeInstanceOf(UserTypeAlreadyActiveError);
   });
 });

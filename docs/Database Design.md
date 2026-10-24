@@ -792,6 +792,7 @@ Menyimpan snapshot:
 |---|---|---:|
 | `id` | UUID | No |
 | `user_id` | UUID | No |
+| `user_type` | VARCHAR(32) | No | Persona snapshot: `ENTREPRENEUR` atau `UMKM_EXISTING` |
 | `opportunity_id` | UUID | No |
 | `dataset_version_id` | UUID | Yes |
 | `scoring_model_id` | UUID | Yes |
@@ -912,13 +913,14 @@ Jangan menyimpan raw API key atau secret di JSON.
 |---|---|---:|
 | `id` | UUID | No |
 | `user_id` | UUID | No |
+| `user_type` | VARCHAR(32) | No | Persona saat relation dibuat |
 | `opportunity_id` | UUID | No |
 | `created_at` | TIMESTAMPTZ | No |
 
 Unique:
 
 ```text
-(user_id, opportunity_id)
+(user_id, user_type, opportunity_id)
 ```
 
 Mencegah duplicate Save.
@@ -1024,7 +1026,7 @@ dataset_versions(source_name, version_key)
 
 scoring_models(model_type, version)
 
-saved_opportunities(user_id, opportunity_id)
+saved_opportunities(user_id, user_type, opportunity_id)
 
 roadmap_steps(roadmap_id, sequence)
 ```
@@ -1097,7 +1099,7 @@ INDEX(source_date DESC)
 Critical:
 
 ```text
-INDEX(user_id, opportunity_id, generated_at DESC)
+INDEX(user_id, user_type, opportunity_id, generated_at DESC)
 ```
 
 Additional:
@@ -1112,8 +1114,8 @@ INDEX(scoring_model_id)
 ## `saved_opportunities`
 
 ```text
-UNIQUE(user_id, opportunity_id)
-INDEX(user_id, created_at DESC)
+UNIQUE(user_id, user_type, opportunity_id)
+INDEX(user_id, user_type, created_at DESC)
 ```
 
 ## `roadmaps`
@@ -1380,7 +1382,16 @@ Repository migrations currently use the sequence below. Migration `008-create-tr
 018-create-private-opportunity-hypotheses.ts
 019-add-entrepreneur-location-details.ts
 020-add-business-location-details.ts
+021-create-trend-notifications.ts
+022-create-journey-roadmap-progress.ts
+023-create-billing.ts
+024-create-admin-billing-controls.ts
+025-remove-trend-insight-credit-usage.ts
+026-rebuild-weekly-food-drink-notifications.ts
+027-scope-persona-history.ts
 ```
+
+Migration `027-scope-persona-history.ts` menambahkan scope persona ke saved opportunity dan analysis lama. Saved rows di-backfill dari `users.user_type`; analysis rows memakai `ai_analysis.userType` yang valid dan fallback ke `users.user_type`. Migration berhenti jika ada row yang tidak dapat dipetakan dan tidak menghapus histori.
 
 ---
 
@@ -1550,6 +1561,7 @@ findLatestForUser
 SELECT *
 FROM user_opportunity_analyses
 WHERE user_id = :user_id
+  AND user_type = :user_type
   AND opportunity_id = :opportunity_id
 ORDER BY generated_at DESC
 LIMIT 1;
@@ -1563,6 +1575,7 @@ FROM saved_opportunities s
 JOIN opportunities o
   ON o.id = s.opportunity_id
 WHERE s.user_id = :user_id
+  AND s.user_type = :user_type
 ORDER BY s.created_at DESC;
 ```
 
@@ -1782,7 +1795,6 @@ Belum final dari PRD/FSD:
 6. Confidence formula;
 7. external data source;
 8. refresh interval;
-9. change user type behavior;
 10. AI prompt version persistence.
 
 Schema dibuat agar keputusan tersebut tidak memerlukan redesign besar.
