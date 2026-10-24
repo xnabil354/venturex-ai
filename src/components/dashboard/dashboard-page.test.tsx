@@ -123,7 +123,7 @@ describe("DashboardPage", () => {
     expect(markup).toContain("Selamat datang kembali");
     expect(markup).toContain("Profil calon pengusaha Anda");
     expect(markup).not.toContain("Jalur Calon Pengusaha");
-    expect(markup).toContain("Profil siap");
+    expect(markup).not.toContain("Profil siap");
     expect(markup).toContain('href="/profile"');
     expect(markup).toContain("Edit profil");
     expect(markup).toContain("Rp 5.000.000");

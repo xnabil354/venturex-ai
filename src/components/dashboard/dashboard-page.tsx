@@ -43,7 +43,6 @@ type DashboardLayoutProps = {
   readonly dashboard: DashboardDto;
   readonly profileUpdated: boolean;
   readonly modules: readonly ModuleDefinition[];
-  readonly profileStatus: string | null;
   readonly profileSummary: ReactNode;
   readonly profileTitle: string;
 };
@@ -51,7 +50,6 @@ type DashboardLayoutProps = {
 function DashboardLayout({
   dashboard,
   modules,
-  profileStatus,
   profileSummary,
   profileTitle,
   profileUpdated,
@@ -111,7 +109,6 @@ function DashboardLayout({
                 </Link>
               ) : null
             }
-            statusLabel={profileStatus}
             title={profileTitle}
           >
             {profileSummary}
@@ -162,7 +159,6 @@ export function DashboardPage({ dashboard, profileUpdated = false, viewerId }: D
           dashboard={dashboard}
           {...(viewerId ? { viewerId } : {})}
           modules={entrepreneurModules}
-          profileStatus="Profil siap"
           profileSummary={<EntrepreneurSummary profile={dashboard.profile} />}
           profileTitle="Profil calon usaha"
           profileUpdated={profileUpdated}
@@ -174,7 +170,6 @@ export function DashboardPage({ dashboard, profileUpdated = false, viewerId }: D
           dashboard={dashboard}
           {...(viewerId ? { viewerId } : {})}
           modules={businessModules}
-          profileStatus={null}
           profileSummary={<BusinessSummary profile={dashboard.profile} />}
           profileTitle="Profil usaha"
           profileUpdated={profileUpdated}

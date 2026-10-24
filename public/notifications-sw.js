@@ -32,11 +32,9 @@ self.addEventListener("push", (event) => {
         // An offline notification contains only generic text, never profile or search details.
       }
       await self.registration.showNotification(
-        message.test ? "Notifikasi aktif" : "Tren terbaru untuk Anda",
+        "Ringkasan Food & Drink",
         {
-          body: message.test
-            ? "Perangkat ini siap menerima ringkasan tren."
-            : "Ringkasan tren Anda sudah tersedia.",
+          body: "Ringkasan mingguan worldwide Anda sudah tersedia.",
           tag: `venturex-${message.id}`,
           icon: "/notification-icon-192.png",
           badge: "/notification-icon-192.png",

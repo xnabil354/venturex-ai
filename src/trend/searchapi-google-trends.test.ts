@@ -163,6 +163,32 @@ describe("SearchApi Google Trends adapter", () => {
     expect(result.providerDiagnostics.durationMs).toBeGreaterThanOrEqual(0);
   });
 
+  it("uses the global Food & Drink category without a profile query", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => response(providerPayload));
+    const adapter = new SearchApiGoogleTrendsAdapter(
+      () => enabled,
+      fetcher,
+      () => new Date("2026-10-26T05:00:00.000Z"),
+    );
+    await adapter.foodAndDrinkRelatedQueries({
+      period: "custom-date",
+      startDate: "2026-10-01",
+      endDate: "2026-10-26",
+      property: "web",
+      geo: "",
+    });
+    const url = new URL(String(fetcher.mock.calls[0]?.[0]));
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      engine: "google_trends",
+      data_type: "RELATED_QUERIES",
+      geo: "",
+      cat: "71",
+      tz: "-420",
+      time: "2026-10-01 2026-10-26",
+    });
+    expect(url.searchParams.has("q")).toBe(false);
+  });
+
   it("requests TIMESERIES and GEO_MAP with shared filters, exact region granularity, and independent cached entries", async () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = new URL(String(input));

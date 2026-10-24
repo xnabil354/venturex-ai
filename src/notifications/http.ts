@@ -1,17 +1,19 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getCurrentUser } from "@/auth/current-user";
 import { isUserType } from "@/auth/user-types";
 import {
-  defaultPreferences,
+  NOTIFICATION_CATEGORY,
+  NOTIFICATION_SCHEDULE_LABEL,
+  NOTIFICATION_SCOPE,
   endpointSchema,
-  preferenceSchema,
+  notificationPreferenceSchema,
+  subscriptionSchema,
 } from "./contract";
 import { NotificationRepository } from "./repository";
-import { notificationTopics } from "./topics";
-import { pushConfig, sendPush } from "./push";
-import { subscriptionSchema } from "./contract";
+import { pushConfig } from "./push";
+
+type NotificationSection = "inbox" | "preferences" | "push" | "context";
 
 function json(data: unknown, status = 200): Response {
   return Response.json(data, {
@@ -27,8 +29,22 @@ class HttpError extends Error {
     super(message);
   }
 }
+function assertSameOrigin(request: Request): void {
+  // ASVS 3.5.1: state changes require an exact same-origin request.
+  const origin = request.headers.get("origin");
+  try {
+    if (!origin || new URL(origin).origin !== new URL(request.url).origin)
+      throw new HttpError(403, "Permintaan tidak diizinkan.");
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(403, "Permintaan tidak diizinkan.");
+  }
+}
 async function body(request: Request): Promise<unknown> {
   if (!request.body) throw new HttpError(400, "Data belum lengkap.");
+  // ASVS 4.2.5: reject unexpected media types and cap request-body processing.
+  if (request.headers.get("content-type")?.split(";", 1)[0] !== "application/json")
+    throw new HttpError(415, "Format data tidak didukung.");
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -51,68 +67,44 @@ async function body(request: Request): Promise<unknown> {
     reader.releaseLock();
   }
 }
+
 export async function notificationHttp(
   request: Request,
-  section: "inbox" | "preferences" | "push" | "test" | "context",
+  section: NotificationSection,
 ): Promise<Response> {
   try {
-    if (request.method !== "GET") {
-      const origin = request.headers.get("origin");
-      if (!origin || new URL(origin).origin !== new URL(request.url).origin)
-        throw new HttpError(403, "Permintaan tidak diizinkan.");
-    }
+    if (request.method !== "GET") assertSameOrigin(request);
     const user = await getCurrentUser();
+    // ASVS 8.3.1: authorization is established server-side for every request.
     if (!user) throw new HttpError(401, "Silakan masuk kembali.");
     if (user.onboardingStatus !== "COMPLETED" || !isUserType(user.userType))
       throw new HttpError(403, "Lengkapi profil terlebih dahulu.");
-    if (section === "context") return json({ userId: user.id });
+    if (section === "context") {
+      if (request.method !== "GET") throw new HttpError(405, "Metode tidak didukung.");
+      return json({ userId: user.id });
+    }
     const repository = new NotificationRepository();
     if (section === "preferences") {
-      const options = await notificationTopics(user);
       if (request.method === "PATCH") {
-        const preferences = preferenceSchema.parse(await body(request));
-        const selected = options.find(
-          (option) => option.key === preferences.queryKey,
-        );
-        if (!selected && preferences.enabled)
-          throw new HttpError(422, "Pilih kembali topik dari profil Anda.");
-        await repository.savePreferences(
-          user.id,
-          preferences,
-          selected?.query ?? "",
-        );
-      }
+        // ASVS 2.2.1: reject every field except the server-owned toggle.
+        const preference = notificationPreferenceSchema.parse(await body(request));
+        await repository.setEnabled(user.id, preference.enabled);
+      } else if (request.method !== "GET") throw new HttpError(405, "Metode tidak didukung.");
       const row = await repository.preferences(user.id);
       const config = pushConfig();
       return json({
-        preferences: row
-          ? { ...row.settings, enabled: row.enabled }
-          : {
-              ...defaultPreferences,
-              queryKey:
-                options.find((option) => option.key.startsWith("product:"))
-                  ?.key ??
-                options[0]?.key ??
-                "preferred",
-            },
-        topicQuery: row?.topic_query ?? null,
+        enabled: row?.enabled ?? false,
         status: row?.status ?? null,
-        options,
+        category: NOTIFICATION_CATEGORY,
+        scope: NOTIFICATION_SCOPE,
+        schedule: NOTIFICATION_SCHEDULE_LABEL,
         pushAvailable: Boolean(config),
         publicKey: config?.publicKey ?? null,
         userId: user.id,
       });
     }
     if (section === "inbox") {
-      if (request.method === "PATCH") {
-        const { id } = z
-          .object({ id: z.string().uuid() })
-          .strict()
-          .parse(await body(request));
-        if (!(await repository.markRead(user.id, id)))
-          throw new HttpError(404, "Notifikasi tidak ditemukan.");
-        return json({ ok: true });
-      }
+      if (request.method !== "GET") throw new HttpError(405, "Metode tidak didukung.");
       const cursor = new URL(request.url).searchParams.get("before");
       if (cursor && !z.string().uuid().safeParse(cursor).success)
         throw new HttpError(400, "Halaman tidak valid.");
@@ -120,39 +112,6 @@ export async function notificationHttp(
         ...(await repository.inbox(user.id, cursor ?? undefined)),
         userId: user.id,
       });
-    }
-    if (section === "test") {
-      const { endpoint } = z
-        .object({ endpoint: endpointSchema })
-        .strict()
-        .parse(await body(request));
-      if (!pushConfig())
-        throw new HttpError(503, "Notifikasi perangkat belum tersedia.");
-      const subscription = await repository.claimTest(user.id, endpoint);
-      if (!subscription)
-        throw new HttpError(
-          429,
-          "Aktifkan perangkat atau tunggu satu menit sebelum mencoba lagi.",
-        );
-      try {
-        await sendPush(subscription, {
-          userId: user.id,
-          id: randomUUID(),
-          test: true,
-        });
-      } catch (error) {
-        const status =
-          error && typeof error === "object" && "statusCode" in error
-            ? Number(error.statusCode)
-            : 0;
-        if (status === 404 || status === 410)
-          await repository.unsubscribe(user.id, endpoint);
-        throw new HttpError(
-          503,
-          "Notifikasi belum terkirim. Coba aktifkan ulang perangkat.",
-        );
-      }
-      return json({ ok: true });
     }
     if (request.method === "DELETE") {
       const { endpoint } = z
@@ -162,6 +121,7 @@ export async function notificationHttp(
       await repository.unsubscribe(user.id, endpoint);
       return json({ ok: true });
     }
+    if (request.method !== "POST") throw new HttpError(405, "Metode tidak didukung.");
     if (!pushConfig())
       throw new HttpError(503, "Notifikasi perangkat belum tersedia.");
     const subscription = subscriptionSchema.parse(await body(request));
@@ -179,6 +139,12 @@ export async function notificationHttp(
         { error: { message: "Periksa kembali pengaturan Anda." } },
         400,
       );
+    // Keep operational diagnostics server-side; never return internal details to the client.
+    console.error("venturex_notification_request_failed", {
+      section,
+      method: request.method,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
     return json(
       { error: { message: "Notifikasi belum dapat dimuat. Coba lagi nanti." } },
       503,
