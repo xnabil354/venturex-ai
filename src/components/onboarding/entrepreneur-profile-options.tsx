@@ -142,7 +142,7 @@ export function CheckboxGroup({
                   aria-required="true"
                   className={cx(
                     "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
-                    otherOption.error ? "border-midnight-wine" : "border-stone-gray",
+                    otherOption.error ? "border-red-600" : "border-stone-gray",
                   )}
                   id={`${id}-other-value`}
                   maxLength={100}
@@ -153,7 +153,7 @@ export function CheckboxGroup({
                 />
                 {otherOption.error ? (
                   <p
-                    className="text-body-sm font-w540 text-midnight-wine"
+                    className="text-body-sm font-w540 text-red-700"
                     id={`${id}-other-value-error`}
                   >
                     {otherOption.error}
@@ -165,7 +165,7 @@ export function CheckboxGroup({
         ) : null}
       </div>
       {error ? (
-        <p className="text-body-sm font-w540 text-midnight-wine" id={errorId}>
+        <p className="text-body-sm font-w540 text-red-700" id={errorId}>
           {error}
         </p>
       ) : null}

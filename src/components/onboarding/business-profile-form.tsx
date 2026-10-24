@@ -292,7 +292,7 @@ export function BusinessProfileForm({
         {step === 2 ? <BusinessProfileStepTwo errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {step === 3 ? <BusinessProfileStepThree errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {formError ? (
-          <div aria-live="assertive" className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal" ref={errorSummaryRef} role="alert" tabIndex={-1}>
+          <div aria-live="assertive" className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-12 text-body-sm font-w540 text-red-800" ref={errorSummaryRef} role="alert" tabIndex={-1}>
             {formError}
           </div>
         ) : null}

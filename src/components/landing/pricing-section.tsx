@@ -94,7 +94,7 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
 
         <aside className="mt-16 grid gap-10 border-t border-soft-mist pt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:items-start">
           <h3 className="text-body font-w540 text-ink-charcoal">Butuh kredit tambahan nanti?</h3>
-          <p className="text-body-sm leading-relaxed text-stone-gray md:text-right">Top up pay-as-you-go tersedia di halaman Billing setelah akun aktif. Kredit top up tidak kedaluwarsa, tetapi aksi AI tetap memerlukan paket aktif atau kredit trial yang tersisa. Tidak ada auto-debit.</p>
+          <p className="text-body-sm leading-relaxed text-stone-gray md:text-right">Top up pay-as-you-go tersedia di halaman Billing setelah akun aktif. Kredit top up tidak kedaluwarsa, tetapi aksi AI tetap memerlukan paket aktif atau kredit trial yang tersisa.</p>
         </aside>
       </div>
     </section>

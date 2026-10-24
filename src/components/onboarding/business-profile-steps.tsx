@@ -248,7 +248,7 @@ function TextareaField({ error, hint, id, label, maxLength, onChange, value }: T
         aria-invalid={error ? true : undefined}
         className={cx(
           "min-h-32 w-full resize-y rounded-small-buttons border bg-paper-white px-12 py-12 text-body text-ink-charcoal transition-[border-color,border-width] duration-200 ease-out placeholder:text-stone-gray focus:border-2 focus:border-royal-violet focus-visible:outline-none",
-          error ? "border-midnight-wine" : "border-stone-gray",
+          error ? "border-red-600" : "border-stone-gray",
         )}
         id={id}
         maxLength={maxLength}
@@ -257,7 +257,7 @@ function TextareaField({ error, hint, id, label, maxLength, onChange, value }: T
         value={value}
       />
       {hint ? <p className="text-body-sm text-stone-gray" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="text-body-sm font-w540 text-midnight-wine" id={`${id}-error`}>{error}</p> : null}
+      {error ? <p className="text-body-sm font-w540 text-red-700" id={`${id}-error`}>{error}</p> : null}
     </div>
   );
 }

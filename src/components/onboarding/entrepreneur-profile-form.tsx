@@ -393,7 +393,7 @@ export function EntrepreneurProfileForm({
         {formError ? (
           <div
             aria-live="assertive"
-            className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal"
+            className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-12 text-body-sm font-w540 text-red-800"
             ref={errorSummaryRef}
             role="alert"
             tabIndex={-1}

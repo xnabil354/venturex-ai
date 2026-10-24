@@ -194,7 +194,7 @@ export function RegisterForm() {
           label="Email"
           name="email"
           onChange={(event) => updateField("email", event.target.value)}
-          placeholder="Masukan email"
+          
           required
           type="email"
           value={values.email}
@@ -208,7 +208,7 @@ export function RegisterForm() {
           label="Password"
           name="password"
           onChange={(event) => updateField("password", event.target.value)}
-          placeholder="Masukan password"
+
           required
           type={showPassword ? "text" : "password"}
           value={values.password}
