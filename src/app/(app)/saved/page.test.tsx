@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/auth/current-user", () => ({ getCurrentUser: mocks.currentUser }));
-vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
+vi.mock("next/navigation", () => ({ notFound: mocks.notFound, useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/opportunity/private-hypothesis-repository", () => ({
   PrivateOpportunityHypothesisRepository: class MockPrivateOpportunityHypothesisRepository {
     async listPageForUser(userId: string, page: number, saved: boolean) { return { items: await mocks.list(userId, saved), page, hasMore: false }; }

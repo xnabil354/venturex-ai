@@ -221,7 +221,7 @@ function ChartSection({ geoLabel, response }: { readonly geoLabel: string; reado
   return (
     <Card className="grid min-w-0 gap-14 border-soft-mist bg-paper-white p-16 sm:p-20">
       <div>
-        <h2 className="text-heading-sm font-w460 text-black">Minat Seiring Waktu</h2>
+        <h2 className="text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460">Minat Seiring Waktu</h2>
         <p className="mt-6 text-caption leading-body-sm text-stone-gray">{interestSubtitle(response, geoLabel)} · Indeks relatif 0–100 untuk {response.productQuery}.</p>
       </div>
       {response.availability.timeSeries === "failed" ? (
@@ -255,7 +255,7 @@ function ChartSection({ geoLabel, response }: { readonly geoLabel: string; reado
             <text fill="#66615e" fontSize="12" textAnchor="start" x={chart.left} y="266">{localDateLabel(chart.minTime, chart.range)}</text>
             <text fill="#66615e" fontSize="12" textAnchor="end" x={chart.right} y="266">{localDateLabel(chart.maxTime, chart.range)}</text>
           </svg>
-          <p aria-live="polite" className="min-h-20 text-body-sm text-black">
+          <p aria-live="polite" className="min-h-20 text-body-sm text-ink-charcoal">
             {active ? `${localDateTime(active.timestamp)} WIB · Indeks ${active.interestIndex ?? "Tidak tersedia"} · Label sumber: ${active.label}` : "Pilih pengamatan pada grafik."}
           </p>
           <p className="text-caption leading-body-sm text-stone-gray">
@@ -310,7 +310,7 @@ function RegionalSection({ geoLabel, response, onRetry, retrying, retryError }: 
   return (
     <Card className="grid min-w-0 gap-14 border-soft-mist bg-paper-white p-16 sm:p-20">
       <div>
-        <h2 className="text-heading-sm font-w460 text-black">Minat Menurut Wilayah</h2>
+        <h2 className="text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460">Minat Menurut Wilayah</h2>
         <p className="mt-6 text-caption leading-body-sm text-stone-gray">{interestSubtitle(response, geoLabel)} · minat relatif per wilayah · {response.productQuery}</p>
       </div>
       {response.availability.regionalInterest === "failed" ? (
@@ -368,7 +368,7 @@ function RegionalSection({ geoLabel, response, onRetry, retrying, retryError }: 
                   ))}
                   <span className="inline-flex items-center gap-5"><span aria-hidden="true" className="size-[12px] rounded-[2px] border border-black/10" style={{ backgroundColor: regionColor(null) }} />Tidak tersedia</span>
                 </div>
-                <p aria-live="polite" className="min-h-18 text-body-sm text-black">
+                <p aria-live="polite" className="min-h-18 text-body-sm text-ink-charcoal">
                   {activeRegion ? `${activeRegion.name} · ${activeRegion.interestIndex ?? "Data tidak tersedia"}` : "Arahkan atau pilih wilayah pada peta atau tabel."}
                 </p>
               </>
@@ -380,23 +380,23 @@ function RegionalSection({ geoLabel, response, onRetry, retrying, retryError }: 
           <div className="grid min-w-0 content-start gap-10">
             <div aria-label="Tabel peringkat minat wilayah, dapat digulir mendatar" className="overflow-x-auto rounded-small-buttons border border-soft-mist" role="region" tabIndex={0}>
               <table aria-label="Peringkat minat wilayah" className="w-full min-w-[340px] border-collapse text-left text-body-sm">
-                <thead className="bg-warm-parchment text-caption font-w540 text-black"><tr><th className="px-10 py-10" scope="col">Posisi</th><th className="px-10 py-10" scope="col">Wilayah</th><th className="px-10 py-10" scope="col">Minat penelusuran</th></tr></thead>
+                <thead className="bg-warm-parchment text-caption font-w540 text-ink-charcoal"><tr><th className="px-10 py-10" scope="col">Posisi</th><th className="px-10 py-10" scope="col">Wilayah</th><th className="px-10 py-10" scope="col">Minat penelusuran</th></tr></thead>
                 <tbody className="divide-y divide-soft-mist">
                   {visibleRows.map((row) => (
                     <tr className={selectedCode === (mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode) ? "bg-warm-parchment/60" : undefined} key={row.geoCode} onMouseEnter={() => setHoverCode(mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} onMouseLeave={() => setHoverCode(null)}>
-                      <td className="whitespace-nowrap px-10 py-10 align-middle text-black">{row.position}</td>
+                      <td className="whitespace-nowrap px-10 py-10 align-middle text-ink-charcoal">{row.position}</td>
                       <td className="px-10 py-8 align-middle">
-                        <button aria-pressed={selectedCode === (mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} className="block w-full rounded-small-buttons py-2 text-left text-black underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" onBlur={() => setHoverCode(null)} onClick={() => setSelectedCode(mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} onFocus={() => setHoverCode(mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} type="button">{row.name}</button>
+                        <button aria-pressed={selectedCode === (mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} className="block w-full rounded-small-buttons py-2 text-left text-ink-charcoal underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" onBlur={() => setHoverCode(null)} onClick={() => setSelectedCode(mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} onFocus={() => setHoverCode(mapSearchApiRegionToBoundaryCode(row.geoCode) ?? row.geoCode)} type="button">{row.name}</button>
                         <span className="mt-5 block h-4 overflow-hidden rounded-full bg-warm-parchment" aria-hidden="true"><span className="block h-full rounded-full" style={{ backgroundColor: regionColor(row.interestIndex), width: row.interestIndex === null || maxIndex === 0 ? "0%" : `${row.interestIndex / maxIndex * 100}%` }} /></span>
                       </td>
-                      <td className="whitespace-nowrap px-10 py-10 align-middle text-black">{row.interestIndex ?? "Tidak tersedia"}</td>
+                      <td className="whitespace-nowrap px-10 py-10 align-middle text-ink-charcoal">{row.interestIndex ?? "Tidak tersedia"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {rows.length > 10 ? (
-              <div className="flex items-center justify-between gap-8 text-caption text-black">
+              <div className="flex flex-wrap items-center justify-between gap-8 text-caption text-ink-charcoal">
                 <span aria-live="polite">{(page - 1) * 10 + 1}–{Math.min(page * 10, rows.length)} dari {rows.length} wilayah</span>
                 <div className="flex gap-6">
                   <button aria-label="Halaman sebelumnya untuk wilayah" className="min-h-[44px] rounded-small-buttons border border-soft-mist px-12 focus-visible:outline-2 focus-visible:outline-royal-violet disabled:opacity-40" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} type="button">Sebelumnya</button>

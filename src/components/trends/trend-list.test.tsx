@@ -13,7 +13,7 @@ describe("TrendList", () => {
     expect(markup).toContain("Kopi");
     expect(markup).toContain("Tren Saat Ini");
     expect(markup).toContain("Produk usaha dibaca dari profil akun");
-    expect(markup).toContain("berdasarkan produk usaha di profil Anda");
+    expect(markup).toContain("untuk produk usaha di profil Anda");
     expect(markup).not.toContain("Trending Now");
     expect(markup).not.toContain("kata kunci");
     expect(markup).not.toContain("Matcha");

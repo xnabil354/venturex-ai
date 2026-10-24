@@ -402,22 +402,24 @@ export function PrivateOpportunityFinder({
 
   return (
     <PageContainer>
-      <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
-        <header className="grid max-w-[760px] gap-12 border-b border-soft-mist pb-24">
+      <div className="grid gap-20 py-24 sm:gap-24 sm:py-32 lg:py-48">
+        <header className="grid max-w-[760px] gap-8 border-b border-soft-mist pb-16 sm:gap-12 sm:pb-24">
           <div className="flex flex-wrap items-center gap-12">
-            <h1 className="text-heading-lg font-w460 leading-heading-lg text-ink-charcoal sm:text-display sm:leading-display">
+            <h1 className="text-subheading font-w460 leading-subheading tracking-[-0.4px] text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:text-display lg:leading-display lg:tracking-display">
               {view === "saved" ? "Saved Opportunities" : "Opportunity Finder"}
             </h1>
           </div>
           <p className="text-body leading-relaxed text-stone-gray">
-            Pilih sinyal Google Trends untuk menyusun hipotesis. Minat pencarian belum membuktikan pembelian.
+            {view === "saved"
+              ? "Kumpulan hipotesis yang Anda simpan. Tinjau kembali bukti, bandingkan peluang yang sudah dianalisis, atau hapus jika tidak lagi diperlukan."
+              : "Pilih sinyal Google Trends untuk menyusun hipotesis. Minat pencarian belum membuktikan pembelian."}
           </p>
         </header>
 
         {view === "finder" ? (
           <Card aria-labelledby="generate-ideas-title" className="grid w-full gap-16 border-soft-mist bg-paper-white p-16 sm:p-20">
             <div className="flex flex-wrap items-baseline justify-between gap-8 border-b border-soft-mist pb-12">
-              <h2 className="text-heading-sm font-w460 text-ink-charcoal" id="generate-ideas-title">
+              <h2 className="text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460" id="generate-ideas-title">
                 Buat hipotesis dari sinyal Google Trends
               </h2>
             </div>
@@ -558,7 +560,7 @@ export function PrivateOpportunityFinder({
         ) : null}
 
         {profileActionRequired && view === "finder" ? <StatusNotice tone="info">Lengkapi produk yang ingin dieksplorasi sebelum memuat sinyal. <Link href="/profile" className="inline-flex min-h-button items-center text-royal-violet underline focus-visible:outline-2 focus-visible:outline-royal-violet">Edit profil</Link></StatusNotice> : null}
-        {error ? <StatusNotice aria-live="polite" role="alert" tone="error">{error}</StatusNotice> : null}
+        {error ? <StatusNotice aria-live="polite" role="alert" tone="error"><span className="text-midnight-wine">{error}</span></StatusNotice> : null}
         {notice ? <StatusNotice aria-live="polite" role="status" tone={noticeTone}>{notice}</StatusNotice> : null}
 
         {items.length === 0 && initialLoadFailed ? (
@@ -569,12 +571,12 @@ export function PrivateOpportunityFinder({
           <ul aria-label={view === "saved" ? "Hipotesis tersimpan pribadi" : "Hipotesis peluang pribadi"} className="grid gap-16">
             {items.map((item) => (
               <li className="scroll-mt-96" data-hypothesis-id={item.id} id={`hypothesis-${item.id}`} key={item.id}>
-                <Card className="grid min-w-0 gap-24 border-soft-mist bg-paper-white p-20 sm:p-32">
+                <Card className="grid min-w-0 gap-20 border-soft-mist bg-paper-white p-16 sm:gap-24 sm:p-24">
                   <article className="grid min-w-0 gap-20">
                     <div className="flex flex-wrap items-center justify-between gap-8">
                       <div className="flex flex-wrap gap-6"><Badge tone="wash">Ide awal · perlu dicoba</Badge>{opportunityTypeLabel(item.hypothesis.opportunityType) ? <Badge tone="neutral">{opportunityTypeLabel(item.hypothesis.opportunityType)}</Badge> : null}</div>
                     </div>
-                    <h2 className="wrap-anywhere text-heading-sm font-w460 text-ink-charcoal">{item.hypothesis.title}</h2>
+                    <h2 className="wrap-anywhere text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460">{item.hypothesis.title}</h2>
                     <p className="wrap-anywhere max-w-[72ch] text-body leading-relaxed text-ink-charcoal">{item.hypothesis.concept}</p>
                     <PrivateHypothesisContent hypothesis={item.hypothesis} />
                     <details className="border-t border-soft-mist text-caption leading-relaxed text-stone-gray">

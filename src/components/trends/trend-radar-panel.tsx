@@ -100,11 +100,11 @@ function TablePagination({
   const pageCount = Math.ceil(totalRows / tablePageSize);
   const firstRow = (currentPage - 1) * tablePageSize + 1;
   const lastRow = Math.min(currentPage * tablePageSize, totalRows);
-  const buttonClass = "inline-flex size-[44px] items-center justify-center rounded-small-buttons border border-soft-mist text-black transition-colors hover:bg-warm-parchment disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet";
+  const buttonClass = "inline-flex size-[44px] items-center justify-center rounded-small-buttons border border-soft-mist text-ink-charcoal transition-colors hover:bg-warm-parchment disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet";
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-8">
-      <span aria-live="polite" className="text-caption text-black">
+      <span aria-live="polite" className="text-caption text-ink-charcoal">
         Menampilkan {firstRow}–{lastRow} dari {totalRows} kueri
       </span>
       <div aria-label={`Navigasi halaman ${tableName}`} className="flex items-center gap-6" role="group">
@@ -156,7 +156,7 @@ function TopQueriesTable({
             <col className="w-[96px]" />
             <col className="w-[112px]" />
           </colgroup>
-          <thead className="bg-warm-parchment text-caption font-w540 text-black">
+          <thead className="bg-warm-parchment text-caption font-w540 text-ink-charcoal">
             <tr>
               <th className="px-10 py-10" scope="col">Posisi</th>
               <th className="px-10 py-10" scope="col">Kueri</th>
@@ -169,9 +169,9 @@ function TopQueriesTable({
               <tr><td className="px-10 py-16 text-stone-gray" colSpan={4}>Belum ada kueri teratas untuk filter ini. Data Google Trends mungkin belum cukup. Coba rentang waktu lebih panjang atau wilayah lebih luas.</td></tr>
             ) : visibleRows.map((row) => (
               <tr key={row.position + "-" + row.query}>
-                <td className="whitespace-nowrap px-10 py-10 align-top text-black">{row.position}</td>
-                <td className="break-words px-10 py-10 align-top font-w540 text-black">{row.query}</td>
-                <td className="break-words px-10 py-10 align-top text-black">{row.interestIndex ?? "Tidak tersedia"}</td>
+                <td className="whitespace-nowrap px-10 py-10 align-top text-ink-charcoal">{row.position}</td>
+                <td className="break-words px-10 py-10 align-top font-w540 text-ink-charcoal">{row.query}</td>
+                <td className="break-words px-10 py-10 align-top text-ink-charcoal">{row.interestIndex ?? "Tidak tersedia"}</td>
                 <td className="px-10 py-10 align-top">
                   {row.sourceUrl ? <a className="whitespace-nowrap text-royal-violet underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal-violet" href={row.sourceUrl} rel="noreferrer" target="_blank">Google Trends</a> : <span className="text-stone-gray">Tidak tersedia</span>}
                 </td>
@@ -206,7 +206,7 @@ function RisingQueriesTable({
             <col className="w-[96px]" />
             <col className="w-[112px]" />
           </colgroup>
-          <thead className="bg-warm-parchment text-caption font-w540 text-black">
+          <thead className="bg-warm-parchment text-caption font-w540 text-ink-charcoal">
             <tr>
               <th className="px-10 py-10" scope="col">Posisi</th>
               <th className="px-10 py-10" scope="col">Kueri</th>
@@ -219,9 +219,9 @@ function RisingQueriesTable({
               <tr><td className="px-10 py-16 text-stone-gray" colSpan={4}>Belum ada kueri meningkat untuk filter ini. Data Google Trends mungkin belum cukup. Coba rentang waktu lebih panjang atau wilayah lebih luas.</td></tr>
             ) : visibleRows.map((row) => (
               <tr key={row.position + "-" + row.query}>
-                <td className="whitespace-nowrap px-10 py-10 align-top text-black">{row.position}</td>
-                <td className="break-words px-10 py-10 align-top font-w540 text-black">{row.query}</td>
-                <td className="break-words px-10 py-10 align-top text-black">
+                <td className="whitespace-nowrap px-10 py-10 align-top text-ink-charcoal">{row.position}</td>
+                <td className="break-words px-10 py-10 align-top font-w540 text-ink-charcoal">{row.query}</td>
+                <td className="break-words px-10 py-10 align-top text-ink-charcoal">
                   {row.isBreakout ? "Breakout" : row.growthLabel ?? (row.growthPercent === null || row.growthPercent === undefined ? "Tidak tersedia" : String(row.growthPercent) + "%")}
                 </td>
                 <td className="px-10 py-10 align-top">
@@ -542,7 +542,7 @@ function TrendRadarSession({
             <Card className="grid min-w-0 content-start gap-14 border-soft-mist bg-paper-white p-16 sm:p-20">
               <div className="flex flex-wrap items-start justify-between gap-10">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-heading-sm font-w460 text-black">Kueri Terpopuler</h2>
+                  <h2 className="text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460">Kueri Terpopuler</h2>
                   <p className="mt-6 text-caption leading-body-sm text-stone-gray">Kueri terkait yang ditampilkan oleh Google Trends untuk konteks terpilih.</p>
                 </div>
                 <Button
@@ -562,7 +562,7 @@ function TrendRadarSession({
             <Card className="grid min-w-0 content-start gap-14 border-soft-mist bg-paper-white p-16 sm:p-20">
               <div className="flex flex-wrap items-start justify-between gap-10">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-heading-sm font-w460 text-black">Kueri yang Makin Populer</h2>
+                  <h2 className="text-label-bold font-w540 text-ink-charcoal sm:text-heading-sm sm:font-w460">Kueri yang Makin Populer</h2>
                   <p className="mt-6 text-caption leading-body-sm text-stone-gray">Label pertumbuhan mengikuti nilai yang disediakan sumber; Breakout tidak dikonversi menjadi persentase.</p>
                 </div>
                 <Button
