@@ -14,9 +14,9 @@ export function ProfileSummary({ action, children, title }: ProfileSummaryProps)
 
   return (
     <section aria-labelledby={headingId} className="grid gap-12 sm:gap-16">
-      <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-10 sm:gap-16">
         <h2
-          className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal"
+          className="min-w-0 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal"
           id={headingId}
         >
           {title}
