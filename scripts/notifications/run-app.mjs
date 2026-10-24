@@ -1,12 +1,16 @@
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import { existsSync } from "node:fs";
 const require = createRequire(import.meta.url);
 const command = process.argv[2];
 if (command !== "dev" && command !== "start")
   throw new Error("Expected dev or start");
+const standaloneServer = command === "start" && existsSync("server.js");
 const web = spawn(
   process.execPath,
-  [require.resolve("next/dist/bin/next"), command, ...process.argv.slice(3)],
+  standaloneServer
+    ? ["server.js", ...process.argv.slice(3)]
+    : [require.resolve("next/dist/bin/next"), command, ...process.argv.slice(3)],
   { stdio: "inherit", windowsHide: true },
 );
 const worker = spawn(
@@ -22,6 +26,8 @@ let stopping = false;
 function stop() {
   if (stopping) return;
   stopping = true;
+  process.off("SIGINT", stop);
+  process.off("SIGTERM", stop);
   web.kill("SIGTERM");
   worker.kill("SIGTERM");
 }

@@ -59,12 +59,12 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
    cp .env.example .env
    ```
 
-   Replace `AUTH_SECRET` with a locally generated secret. The remaining default database settings match `compose.yaml`.
+   Replace `AUTH_SECRET` with a locally generated secret. For a fresh database, also set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters before migrations. It becomes the password for `adminventurex@gmail.com`; remove the variable after migrations. The remaining default database settings match `compose.yaml`.
 
 3. Start PostgreSQL:
 
    ```bash
-   docker compose up -d postgres
+   docker compose -f compose.yaml -f compose.dev.yaml up -d postgres
    ```
 
 4. Apply schema migrations and seed reference data:
@@ -85,8 +85,37 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
 To stop the local database without deleting its named volume:
 
 ```bash
-docker compose stop postgres
+docker compose -f compose.yaml -f compose.dev.yaml stop postgres
 ```
+
+## VPS deployment with Docker Compose
+
+The production Compose setup runs the app and PostgreSQL. It publishes the app only on `127.0.0.1:3000` by default for a host-installed Nginx reverse proxy; set `APP_PORT` if that port is already in use. PostgreSQL has no published port.
+
+1. Copy `.env.production.example` to `.env.production` on the VPS. Set `APP_URL` to the HTTPS domain Nginx will serve, generate unique `AUTH_SECRET` and `POSTGRES_PASSWORD` values, and put the same database password in `DATABASE_URL`. The database host in that URL must remain `postgres`. For a fresh database, set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters. Migration 024 uses it for the initial admin account `adminventurex@gmail.com`.
+2. Build the production image, apply pending migrations, and seed reference data:
+
+   ```bash
+   docker compose --env-file .env.production build app
+   docker compose --env-file .env.production --profile ops run --rm migrate
+   docker compose --env-file .env.production --profile ops run --rm seed-reference
+   ```
+
+   After migration 024 succeeds, remove `ADMIN_BOOTSTRAP_PASSWORD` from `.env.production`. Then start the app:
+
+   ```bash
+   docker compose --env-file .env.production up -d app
+   ```
+
+3. Check startup and health:
+
+   ```bash
+   docker compose --env-file .env.production ps
+   docker compose --env-file .env.production logs --tail=100 app
+   curl http://127.0.0.1:3000/api/health
+   ```
+
+The PostgreSQL data volume is named `venturex_postgres_data`. Back it up before applying migrations to a database that contains data. Do not run `docker compose down -v` unless you intend to delete that database volume.
 
 The project requires Node 24. If dependencies were copied from another machine or built under a different Node major, reinstall them before starting the app. Native modules such as `argon2` must match the active runtime.
 

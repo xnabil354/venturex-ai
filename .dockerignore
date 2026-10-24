@@ -1,0 +1,13 @@
+.git
+.env*
+node_modules
+.next
+.next-e2e
+coverage
+playwright-report
+test-results
+.playwright-mcp
+.archify
+.agents
+.codex
+*.tsbuildinfo

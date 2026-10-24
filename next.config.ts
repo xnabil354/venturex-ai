@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
       "./node_modules/pg-hstore/**/*",
       "./node_modules/sequelize/**/*",
       "./node_modules/umzug/**/*",
+      "./node_modules/jiti/**/*",
+      "./node_modules/server-only/**/*",
+      "./node_modules/zod/**/*",
     ],
   },
 };
