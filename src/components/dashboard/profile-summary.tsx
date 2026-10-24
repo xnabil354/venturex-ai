@@ -1,16 +1,15 @@
 import { useId, type ReactNode } from "react";
 
-import { Badge, Card } from "../ui";
+import { Card } from "../ui";
 import type { DashboardReference } from "../../dashboard/dto";
 
 export type ProfileSummaryProps = {
   readonly action?: ReactNode;
   readonly children: ReactNode;
-  readonly statusLabel: string | null;
   readonly title: string;
 };
 
-export function ProfileSummary({ action, children, statusLabel, title }: ProfileSummaryProps) {
+export function ProfileSummary({ action, children, title }: ProfileSummaryProps) {
   const headingId = useId();
 
   return (
@@ -24,7 +23,6 @@ export function ProfileSummary({ action, children, statusLabel, title }: Profile
         </h2>
         <div className="flex flex-wrap items-center gap-8 sm:gap-12">
           {action}
-          {statusLabel ? <Badge tone="wash">{statusLabel}</Badge> : null}
         </div>
       </div>
       <Card className="overflow-hidden border border-[#ded8cb] bg-[#faf9f6] shadow-xs p-0">{children}</Card>

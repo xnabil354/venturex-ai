@@ -10,6 +10,6 @@ describe("push progressive enhancement", () => {
   it("requires real capabilities even in an installed iOS app", () => {
     expect(pushCapability({ ...supported, ios: true, standalone: true, pushManager: false }).supported).toBe(false);
     expect(pushCapability({ ...supported, secure: false }).hint).toContain("HTTPS");
-    expect(pushCapability({ ...supported, notification: false }).hint).toContain("kotak notifikasi");
+    expect(pushCapability({ ...supported, notification: false }).hint).toContain("arsip notifikasi");
   });
 });

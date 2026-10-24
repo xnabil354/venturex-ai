@@ -63,9 +63,9 @@ describe("notification service worker", () => {
       body: "private profile text",
     });
     expect(show).toHaveBeenCalledWith(
-      "Tren terbaru untuk Anda",
+      "Ringkasan Food & Drink",
       expect.objectContaining({
-        body: "Ringkasan tren Anda sudah tersedia.",
+        body: "Ringkasan mingguan worldwide Anda sudah tersedia.",
         tag: "venturex-digest",
       }),
     );

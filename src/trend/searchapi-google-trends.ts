@@ -24,6 +24,8 @@ const configSchema = z.object({
   TREND_RADAR_MAX_PROVIDER_REQUESTS_PER_DAY: z.coerce.number().int().min(1).max(10_000).default(100),
 }).strict();
 
+export const GOOGLE_TRENDS_FOOD_AND_DRINK_CATEGORY = 71;
+
 export type SearchApiConfig = {
   readonly apiKey: string;
   readonly baseUrl: string;
@@ -299,6 +301,64 @@ export class SearchApiGoogleTrendsAdapter {
     }
   }
 
+  async foodAndDrinkRelatedQueries(
+    request: TrendRadarRequest,
+  ): Promise<SearchApiRelatedQueries> {
+    const configuration = this.configResolver();
+    if (!configuration.enabled) throw new SearchApiTrendsError("FEATURE_DISABLED");
+    const config = configuration.config;
+    const time = toSearchApiTime(request, this.now());
+    const key = JSON.stringify([
+      "NOTIFICATION_FOOD_AND_DRINK_RELATED_QUERIES",
+      time,
+      request.property,
+      request.geo ?? "",
+      config.timezoneOffsetMinutes,
+      GOOGLE_TRENDS_FOOD_AND_DRINK_CATEGORY,
+    ]);
+    const nowMs = this.now().getTime();
+    this.pruneCache(nowMs);
+    const cached = this.cache.get(key);
+    if (cached && cached.expiresAt > nowMs)
+      return {
+        ...(cached.value as ProviderResponse),
+        expiresAt: new Date(cached.expiresAt).toISOString(),
+        cacheStatus: "HIT",
+      };
+    const active = this.inflight.get(key);
+    if (active) {
+      const value = (await active) as ProviderResponse;
+      return {
+        ...value,
+        expiresAt: new Date(
+          Date.parse(value.retrievedAt) + config.longCacheTtlMs,
+        ).toISOString(),
+        cacheStatus: "COALESCED",
+      };
+    }
+    this.reserveBudget(config, this.now());
+    const pending = this.fetchRelatedQueries(
+      config,
+      null,
+      request,
+      time,
+      GOOGLE_TRENDS_FOOD_AND_DRINK_CATEGORY,
+    );
+    this.inflight.set(key, pending);
+    try {
+      const value = await pending;
+      const expiresAt = Date.parse(value.retrievedAt) + config.longCacheTtlMs;
+      this.cache.set(key, { value, expiresAt });
+      return {
+        ...value,
+        expiresAt: new Date(expiresAt).toISOString(),
+        cacheStatus: "NETWORK",
+      };
+    } finally {
+      this.inflight.delete(key);
+    }
+  }
+
   async interestOverTime(productQuery: string, request: TrendRadarRequest, requestedTime?: string): Promise<SearchApiInterestResult<TrendTimeSeries>> {
     return this.requestInterestDataset(productQuery, request, requestedTime, "TIMESERIES", (payload) => normalizeSearchApiTimeSeries(payload, productQuery));
   }
@@ -450,16 +510,17 @@ export class SearchApiGoogleTrendsAdapter {
 
   private async fetchRelatedQueries(
     config: SearchApiConfig,
-    productQuery: string,
+    productQuery: string | null,
     request: TrendRadarRequest,
     time: string,
+    category: number = config.category,
   ): Promise<ProviderResponse> {
     const url = new URL(config.baseUrl);
     url.searchParams.set("engine", "google_trends");
     url.searchParams.set("data_type", "RELATED_QUERIES");
-    url.searchParams.set("q", productQuery);
+    if (productQuery) url.searchParams.set("q", productQuery);
     url.searchParams.set("geo", request.geo ?? "");
-    url.searchParams.set("cat", String(config.category));
+    url.searchParams.set("cat", String(category));
     url.searchParams.set("tz", String(config.timezoneOffsetMinutes));
     url.searchParams.set("time", time);
     const property = toSearchApiProperty(request.property);
@@ -498,6 +559,7 @@ export class SearchApiGoogleTrendsAdapter {
     const durationMs = performance.now() - startedAt;
     let normalized: ReturnType<typeof normalizeSearchApiRelatedQueries>;
     try {
+      // ASVS 1.5.2: external JSON is accepted only through the strict row schema.
       normalized = normalizeSearchApiRelatedQueries(payload);
     } catch (error) {
       if (error instanceof SearchApiTrendsError && error.code === "PROVIDER_RESPONSE_INVALID") {

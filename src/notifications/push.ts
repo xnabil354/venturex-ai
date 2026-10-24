@@ -29,7 +29,7 @@ export function pushConfig(): PushConfig | null {
 }
 export async function sendPush(
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
-  payload: { userId: string; id: string; test?: boolean },
+  payload: { userId: string; id: string },
 ): Promise<void> {
   const config = pushConfig();
   if (!config) throw new Error("PUSH_UNAVAILABLE");
@@ -39,10 +39,8 @@ export async function sendPush(
     subscription,
     JSON.stringify({
       ...payload,
-      title: payload.test ? "Notifikasi aktif" : "Tren terbaru untuk Anda",
-      body: payload.test
-        ? "Perangkat ini siap menerima ringkasan tren."
-        : "Ringkasan tren Anda sudah tersedia.",
+      title: "Ringkasan Food & Drink",
+      body: "Ringkasan mingguan worldwide Anda sudah tersedia.",
     }),
     {
       vapidDetails: {
