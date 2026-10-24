@@ -4,7 +4,7 @@ export const appNavigation = [
   { href: "/opportunities", label: "Opportunity Finder" },
   { href: "/saved", label: "Saved Opportunities" },
   { href: "/roadmaps", label: "Roadmaps" },
-  { href: "/billing", label: "Billing" },
+  { href: "/billing", label: "Paket & Kredit" },
 ] as const;
 
 export const primaryNavigation = appNavigation;

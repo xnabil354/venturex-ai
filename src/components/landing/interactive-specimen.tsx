@@ -119,13 +119,13 @@ export function InteractiveSpecimen() {
   const currentResult = simulationMatrix[`${category}_${capital}`];
 
   return (
-    <section id="simulasi-skor" className="py-64 lg:py-96 scroll-mt-24">
+    <section id="simulasi-skor" className="scroll-mt-24 py-48 sm:py-64 lg:py-96">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
         <div className="max-w-[760px]">
           <p className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
             Simulator Cepat Interaktif
           </p>
-          <h2 className="mt-12 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal text-balance">
+          <h2 className="mt-12 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg text-balance">
             Lihat bentuk informasi yang akan Anda telaah.
           </h2>
           <p className="mt-16 text-body text-stone-gray text-balance">
@@ -134,9 +134,9 @@ export function InteractiveSpecimen() {
         </div>
 
         {/* Interactive Box */}
-        <div className="mt-40 grid gap-24 lg:grid-cols-[1fr_1.2fr]">
+        <div className="mt-32 grid gap-16 sm:mt-40 sm:gap-24 md:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
           {/* Controls Column */}
-          <div className="rounded-cards border border-soft-mist bg-paper-white p-24 sm:p-32">
+          <div className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24 lg:p-32">
             <h3 className="text-label-bold font-w540 text-ink-charcoal">
               Parameter Eksplorasi
             </h3>
@@ -233,9 +233,9 @@ export function InteractiveSpecimen() {
           </div>
 
           {/* Result Card Column */}
-          <div className="flex flex-col justify-between rounded-cards border border-soft-mist bg-paper-white p-24 sm:p-32">
+          <div className="flex min-w-0 flex-col justify-between rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24 lg:p-32">
             <div>
-              <div className="flex items-center justify-between border-b border-soft-mist/80 pb-16">
+              <div className="flex flex-col items-start gap-12 border-b border-soft-mist/80 pb-16 sm:flex-row sm:justify-between">
                 <div>
                   <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
                     Hasil simulasi · data dummy
@@ -277,11 +277,11 @@ export function InteractiveSpecimen() {
 
               {/* Detail Metrics */}
               <div className="mt-20 space-y-10 rounded-small-buttons bg-warm-parchment/40 p-16 text-body-sm">
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <span className="text-stone-gray">Alokasi modal (dummy):</span>
                   <span className="font-w540 text-ink-charcoal">{currentResult.estimatedCapital}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <span className="text-stone-gray">Balik modal (dummy):</span>
                   <span className="font-w540 text-ink-charcoal">{currentResult.paybackPeriod}</span>
                 </div>
@@ -295,15 +295,7 @@ export function InteractiveSpecimen() {
             </div>
 
             {/* Direct CTA */}
-            <div className="mt-28 pt-20 border-t border-soft-mist">
-              <Link
-                href="/register"
-                className="flex min-h-[48px] w-full items-center justify-center gap-8 rounded-buttons bg-midnight-wine px-20 text-body font-w460 text-paper-white transition-[background-color,transform] hover:bg-midnight-wine/90 active:translate-y-px"
-              >
-                <span>Buka Detail Analisis & Dapatkan Roadmap Lengkap</span>
-                <span aria-hidden="true">&rarr;</span>
-              </Link>
-            </div>
+
           </div>
         </div>
       </div>

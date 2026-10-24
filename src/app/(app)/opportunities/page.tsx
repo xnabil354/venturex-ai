@@ -96,22 +96,34 @@ export default async function OpportunitiesPage({ searchParams = Promise.resolve
             : undefined;
 
   return (
-    <>{queryOptions.length ? <BusinessQuerySelect options={queryOptions} selected={queryKey} /> : null}<PrivateOpportunityFinder comparisonOwnerId={user.id}
-      key={`finder-${page}-${queryKey}`}
-      {...(userType === "UMKM_EXISTING" ? { queryKey } : {})}
-      profileActionRequired={profileActionRequired}
-      pagination={{ page, hasMore }}
-      showScoreDetails
-      businessMode={userType === "UMKM_EXISTING"}
-      initialItems={initialItems}
-      initialLoadFailed={initialLoadFailed}
-      profileContextCategories={profileContextCategories}
-      profileContextAvailable={profileContextAvailable}
-      providerAvailable={providerAvailable}
-      {...(providerBlockMessage ? { providerBlockMessage } : {})}
-      evidenceSigningAvailable={isSearchApiEvidenceTokenConfigured()}
-      searchApiAvailable={!profileActionRequired && process.env.TREND_RADAR_SEARCHAPI_ENABLED === "true"}
-      sourceProcessingApproved={sourceProcessingApproved}
-    /></>
+    <div className="relative isolate min-h-[calc(100dvh-64px)] bg-warm-parchment">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/Cozy%20Breakfast%20Bowl%20and%20Iced%20Latte.png')" }}
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-paper-white/86" />
+      <div className="relative z-10">
+        {queryOptions.length ? <BusinessQuerySelect options={queryOptions} selected={queryKey} /> : null}
+        <PrivateOpportunityFinder
+          comparisonOwnerId={user.id}
+          key={`finder-${page}-${queryKey}`}
+          {...(userType === "UMKM_EXISTING" ? { queryKey } : {})}
+          profileActionRequired={profileActionRequired}
+          pagination={{ page, hasMore }}
+          showScoreDetails
+          businessMode={userType === "UMKM_EXISTING"}
+          initialItems={initialItems}
+          initialLoadFailed={initialLoadFailed}
+          profileContextCategories={profileContextCategories}
+          profileContextAvailable={profileContextAvailable}
+          providerAvailable={providerAvailable}
+          {...(providerBlockMessage ? { providerBlockMessage } : {})}
+          evidenceSigningAvailable={isSearchApiEvidenceTokenConfigured()}
+          searchApiAvailable={!profileActionRequired && process.env.TREND_RADAR_SEARCHAPI_ENABLED === "true"}
+          sourceProcessingApproved={sourceProcessingApproved}
+        />
+      </div>
+    </div>
   );
 }

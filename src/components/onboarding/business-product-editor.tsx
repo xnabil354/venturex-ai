@@ -106,7 +106,7 @@ export function BusinessProductEditor({
         </Button>
       ) : null}
       {errors.products ? (
-        <p className="text-body-sm font-w540 text-midnight-wine">{errors.products}</p>
+        <p className="text-body-sm font-w540 text-red-700">{errors.products}</p>
       ) : null}
     </div>
   );

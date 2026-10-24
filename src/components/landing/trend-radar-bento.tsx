@@ -4,7 +4,7 @@ import { ArrowRightIcon } from "./icons";
 export function TrendRadarBento() {
 
   return (
-    <section id="fitur-utama" className="py-64 lg:py-96 scroll-mt-24">
+    <section id="fitur-utama" className="scroll-mt-24 py-48 sm:py-64 lg:py-96">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
         {/* Section Header */}
         <div className="mx-auto max-w-[760px] text-center">
@@ -13,7 +13,7 @@ export function TrendRadarBento() {
             VENTUREX Trend Radar
           </span>
 
-          <h2 className="mt-16 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal sm:text-display sm:leading-display sm:tracking-display text-balance">
+          <h2 className="mt-16 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:text-display lg:leading-display lg:tracking-display text-balance">
             Tangkap pergeseran pasar sebelum menjadi jenuh.
           </h2>
 
@@ -21,7 +21,7 @@ export function TrendRadarBento() {
             Jelajahi tren F&amp;B yang diterbitkan bersama ringkasan, periode pengamatan, sumber bukti, dan relevansi bisnisnya.
           </p>
 
-          <div className="mt-28 flex items-center justify-center gap-16">
+          <div className="mt-28 flex flex-col items-stretch justify-center gap-8 sm:flex-row sm:items-center sm:gap-16">
             <Link
               href="/register"
               className="inline-flex min-h-[44px] items-center justify-center rounded-buttons bg-midnight-wine px-20 text-body-sm font-w460 text-paper-white hover:bg-midnight-wine/90"
@@ -30,7 +30,7 @@ export function TrendRadarBento() {
             </Link>
             <a
               href="#kualitas-data"
-              className="group inline-flex items-center gap-6 text-body-sm font-w460 text-royal-violet hover:underline"
+              className="group inline-flex min-h-[44px] items-center justify-center gap-6 text-body-sm font-w460 text-royal-violet hover:underline"
             >
               <span>Lihat Standar Kurasi</span>
               <ArrowRightIcon className="h-14 w-14 transition-transform group-hover:translate-x-1" />
@@ -39,9 +39,9 @@ export function TrendRadarBento() {
         </div>
 
         {/* Bento Grid (Superhuman Layout) */}
-        <div className="mt-48 grid gap-20 lg:grid-cols-12">
+        <div className="mt-32 grid gap-16 sm:mt-40 sm:gap-20 lg:mt-48 lg:grid-cols-12">
           {/* Top Wide Bento: Deep Lagoon */}
-          <div className="lg:col-span-12 rounded-cards bg-deep-lagoon text-paper-white p-24 sm:p-40 border border-paper-white/10 shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-paper-white/20">
+          <div className="rounded-cards border border-paper-white/10 bg-deep-lagoon p-20 text-paper-white shadow-lg transition-all duration-300 hover:border-paper-white/20 hover:shadow-2xl sm:p-32 lg:col-span-12 lg:p-40">
             <div className="grid gap-32 lg:grid-cols-2 lg:items-center">
               <div>
                 <span className="text-caption font-w540 uppercase tracking-wider text-lilac-mist">
@@ -94,7 +94,7 @@ export function TrendRadarBento() {
           </div>
 
           {/* Bottom Left Bento: Midnight Wine */}
-          <div className="lg:col-span-6 rounded-cards bg-midnight-wine text-paper-white p-24 sm:p-32 border border-soft-mist/20 shadow-md flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-lilac-mist/30">
+          <div className="flex flex-col justify-between rounded-cards border border-soft-mist/20 bg-midnight-wine p-20 text-paper-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:border-lilac-mist/30 hover:shadow-xl sm:p-24 lg:col-span-6 lg:p-32">
             <div>
               <span className="text-caption font-w540 uppercase tracking-wider text-lilac-mist">
                 Peluang dalam Katalog
@@ -113,7 +113,7 @@ export function TrendRadarBento() {
           </div>
 
           {/* Bottom Right Bento: Paper White with Soft Mist Border */}
-          <div className="lg:col-span-6 rounded-cards bg-paper-white text-ink-charcoal p-24 sm:p-32 border border-soft-mist shadow-sm flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-royal-violet/30">
+          <div className="flex flex-col justify-between rounded-cards border border-soft-mist bg-paper-white p-20 text-ink-charcoal shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-royal-violet/30 hover:shadow-xl sm:p-24 lg:col-span-6 lg:p-32">
             <div>
               <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
                 Pemetaan Konsumen

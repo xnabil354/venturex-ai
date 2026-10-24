@@ -18,13 +18,13 @@ export type BusinessSummaryProps = {
 
 export function BusinessSummary({ profile }: BusinessSummaryProps) {
   return (
-    <dl aria-label={`Profil usaha ${profile.businessName}`} className="grid gap-10 bg-[#ded8cb] p-10 sm:grid-cols-2 lg:grid-cols-12">
-      <div className="grid gap-20 rounded-small-buttons bg-midnight-wine p-20 text-paper-white sm:col-span-2 lg:col-span-5">
+    <dl aria-label={`Profil usaha ${profile.businessName}`} className="grid gap-10 bg-[#ded8cb] p-10 md:grid-cols-2 lg:grid-cols-12">
+      <div className="grid gap-20 rounded-small-buttons bg-midnight-wine p-20 text-paper-white md:col-span-2 lg:col-span-5">
         <div>
           <dt className="text-caption font-w540 text-paper-white/70">Nama usaha</dt>
           <dd className="mt-6 break-words text-subheading font-w460 leading-tight">{profile.businessName}</dd>
         </div>
-        <div className="grid gap-16 sm:grid-cols-2">
+        <div className="grid gap-16 md:grid-cols-2">
           <div>
             <dt className="text-caption font-w540 text-paper-white/70">Bidang usaha</dt>
             <dd className="mt-4 text-body-sm font-w540">{profile.businessCategory.name}</dd>
@@ -35,7 +35,7 @@ export function BusinessSummary({ profile }: BusinessSummaryProps) {
           </div>
         </div>
       </div>
-      <div className="grid gap-10 sm:col-span-2 sm:grid-cols-2 lg:col-span-7">
+      <div className="grid gap-10 md:col-span-2 md:grid-cols-2 lg:col-span-7">
         <div className="rounded-small-buttons bg-[#faf9f6]">
           <SummaryField label="Kisaran harga rata-rata">
             {formatRange(profile.averagePrice.min, profile.averagePrice.max)}

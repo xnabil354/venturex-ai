@@ -343,18 +343,25 @@ export function EntrepreneurProfileForm({
     );
   }
 
+  const Heading = mode === "edit" ? "h2" : "h1";
+
   return (
-    <section aria-labelledby={headingId} className="grid gap-32 border-t border-soft-mist pt-20 sm:pt-24">
-      <header className="grid gap-12">
-        <h1
+    <section aria-labelledby={headingId} className={cx(
+      "grid",
+      mode === "edit"
+        ? "max-w-[58rem] gap-24 rounded-cards border border-soft-mist bg-paper-white p-16 sm:p-24"
+        : "gap-32 border-t border-soft-mist pt-20 sm:pt-24",
+    )}>
+      <header className={cx("grid", mode === "edit" ? "gap-8 border-b border-soft-mist pb-16" : "gap-12")}>
+        <Heading
           className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:max-w-none"
           id={headingId}
         >
-          {mode === "edit" ? "Edit profil entrepreneur" : "Lengkapi profil calon pengusaha"}
-        </h1>
+          {mode === "edit" ? "Perbarui detail Anda" : "Lengkapi profil calon pengusaha"}
+        </Heading>
         <p className="max-w-[52ch] text-body-sm leading-body-sm text-stone-gray">
           {mode === "edit"
-            ? "Perbarui informasi profil Anda. Perubahan profil tidak menghapus peluang yang telah disimpan."
+            ? "Data yang tersimpan tetap digunakan pada peluang yang sudah ada."
             : "Beberapa pilihan singkat membantu VENTUREX menyiapkan konteks usaha yang lebih sesuai."}
         </p>
       </header>
@@ -364,7 +371,7 @@ export function EntrepreneurProfileForm({
         <OnboardingProgressSlot currentStep={step} steps={PROFILE_STEPS} />
       ) : null}
 
-      <form className="grid gap-32" noValidate onSubmit={handleSubmit}>
+      <form className={cx("grid", mode === "edit" ? "gap-24" : "gap-32")} noValidate onSubmit={handleSubmit}>
         {step === 1 ? (
           <EntrepreneurProfileStepOne
             errors={stepErrors}
@@ -393,7 +400,7 @@ export function EntrepreneurProfileForm({
         {formError ? (
           <div
             aria-live="assertive"
-            className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal"
+            className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-12 text-body-sm font-w540 text-red-800"
             ref={errorSummaryRef}
             role="alert"
             tabIndex={-1}
@@ -404,8 +411,8 @@ export function EntrepreneurProfileForm({
 
         <div
           className={cx(
-            "flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center",
-            step > 1 ? "sm:justify-between" : "sm:justify-end",
+            "flex flex-col-reverse gap-12 border-t border-soft-mist pt-20 sm:flex-row sm:items-center sm:pt-24",
+            step > 1 ? "justify-between" : "justify-end",
           )}
         >
           {step > 1 ? (

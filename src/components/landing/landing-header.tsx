@@ -106,7 +106,7 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-nav-menu"
           aria-label="Menu navigasi mobile"
-          className="inline-flex h-44 w-44 min-h-[44px] min-w-[44px] items-center justify-center rounded-small-buttons border border-white/15 bg-white/10 text-paper-white backdrop-blur-md md:hidden hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e]"
+          className="inline-flex h-44 w-44 min-h-[44px] min-w-[44px] items-center justify-center text-paper-white transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] md:hidden"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
         >
           {mobileMenuOpen ? (

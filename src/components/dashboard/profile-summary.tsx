@@ -14,15 +14,15 @@ export function ProfileSummary({ action, children, statusLabel, title }: Profile
   const headingId = useId();
 
   return (
-    <section aria-labelledby={headingId} className="grid gap-16">
-      <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:justify-between">
+    <section aria-labelledby={headingId} className="grid gap-12 sm:gap-16">
+      <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:justify-between">
         <h2
           className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal"
           id={headingId}
         >
           {title}
         </h2>
-        <div className="flex items-center gap-12">
+        <div className="flex flex-wrap items-center gap-8 sm:gap-12">
           {action}
           {statusLabel ? <Badge tone="wash">{statusLabel}</Badge> : null}
         </div>

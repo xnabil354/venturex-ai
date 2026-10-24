@@ -54,8 +54,8 @@ export function Input({
           className={cx(
             "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal placeholder:text-stone-gray transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
             Boolean(prefix) && "pl-40",
-            Boolean(suffix) && "pr-44",
-            error ? "border-midnight-wine" : "border-stone-gray",
+            Boolean(suffix) && "pr-[60px]",
+            error ? "border-red-600" : "border-stone-gray",
             className,
           )}
           id={id}
@@ -66,7 +66,7 @@ export function Input({
           </div>
         ) : null}
         {suffix ? (
-          <div className="absolute right-8 flex items-center text-stone-gray">
+          <div className="absolute right-2 flex items-center text-stone-gray">
             {suffix}
           </div>
         ) : null}
@@ -77,7 +77,7 @@ export function Input({
         </p>
       ) : null}
       {error ? (
-        <p className="text-body-sm font-w540 text-midnight-wine" id={`${id}-error`}>
+        <p className="text-body-sm font-w540 text-red-700" id={`${id}-error`}>
           {error}
         </p>
       ) : null}
@@ -125,7 +125,7 @@ export function Select({
         aria-invalid={error ? true : undefined}
         className={cx(
           "min-h-button w-full rounded-small-buttons border bg-paper-white px-12 text-body text-ink-charcoal transition-[border-color,border-width] duration-200 ease-out focus:border-2 focus:border-royal-violet focus-visible:outline-none",
-          error ? "border-midnight-wine" : "border-stone-gray",
+          error ? "border-red-600" : "border-stone-gray",
           className,
         )}
         id={id}
@@ -142,7 +142,7 @@ export function Select({
         </p>
       ) : null}
       {error ? (
-        <p className="text-body-sm font-w540 text-midnight-wine" id={`${id}-error`}>
+        <p className="text-body-sm font-w540 text-red-700" id={`${id}-error`}>
           {error}
         </p>
       ) : null}

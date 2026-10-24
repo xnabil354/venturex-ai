@@ -20,10 +20,36 @@ export default async function PrivateComparePage({ searchParams }: { searchParam
     const rows = await Promise.all(parsed.data.map(id => repository.findForBusiness(user.id, id)));
     const items = rows.filter((item): item is NonNullable<typeof item> => Boolean(item && isBusinessAnalysisFresh(context, item) && item.hypothesis.businessAnalysis && item.hypothesis.businessAnalysis.opportunity.score !== null && item.hypothesis.businessAnalysis.fit.score !== null));
     const removedIds = parsed.data.filter(id => !items.some(item => item.id === id));
-    return <><PrivateComparisonRecovery ownerId={user.id} removedIds={removedIds} /><BusinessComparison items={items} removedCount={removedIds.length} from={from === "saved" ? "saved" : "finder"} /></>;
+    return (
+      <div className="relative isolate min-h-[calc(100dvh-64px)] bg-warm-parchment">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/Cozy%20Coffee%2C%20Croissant%2C%20and%20Blueberries.png')" }}
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-paper-white/86" />
+        <div className="relative z-10">
+          <PrivateComparisonRecovery ownerId={user.id} removedIds={removedIds} />
+          <BusinessComparison items={items} removedCount={removedIds.length} from={from === "saved" ? "saved" : "finder"} />
+        </div>
+      </div>
+    );
   }
   const items = await Promise.all(parsed.data.map(id => repository.findForEntrepreneur(user.id, id)));
   const available = items.filter((item): item is NonNullable<typeof item> => Boolean(item?.hypothesis.analysis && item.hypothesis.analysis.opportunity.score !== null && item.hypothesis.analysis.fit.score !== null));
   const removedIds = parsed.data.filter(id => !available.some(item => item.id === id));
-  return <><PrivateComparisonRecovery ownerId={user.id} removedIds={removedIds} /><PrivateComparison removedCount={removedIds.length} from={from === "finder" ? "finder" : "saved"} items={available} /></>;
+  return (
+    <div className="relative isolate min-h-[calc(100dvh-64px)] bg-warm-parchment">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/Cozy%20Coffee%2C%20Croissant%2C%20and%20Blueberries.png')" }}
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-paper-white/86" />
+      <div className="relative z-10">
+        <PrivateComparisonRecovery ownerId={user.id} removedIds={removedIds} />
+        <PrivateComparison removedCount={removedIds.length} from={from === "finder" ? "finder" : "saved"} items={available} />
+      </div>
+    </div>
+  );
 }

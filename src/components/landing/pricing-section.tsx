@@ -14,7 +14,7 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
 
   if (!pricing) {
     return (
-      <section aria-labelledby="pricing-title" className="border-y border-soft-mist bg-paper-white py-28 sm:py-36" id="pricing">
+      <section aria-labelledby="pricing-title" className="border-y border-soft-mist bg-paper-white py-24 sm:py-36" id="pricing">
         <div className="mx-auto w-full max-w-[1120px] px-16 sm:px-24">
           <div className="max-w-[42rem]">
             <h2 id="pricing-title" className="text-heading-lg font-w460 tracking-heading-lg text-ink-charcoal">Mulai dari trial, lanjut saat ritme riset Anda terbentuk.</h2>
@@ -67,16 +67,16 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
   ];
 
   return (
-    <section aria-labelledby="pricing-title" className="border-y border-soft-mist bg-paper-white py-28 sm:py-36" id="pricing">
+    <section aria-labelledby="pricing-title" className="border-y border-soft-mist bg-paper-white py-24 sm:py-36" id="pricing">
       <div className="mx-auto w-full max-w-[1120px] px-16 sm:px-24">
         <div className="max-w-[72rem] text-center py-15">
-          <h2 id="pricing-title" className="text-heading-lg font-w460 tracking-heading-lg text-ink-charcoal">Pilihan paket untuk setiap tahap usaha.</h2>
+          <h2 id="pricing-title" className="text-heading-sm font-w460 tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:tracking-heading-lg">Pilihan paket untuk setiap tahap usaha.</h2>
           <p className="mt-12 text-body leading-relaxed text-stone-gray ">Dari eksplorasi awal hingga pengembangan peluang, pilih jatah kredit yang sesuai.</p>
         </div>
 
-        <div className="mt-20 grid gap-16 lg:grid-cols-3">
+        <div className="mt-20 grid gap-16 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => (
-            <article className={`relative flex min-h-[22rem] min-w-0 flex-col rounded-cards border p-24 sm:p-32 ${plan.featured ? "border-midnight-wine bg-lilac-mist/35" : "border-soft-mist bg-paper-white"}`} key={plan.name}>
+            <article className={`relative flex min-w-0 flex-col rounded-cards border p-20 sm:p-24 lg:min-h-[22rem] lg:p-32 ${plan.featured ? "border-midnight-wine bg-lilac-mist/35" : "border-soft-mist bg-paper-white"}`} key={plan.name}>
               {plan.featured ? <p className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded-pills bg-midnight-wine px-12 py-4 text-caption font-w540 uppercase tracking-[0.1em] text-paper-white shadow-xs">Popular</p> : null}
               <div>
                 <h3 className="text-label-bold font-w540 text-ink-charcoal">{plan.name}</h3>
@@ -92,9 +92,9 @@ export function PricingSection({ isAuthenticated = false, pricing }: PricingSect
           ))}
         </div>
 
-        <aside className="mt-16 grid gap-10 border-t border-soft-mist pt-16 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] sm:items-start">
+        <aside className="mt-16 grid gap-10 border-t border-soft-mist pt-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:items-start">
           <h3 className="text-body font-w540 text-ink-charcoal">Butuh kredit tambahan nanti?</h3>
-          <p className="text-body-sm leading-relaxed text-stone-gray sm:text-right">Top up pay-as-you-go tersedia di halaman Billing setelah akun aktif. Kredit top up tidak kedaluwarsa, tetapi aksi AI tetap memerlukan paket aktif atau kredit trial yang tersisa. Tidak ada auto-debit.</p>
+          <p className="text-body-sm leading-relaxed text-stone-gray md:text-right">Top up pay-as-you-go tersedia di halaman Billing setelah akun aktif. Kredit top up tidak kedaluwarsa, tetapi aksi AI tetap memerlukan paket aktif atau kredit trial yang tersisa.</p>
         </aside>
       </div>
     </section>

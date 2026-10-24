@@ -27,5 +27,25 @@ export default async function TrendsPage({ searchParams = Promise.resolve({}) }:
   const queryKey = queryOptions.some(o => o.key === params.queryKey) ? params.queryKey! : "business";
   const productQuery = queryOptions.find(o => o.key === queryKey)?.query ?? await getProfileSearchTerm(user.id, user.userType);
   const now = new Date();
-  return <>{queryOptions.length ? <BusinessQuerySelect options={queryOptions} selected={queryKey} /> : null}<TrendList key={queryKey} {...(user.userType === "UMKM_EXISTING" ? { queryKey } : {})} viewerId={user.id} currentYear={getJakartaCurrentYear(now)} productQuery={productQuery} today={getJakartaToday(now)} /></>;
+  return (
+    <div className="relative isolate min-h-[calc(100dvh-64px)] bg-warm-parchment">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/Cozy%20Coffee%2C%20Croissant%2C%20and%20Blueberries.png')" }}
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-paper-white/85" />
+      <div className="relative z-10">
+        {queryOptions.length ? <BusinessQuerySelect options={queryOptions} selected={queryKey} /> : null}
+        <TrendList
+          key={queryKey}
+          {...(user.userType === "UMKM_EXISTING" ? { queryKey } : {})}
+          viewerId={user.id}
+          currentYear={getJakartaCurrentYear(now)}
+          productQuery={productQuery}
+          today={getJakartaToday(now)}
+        />
+      </div>
+    </div>
+  );
 }

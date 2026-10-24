@@ -42,7 +42,7 @@ export function HeroSection() {
             <div className="relative z-30 mx-auto max-w-[640px] xl:max-w-[700px] px-16 sm:px-24 text-center my-auto">
                 {/* Monumental Headline */}
                 <h1 className="text-[32px] leading-[1.12] sm:text-[44px] sm:leading-[1.08] lg:text-[48px] xl:text-[54px] lg:leading-[1.05] font-w460 tracking-tight text-paper-white text-balance">
-                    Ubah tren F&amp;B menjadi keputusan bisnis yang presisi.
+                    Future Trend Intelligence & Business Growth Navigator untuk Ekosistem Food & Beverage
                 </h1>
 
                 {/* Editorial Subheadline */}
@@ -66,8 +66,10 @@ export function HeroSection() {
                         href="#alur-solusi"
                         className="group inline-flex items-center gap-6 text-body-sm font-w460 text-lilac-mist transition-colors hover:text-paper-white py-8"
                     >
-                        <span>Pelajari Alur Solusi</span>
-                        <ArrowRightIcon className="h-14 w-14 transition-transform duration-200 group-hover:translate-x-1" />
+                        <span>Jelajahi Fitur</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-down" viewBox="0 0 16 16">
+  <path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1"/>
+</svg>
                     </a>
                 </div>
             </div>

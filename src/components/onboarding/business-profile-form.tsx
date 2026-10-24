@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import { Button, EmptyState, LoadingSkeleton } from "@/components/ui";
+import { cx } from "@/lib/cx";
 import type { BusinessProfileInput } from "@/profile/business-validation";
 
 import {
@@ -271,15 +272,22 @@ export function BusinessProfileForm({
     );
   }
 
+  const Heading = mode === "edit" ? "h2" : "h1";
+
   return (
-    <section aria-labelledby={headingId} className="grid gap-32 border-t border-soft-mist pt-20 sm:pt-24">
-      <header className="grid gap-12">
-        <h1 className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:max-w-none" id={headingId}>
-          {mode === "edit" ? "Edit profil bisnis" : "Lengkapi profil bisnis Anda"}
-        </h1>
+    <section aria-labelledby={headingId} className={cx(
+      "grid",
+      mode === "edit"
+        ? "max-w-[58rem] gap-24 rounded-cards border border-soft-mist bg-paper-white p-16 sm:p-24"
+        : "gap-32 border-t border-soft-mist pt-20 sm:pt-24",
+    )}>
+      <header className={cx("grid", mode === "edit" ? "gap-8 border-b border-soft-mist pb-16" : "gap-12")}>
+        <Heading className="max-w-[20ch] text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:max-w-none" id={headingId}>
+          {mode === "edit" ? "Perbarui detail usaha" : "Lengkapi profil bisnis Anda"}
+        </Heading>
         <p className="max-w-[52ch] text-body-sm leading-body-sm text-stone-gray">
           {mode === "edit"
-            ? "Perbarui informasi usaha yang tersimpan. Peluang yang telah disimpan tetap dipertahankan."
+            ? "Data yang tersimpan tetap digunakan pada peluang yang sudah ada."
             : "Beberapa detail singkat membantu VENTUREX memahami konteks usaha Anda."}
         </p>
       </header>
@@ -287,16 +295,16 @@ export function BusinessProfileForm({
       {mode === "edit" ? (
         <OnboardingProgressSlot currentStep={step} steps={PROFILE_STEPS} />
       ) : null}
-      <form className="grid gap-32" noValidate onSubmit={handleSubmit}>
+      <form className={cx("grid", mode === "edit" ? "gap-24" : "gap-32")} noValidate onSubmit={handleSubmit}>
         {step === 1 ? <BusinessProfileStepOne errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {step === 2 ? <BusinessProfileStepTwo errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {step === 3 ? <BusinessProfileStepThree errors={stepErrors} references={references.data} state={formState} updateForm={updateForm} /> : null}
         {formError ? (
-          <div aria-live="assertive" className="rounded-small-buttons border border-soft-mist bg-warm-parchment px-12 py-12 text-body-sm font-w540 text-ink-charcoal" ref={errorSummaryRef} role="alert" tabIndex={-1}>
+          <div aria-live="assertive" className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-12 text-body-sm font-w540 text-red-800" ref={errorSummaryRef} role="alert" tabIndex={-1}>
             {formError}
           </div>
         ) : null}
-        <div className={`flex flex-col-reverse gap-12 border-t border-soft-mist pt-24 sm:flex-row sm:items-center ${step > 1 ? "sm:justify-between" : "sm:justify-end"}`}>
+        <div className={`flex flex-col-reverse gap-12 border-t border-soft-mist pt-20 sm:flex-row sm:items-center sm:pt-24 ${step > 1 ? "justify-between" : "justify-end"}`}>
           {step > 1 ? <Button className="w-full sm:w-auto" disabled={isSubmitting} onClick={handleBack} type="button" variant="ghost">Sebelumnya</Button> : null}
           <Button className="w-full sm:w-auto" loading={isSubmitting} type="submit">
             {step < 3 ? "Selanjutnya" : mode === "edit" ? "Simpan perubahan" : "Simpan profil"}

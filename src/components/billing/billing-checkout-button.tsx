@@ -4,7 +4,13 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui";
 
-export function BillingCheckoutButton({ productCode, children }: { readonly productCode: string; readonly children: ReactNode }) {
+type BillingCheckoutButtonProps = {
+  readonly children: ReactNode;
+  readonly productCode: string;
+  readonly variant?: "primary" | "inverse";
+};
+
+export function BillingCheckoutButton({ productCode, children, variant = "primary" }: BillingCheckoutButtonProps) {
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -25,7 +31,7 @@ export function BillingCheckoutButton({ productCode, children }: { readonly prod
   }
 
   return <div>
-    <Button className="w-full" loading={state === "loading"} loadingText="Membuka Duitku…" onClick={checkout}>{children}</Button>
+    <Button className="w-full" loading={state === "loading"} loadingText="Membuka Duitku…" onClick={checkout} variant={variant === "inverse" ? "inverse" : "primary"}>{children}</Button>
     {state === "error" ? <p className="mt-8 text-caption text-[#9b2c2c]" role="alert">{message}</p> : null}
   </div>;
 }

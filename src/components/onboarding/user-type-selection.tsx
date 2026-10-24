@@ -181,14 +181,8 @@ export function UserTypeSelection({
   return (
     <section
       aria-labelledby={titleId}
-      className="grid gap-32"
+      className="grid gap-24 sm:gap-32"
     >
-      <header className="text-left">
-        <p className="text-caption font-w540 uppercase tracking-[0.12em] text-stone-gray">
-          Pilih jalur
-        </p>
-      </header>
-
       <form className="grid gap-24" onSubmit={handleSubmit}>
         <fieldset
           aria-describedby={formError ? errorId : undefined}
@@ -204,12 +198,12 @@ export function UserTypeSelection({
           <p className="-mt-4 max-w-[42ch] text-left text-body-sm leading-body-sm text-stone-gray">
             Pilihan ini menentukan jalur persiapan profil Anda berikutnya.
           </p>
-          {options.map((option, index) => {
+          {options.map((option) => {
             const isSelected = selectedUserType === option.value;
             return (
               <label
                 className={cx(
-                  "group grid min-h-[9rem] cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-start gap-16 rounded-cards border px-16 py-16 transition-[background-color,border-color,transform] duration-200 ease-out active:translate-y-px focus-within:ring-2 focus-within:ring-royal-violet/40 focus-within:ring-offset-2 focus-within:ring-offset-paper-white motion-reduce:transition-none sm:px-20 sm:py-20",
+                  "group grid min-h-[7.5rem] cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-start gap-16 rounded-cards border px-16 py-16 transition-[background-color,border-color,transform] duration-200 ease-out active:translate-y-px focus-within:ring-2 focus-within:ring-royal-violet/40 focus-within:ring-offset-2 focus-within:ring-offset-paper-white motion-reduce:transition-none sm:min-h-[9rem] sm:px-20 sm:py-20",
                   isSelected
                     ? "border-midnight-wine bg-lilac-mist/40"
                     : "border-soft-mist bg-warm-parchment hover:-translate-y-0.5 hover:border-stone-gray",
@@ -239,7 +233,7 @@ export function UserTypeSelection({
                 </span>
                 <span className="grid gap-8">
                   <span className="text-caption font-w540 tracking-[0.08em] text-stone-gray">
-                    {String(index + 1).padStart(2, "0")} / {option.audience}
+                    {option.audience}
                   </span>
                   <span className="text-body font-w540 leading-body text-ink-charcoal">
                     {option.label}
@@ -256,7 +250,7 @@ export function UserTypeSelection({
         {formError ? (
           <div
             aria-live="assertive"
-            className="border-l-2 border-midnight-wine bg-warm-parchment px-12 py-8 text-body-sm text-ink-charcoal"
+            className="rounded-small-buttons border border-red-300 bg-red-50 px-12 py-10 text-body-sm font-w540 text-red-800"
             id={errorId}
             ref={errorSummaryRef}
             role="alert"

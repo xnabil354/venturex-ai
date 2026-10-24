@@ -1,152 +1,51 @@
-import Link from "next/link";
-
 export function LandingFooter() {
   return (
-    <footer className="w-full bg-midnight-wine py-64 text-paper-white">
+    <footer className="w-full bg-midnight-wine py-48 text-paper-white sm:py-64">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
-        {/* Brand Header inside Footer */}
-        <div className="flex flex-col items-start justify-between gap-16 border-b border-paper-white/15 pb-32 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-8">
-            <span className="h-8 w-8 rounded-full bg-lilac-mist" aria-hidden="true" />
-            <span className="font-w540 text-heading-sm tracking-tight text-paper-white">
-              VENTUREX AI
-            </span>
-          </div>
-          <p className="text-body-sm font-w460 text-paper-white/70 max-w-[480px]">
-            Future Trend Intelligence & Business Growth Navigator untuk Ekosistem Food & Beverage Indonesia.
-          </p>
-        </div>
-
-        {/* 4-Column Navigation */}
-        <div className="mt-40 grid gap-32 sm:grid-cols-2 md:grid-cols-4">
-          <div>
-            <h3 className="text-caption font-bold uppercase tracking-wider text-paper-white">
-              Solusi Produk
-            </h3>
-            <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
-              <li>
-                <a href="#fitur-utama" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Trend Radar
-                </a>
-              </li>
-              <li>
-                <a href="#fitur-utama" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Opportunity Finder
-                </a>
-              </li>
-              <li>
-                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Personal Fit Score Engine
-                </a>
-              </li>
-              <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Startup Roadmap (Calon Pengusaha)
-                </a>
-              </li>
-              <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Growth Roadmap (UMKM Existing)
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-caption font-bold uppercase tracking-wider text-paper-white">
-              Persona Pengguna
-            </h3>
-            <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
-              <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Calon Pengusaha (Discover &rarr; Start)
-                </a>
-              </li>
-              <li>
-                <a href="#alur-solusi" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  UMKM F&B (Discover &rarr; Grow)
-                </a>
-              </li>
-              <li>
-                <Link href="/register" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Pendaftaran Akun Baru
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Portal Masuk Pengguna
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-caption font-bold uppercase tracking-wider text-paper-white">
-              Metodologi & Data
-            </h3>
-            <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
-              <li>
-                <a href="#kualitas-data" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Standar Bukti Pasar Terkurasi
-                </a>
-              </li>
-              <li>
-                <a href="#kualitas-data" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Sumber tren dan batasan data
-                </a>
-              </li>
-              <li>
-                <a href="#simulasi-skor" className="transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm">
-                  Model penilaian berbasis data tersedia
-                </a>
-              </li>
-              <li>
-                <span className="text-paper-white/50 cursor-default">
-                  Komitmen Dampak SDG 8
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-caption font-bold uppercase tracking-wider text-paper-white">
-              Platform & Keamanan
-            </h3>
-            <ul className="mt-16 space-y-12 text-body-sm font-w460 text-paper-white/70">
-              <li>
-                <span className="text-paper-white/50 cursor-default">
-                  Arsitektur Next.js & PostgreSQL
-                </span>
-              </li>
-              <li>
-                <span className="text-paper-white/50 cursor-default">
-                  Standar Enkripsi Argon2id
-                </span>
-              </li>
-              <li>
-                <span className="text-paper-white/50 cursor-default">
-                  Data profil dikelola untuk personalisasi
-                </span>
-              </li>
-              <li>
-                <span className="text-paper-white/50 cursor-default">
-                  Ketentuan layanan tersedia saat pendaftaran
-                </span>
-              </li>
-            </ul>
+        <div className="border-b border-paper-white/15 pb-32">
+          <div className="max-w-[400px] xl:max-w-none">
+            <div className="flex items-center gap-8">
+              <span className="h-8 w-8 rounded-full bg-lilac-mist" aria-hidden="true" />
+              <span className="font-w540 text-heading-sm tracking-tight text-paper-white">
+                VENTUREX AI
+              </span>
+            </div>
+            <nav aria-label="Solusi Produk" className="mt-32 sm:mt-40">
+              <h3 className="text-caption font-bold uppercase tracking-wider text-paper-white">
+                Solusi Produk
+              </h3>
+              <ul className="mt-16 flex flex-col gap-y-10 text-body-sm font-w460 text-paper-white/70 xl:flex-row xl:flex-nowrap xl:gap-x-12 xl:gap-y-0">
+                <li>
+                  <a href="#fitur-utama" className="inline-flex min-h-[44px] items-center rounded-sm transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist">
+                    Trend Radar
+                  </a>
+                </li>
+                <li>
+                  <a href="#fitur-utama" className="inline-flex min-h-[44px] items-center rounded-sm transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist">
+                    Opportunity Finder
+                  </a>
+                </li>
+                <li>
+                  <a href="#simulasi-skor" className="inline-flex min-h-[44px] items-center rounded-sm transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist">
+                    Personal Fit Score Engine
+                  </a>
+                </li>
+                <li>
+                  <a href="#alur-solusi" className="inline-flex min-h-[44px] items-center rounded-sm transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist">
+                    Startup Roadmap (Calon Pengusaha)
+                  </a>
+                </li>
+                <li>
+                  <a href="#alur-solusi" className="inline-flex min-h-[44px] items-center rounded-sm transition-colors hover:text-paper-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist">
+                    Growth Roadmap (UMKM Existing)
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-48 flex flex-col items-start justify-between gap-12 border-t border-paper-white/15 pt-24 text-caption text-paper-white/60 sm:flex-row sm:items-center">
-          <p>
-            &copy; {new Date().getFullYear()} VENTUREX AI. Semua hak cipta dilindungi undang-undang.
-          </p>
-          <p className="flex items-center gap-6">
-            <span className="h-8 w-8 rounded-full bg-emerald-400" aria-hidden="true" />
-            <span>Mendukung SDG 8: Pertumbuhan Ekonomi Inklusif & Berkelanjutan.</span>
-          </p>
-        </div>
+   
 
         {/* Giant Ghost Watermark (Superhuman Style) */}
         <div className="mt-40 select-none text-center overflow-hidden" aria-hidden="true">
