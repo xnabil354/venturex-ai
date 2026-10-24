@@ -2,13 +2,11 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { QueryTypes, type Sequelize, type Transaction } from "sequelize";
 import { getSequelize } from "@/db/sequelize";
-import { nextRun, type Preferences, type InboxItem } from "./contract";
+import { nextWeeklyRun, type InboxItem } from "./contract";
 
 export type PreferenceRow = {
   user_id: string;
   enabled: boolean;
-  settings: Preferences;
-  topic_query: string;
   next_run_at: Date;
   attempts: number;
   status: string | null;
@@ -19,8 +17,10 @@ export type SubscriptionRow = {
   endpoint: string;
   keys: { p256dh: string; auth: string };
 };
+
 export class NotificationRepository {
   constructor(readonly db: Sequelize = getSequelize()) {}
+
   async preferences(userId: string): Promise<PreferenceRow | null> {
     return (
       (
@@ -31,82 +31,65 @@ export class NotificationRepository {
       )[0] ?? null
     );
   }
-  async savePreferences(
-    userId: string,
-    preferences: Preferences,
-    query: string,
-  ): Promise<void> {
-    await this.db.query(
-      `INSERT INTO notification_preferences(user_id, enabled, settings, topic_query, next_run_at)
-      VALUES (:userId,:enabled,CAST(:settings AS jsonb),:query,:next)
-      ON CONFLICT(user_id) DO UPDATE SET enabled=EXCLUDED.enabled,settings=EXCLUDED.settings,topic_query=EXCLUDED.topic_query,
-      next_run_at=EXCLUDED.next_run_at,attempts=0,status=NULL,updated_at=now()`,
-      {
-        replacements: {
-          userId,
-          enabled: preferences.enabled,
-          settings: JSON.stringify(preferences),
-          query,
-          next: nextRun(new Date(), preferences.time, preferences.timezone),
+
+  async setEnabled(userId: string, enabled: boolean, now = new Date()): Promise<void> {
+    await this.db.transaction(async (transaction) => {
+      // ASVS 2.3.3: account state and device revocation change atomically.
+      // ASVS 1.2.4: every user identifier remains a bound SQL parameter.
+      await this.db.query(
+        `INSERT INTO notification_preferences(user_id, enabled, next_run_at)
+        VALUES (:userId,:enabled,:next)
+        ON CONFLICT(user_id) DO UPDATE SET enabled=EXCLUDED.enabled,next_run_at=EXCLUDED.next_run_at,
+        attempts=0,status=NULL,updated_at=now()`,
+        {
+          replacements: { userId, enabled, next: nextWeeklyRun(now) },
+          transaction,
         },
-      },
-    );
+      );
+      if (!enabled)
+        await this.db.query("DELETE FROM push_subscriptions WHERE user_id=:userId", {
+          replacements: { userId },
+          transaction,
+        });
+    });
   }
+
   async inbox(
     userId: string,
     before?: string,
-  ): Promise<{
-    items: InboxItem[];
-    nextCursor: string | null;
-    unread: number;
-  }> {
-    const [rows, counts] = await Promise.all([
-      this.db.query<{
-        id: string;
-        local_date: string;
-        digest: InboxItem["digest"];
-        read_at: Date | null;
-        created_at: Date;
-      }>(
-        `
-        SELECT id,local_date,digest,read_at,created_at FROM trend_notifications WHERE user_id=:userId
-        ${before ? "AND (created_at,id) < (SELECT created_at,id FROM trend_notifications WHERE id=:before AND user_id=:userId)" : ""}
-        ORDER BY created_at DESC,id DESC LIMIT 21`,
-        {
-          replacements: { userId, before: before ?? null },
-          type: QueryTypes.SELECT,
-        },
-      ),
-      this.db.query<{ count: string }>(
-        "SELECT count(*) FROM trend_notifications WHERE user_id=:userId AND read_at IS NULL",
-        { replacements: { userId }, type: QueryTypes.SELECT },
-      ),
-    ]);
+  ): Promise<{ items: InboxItem[]; nextCursor: string | null }> {
+    const rows = await this.db.query<{
+      id: string;
+      week_start: string;
+      digest: InboxItem["digest"];
+      created_at: Date;
+    }>(
+      `
+      SELECT id,week_start,digest,created_at FROM trend_notifications WHERE user_id=:userId
+      ${before ? "AND (created_at,id) < (SELECT created_at,id FROM trend_notifications WHERE id=:before AND user_id=:userId)" : ""}
+      ORDER BY created_at DESC,id DESC LIMIT 21`,
+      {
+        replacements: { userId, before: before ?? null },
+        type: QueryTypes.SELECT,
+      },
+    );
     return {
       items: rows.slice(0, 20).map((row) => ({
         id: row.id,
-        localDate: row.local_date,
+        weekStart: row.week_start,
         digest: row.digest,
-        readAt: row.read_at?.toISOString() ?? null,
         createdAt: row.created_at.toISOString(),
       })),
       nextCursor: rows.length > 20 ? rows[19]!.id : null,
-      unread: Number(counts[0]?.count ?? 0),
     };
   }
-  async markRead(userId: string, id: string): Promise<boolean> {
-    const rows = await this.db.query<{ id: string }>(
-      "UPDATE trend_notifications SET read_at=COALESCE(read_at,now()) WHERE user_id=:userId AND id=:id RETURNING id",
-      { replacements: { userId, id }, type: QueryTypes.SELECT },
-    );
-    return rows.length > 0;
-  }
+
   async subscribe(
     userId: string,
     input: { endpoint: string; keys: SubscriptionRow["keys"] },
   ): Promise<boolean> {
     return this.db.transaction(async (transaction) => {
-      // Serialize account registrations to enforce the device cap.
+      // ASVS 2.3.4: serialize registrations before enforcing the device cap.
       await this.db.query("SELECT id FROM users WHERE id=:userId FOR UPDATE", {
         replacements: { userId },
         transaction,
@@ -142,26 +125,14 @@ export class NotificationRepository {
       return registered.length > 0;
     });
   }
+
   async unsubscribe(userId: string, endpoint: string): Promise<void> {
     await this.db.query(
       "DELETE FROM push_subscriptions WHERE user_id=:userId AND endpoint=:endpoint",
       { replacements: { userId, endpoint } },
     );
   }
-  async claimTest(
-    userId: string,
-    endpoint: string,
-  ): Promise<SubscriptionRow | null> {
-    return (
-      (
-        await this.db.query<SubscriptionRow>(
-          `UPDATE push_subscriptions SET last_test_at=now() WHERE user_id=:userId AND endpoint=:endpoint
-      AND (last_test_at IS NULL OR last_test_at < now()-interval '60 seconds') RETURNING *`,
-          { replacements: { userId, endpoint }, type: QueryTypes.SELECT },
-        )
-      )[0] ?? null
-    );
-  }
+
   async updateSchedule(
     row: PreferenceRow,
     now: Date,
@@ -174,7 +145,7 @@ export class NotificationRepository {
     const next =
       retry && attempt < 3
         ? new Date(now.getTime() + 300_000)
-        : nextRun(now, row.settings.time, row.settings.timezone);
+        : nextWeeklyRun(now);
     if (retry && attempt >= 3) status = "UNAVAILABLE";
     await this.db.query(
       "UPDATE notification_preferences SET attempts=:attempts,status=:status,next_run_at=:next,updated_at=now() WHERE user_id=:userId",

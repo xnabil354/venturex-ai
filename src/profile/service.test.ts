@@ -267,6 +267,17 @@ describe("EntrepreneurProfileService", () => {
     await expect(service.getForEdit(USER_ID)).resolves.toEqual(validInput);
   });
 
+  it("prefills the existing profile when onboarding resumes after a persona switch", async () => {
+    const { service, userRepository } = createService();
+    await service.save(validInput, USER_ID);
+    userRepository.user = {
+      ...userRepository.user,
+      onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED,
+    };
+
+    await expect(service.getForOnboarding(USER_ID)).resolves.toEqual(validInput);
+  });
+
   it("rejects profile prefill for a non-entrepreneur", async () => {
     const userRepository = new MemoryUserRepository();
     userRepository.user = { ...userRepository.user, userType: USER_TYPES.UMKM_EXISTING };

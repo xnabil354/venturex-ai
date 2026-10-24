@@ -84,9 +84,20 @@ describe("private roadmap persistence and paged archives", () => {
   it("keeps valid archived analysis readable if optional roadmap metadata is invalid", async () => {
     const row = rowFixture();
     model.findAll.mockResolvedValue([{ ...row, hypothesis: { ...row.hypothesis, startupRoadmap: { version: "unknown" } } }]);
-    const items = await new PrivateOpportunityHypothesisRepository().listForUser("owner", true);
+    const items = await new PrivateOpportunityHypothesisRepository().listForUser("owner", "ENTREPRENEUR", true);
     expect(items[0]?.hypothesis.analysis).toEqual(row.hypothesis.analysis);
     expect(items[0]?.hypothesis.startupRoadmap).toBeUndefined();
+  });
+  it("does not mix private history between personas", async () => {
+    model.findAll.mockResolvedValue([]);
+
+    await new PrivateOpportunityHypothesisRepository().listForUser("owner", "UMKM_EXISTING");
+
+    expect(model.findAll).toHaveBeenCalledWith({
+      where: { userId: "owner", userType: "UMKM_EXISTING" },
+      order: [["createdAt", "DESC"], ["id", "ASC"]],
+      limit: 50,
+    });
   });
   it("can reach records beyond fifty with bounded lookahead and stable ordering", async () => {
     model.findAll.mockResolvedValue(Array.from({ length: 13 }, () => rowFixture()));
@@ -121,9 +132,9 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
     const destroy = vi.fn();
     model.findOne.mockResolvedValue({ userType: "ENTREPRENEUR", isSaved: false, destroy });
 
-    await repository.removeForUser(userId, hypothesisId);
+    await repository.removeForUser(userId, "ENTREPRENEUR", hypothesisId);
 
-    expect(model.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: hypothesisId, userId }, lock: "UPDATE" }));
+    expect(model.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: hypothesisId, userId, userType: "ENTREPRENEUR" }, lock: "UPDATE" }));
     expect(destroy).toHaveBeenCalledOnce();
   });
 
@@ -131,8 +142,8 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
     const destroy = vi.fn(), update = vi.fn();
     model.findOne.mockResolvedValue({ userType: "ENTREPRENEUR", isSaved: true, destroy, update });
     const repository = new PrivateOpportunityHypothesisRepository();
-    await expect(repository.removeForUser("owner", "idea")).rejects.toMatchObject({ code: "SAVED_PERMANENT" });
-    await expect(repository.setSaved("owner", "idea", false)).rejects.toMatchObject({ code: "SAVED_PERMANENT" });
+    await expect(repository.removeForUser("owner", "ENTREPRENEUR", "idea")).rejects.toMatchObject({ code: "SAVED_PERMANENT" });
+    await expect(repository.setSaved("owner", "ENTREPRENEUR", "idea", false)).rejects.toMatchObject({ code: "SAVED_PERMANENT" });
     expect(destroy).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
   });
 
@@ -140,8 +151,8 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
     const update = vi.fn();
     model.findOne.mockResolvedValue({ userType: "ENTREPRENEUR", isSaved: false, hypothesis: {}, update });
     const repository = new PrivateOpportunityHypothesisRepository();
-    await expect(repository.setSaved("owner", "idea", true)).rejects.toMatchObject({ code: "ANALYSIS_REQUIRED" });
-    expect(model.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "idea", userId: "owner" }, lock: "UPDATE" }));
+    await expect(repository.setSaved("owner", "ENTREPRENEUR", "idea", true)).rejects.toMatchObject({ code: "ANALYSIS_REQUIRED" });
+    expect(model.findOne).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "idea", userId: "owner", userType: "ENTREPRENEUR" }, lock: "UPDATE" }));
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -156,9 +167,9 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
     const update = vi.fn(), analysis = analysisFixture();
     model.findOne.mockResolvedValue({ userType: "ENTREPRENEUR", isSaved: false, hypothesis: { analysis }, update });
     const repository = new PrivateOpportunityHypothesisRepository();
-    await expect(repository.setSaved("owner", "idea", true, new Date(), "b".repeat(64))).rejects.toMatchObject({ code: "ANALYSIS_CHANGED" });
+    await expect(repository.setSaved("owner", "ENTREPRENEUR", "idea", true, new Date(), "b".repeat(64))).rejects.toMatchObject({ code: "ANALYSIS_CHANGED" });
     analysis.fit.score = null;
-    await expect(repository.setSaved("owner", "idea", true, new Date(), analysis.inputFingerprint)).rejects.toMatchObject({ code: "ANALYSIS_REQUIRED" });
+    await expect(repository.setSaved("owner", "ENTREPRENEUR", "idea", true, new Date(), analysis.inputFingerprint)).rejects.toMatchObject({ code: "ANALYSIS_REQUIRED" });
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -166,7 +177,7 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
     const update = vi.fn(), analysis = analysisFixture();
     model.findOne.mockResolvedValue({ userType: "ENTREPRENEUR", isSaved: false, hypothesis: { analysis }, update });
     const now = new Date();
-    await new PrivateOpportunityHypothesisRepository().setSaved("owner", "idea", true, now, analysis.inputFingerprint);
+    await new PrivateOpportunityHypothesisRepository().setSaved("owner", "ENTREPRENEUR", "idea", true, now, analysis.inputFingerprint);
     expect(update).toHaveBeenCalledWith({ isSaved: true, savedAt: now, updatedAt: now }, expect.objectContaining({ transaction: expect.anything() }));
   });
 
@@ -198,7 +209,7 @@ describe("PrivateOpportunityHypothesisRepository.removeForUser", () => {
       isSaved: true,
     }]);
 
-    const results = await repository.listForUser("80000000-0000-4000-8000-000000000011");
+    const results = await repository.listForUser("80000000-0000-4000-8000-000000000011", "ENTREPRENEUR");
 
     expect(results).toHaveLength(1);
     expect(results[0]?.model).toBe(previousModel);

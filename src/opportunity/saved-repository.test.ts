@@ -88,11 +88,11 @@ describe("SavedOpportunityRepository", () => {
       }]);
 
       const options = findAll.mock.calls[0]?.[0] as {
-        readonly where: { readonly userId: string };
+        readonly where: { readonly userId: string; readonly userType: UserType };
         readonly include: readonly Record<string, unknown>[];
         readonly order: readonly unknown[];
       };
-      expect(options.where).toEqual({ userId });
+      expect(options.where).toEqual({ userId, userType });
       const opportunityInclude = options.include[0] as {
         readonly as: string;
         readonly required: boolean;
@@ -127,7 +127,7 @@ describe("SavedOpportunityRepository", () => {
       expect.objectContaining({
         as: "savedOpportunities",
         required: false,
-        where: { userId },
+        where: { userId, userType: USER_TYPES.ENTREPRENEUR },
       }),
     ]));
   });
@@ -155,8 +155,8 @@ describe("SavedOpportunityRepository", () => {
 
     expect(findOrCreate).toHaveBeenCalledTimes(2);
     expect(findOrCreate).toHaveBeenNthCalledWith(1, {
-      where: { userId, opportunityId },
-      defaults: { userId, opportunityId },
+      where: { userId, userType: USER_TYPES.ENTREPRENEUR, opportunityId },
+      defaults: { userId, userType: USER_TYPES.ENTREPRENEUR, opportunityId },
     });
   });
 
@@ -168,7 +168,7 @@ describe("SavedOpportunityRepository", () => {
     await expect(repository.saveVisibleForUser(userId, USER_TYPES.ENTREPRENEUR, opportunityId))
       .resolves.toBe(true);
 
-    expect(savedModel.findOne).toHaveBeenCalledWith({ where: { userId, opportunityId } });
+    expect(savedModel.findOne).toHaveBeenCalledWith({ where: { userId, userType: USER_TYPES.ENTREPRENEUR, opportunityId } });
     expect(savedModel.findOne).not.toHaveBeenCalledWith({ where: { userId: otherUserId, opportunityId } });
   });
 
@@ -178,7 +178,7 @@ describe("SavedOpportunityRepository", () => {
     await expect(repository.removeVisibleForUser(userId, USER_TYPES.ENTREPRENEUR, opportunityId))
       .resolves.toBe(false);
 
-    expect(destroy).toHaveBeenCalledWith({ where: { userId, opportunityId } });
+    expect(destroy).toHaveBeenCalledWith({ where: { userId, userType: USER_TYPES.ENTREPRENEUR, opportunityId } });
     expect(opportunityModel).not.toHaveProperty("destroy");
   });
 
@@ -204,12 +204,12 @@ describe("SavedOpportunityRepository", () => {
     await expect(repository.countVisibleForUser(userId, USER_TYPES.ENTREPRENEUR)).resolves.toBe(1);
 
     const options = count.mock.calls[0]?.[0] as {
-      readonly where: { readonly userId: string };
+      readonly where: { readonly userId: string; readonly userType: UserType };
       readonly distinct: boolean;
       readonly col: string;
       readonly include: readonly Record<string, unknown>[];
     };
-    expect(options.where).toEqual({ userId });
+    expect(options.where).toEqual({ userId, userType: USER_TYPES.ENTREPRENEUR });
     expect(options.distinct).toBe(true);
     expect(options.col).toBe("id");
     expect(options.include[0]).toMatchObject({ as: "opportunity", required: true });
@@ -226,7 +226,7 @@ describe("SavedOpportunityRepository", () => {
     });
 
     expect(findAll.mock.calls[0]?.[0]).toMatchObject({
-      where: { userId },
+      where: { userId, userType: USER_TYPES.ENTREPRENEUR },
       order: [["createdAt", "ASC"], ["id", "ASC"]],
       limit: 5,
       offset: 10,

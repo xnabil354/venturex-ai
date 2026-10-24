@@ -159,6 +159,7 @@ function persistenceValues(
 
   return {
     userId,
+    userType: context.userType,
     opportunityId: context.opportunity.id,
     datasetVersionId: null,
     scoringModelId: null,
@@ -214,7 +215,7 @@ export class AIAnalysisService {
     } catch {
       return null;
     }
-    return dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context, provider);
+    return dtoFromRecord(await this.repository.findLatest(user.id, user.userType, opportunityId.data, context.contextFingerprint), context, provider);
   }
 
   async generate(idInput: unknown, options: { readonly forceRefresh?: boolean; readonly consentConfirmed?: boolean } = {}): Promise<OpportunityAnalysisDto> {
@@ -235,7 +236,7 @@ export class AIAnalysisService {
     if (options.consentConfirmed !== true) throw new AIAnalysisConsentRequiredError();
 
     if (!options.forceRefresh) {
-      const cached = dtoFromRecord(await this.repository.findLatest(user.id, opportunityId.data, context.contextFingerprint), context, provider);
+      const cached = dtoFromRecord(await this.repository.findLatest(user.id, user.userType, opportunityId.data, context.contextFingerprint), context, provider);
       if (cached) return cached;
     }
 

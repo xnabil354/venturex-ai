@@ -247,6 +247,17 @@ describe("BusinessProfileService", () => {
     expect(result.salesChannelIds).toEqual([CHANNEL_ID]);
   });
 
+  it("prefills the existing business when onboarding resumes after a persona switch", async () => {
+    const { service, userRepository } = createService();
+    await service.save(validInput, USER_ID);
+    userRepository.user = {
+      ...userRepository.user,
+      onboardingStatus: ONBOARDING_STATUSES.USER_TYPE_SELECTED,
+    };
+
+    await expect(service.getForOnboarding(USER_ID)).resolves.toEqual(validInput);
+  });
+
   it("rejects edit reads for the wrong role and incomplete onboarding", async () => {
     // Given
     const { service, userRepository } = createService();

@@ -208,6 +208,43 @@ export class BusinessProfileService {
     });
   }
 
+  async getForOnboarding(userId: UserId): Promise<BusinessProfileEditValues | null> {
+    return this.sequelize.transaction(async (transaction) => {
+      const currentUser = await this.userRepository.findById(userId, transaction);
+      if (!currentUser) throw new CurrentUserNotFoundError();
+      if (currentUser.userType === USER_TYPES.ENTREPRENEUR) {
+        throw new BusinessProfileForbiddenError();
+      }
+      if (currentUser.userType !== USER_TYPES.UMKM_EXISTING
+        || (currentUser.onboardingStatus !== ONBOARDING_STATUSES.USER_TYPE_SELECTED
+          && currentUser.onboardingStatus !== ONBOARDING_STATUSES.PROFILE_IN_PROGRESS
+          && currentUser.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED)) {
+        throw new BusinessProfileStateError();
+      }
+
+      const profile = await this.profileRepository.findByUserId(userId, transaction);
+      if (!profile) return null;
+      const state = await this.profileRepository.loadState(profile.id, transaction);
+      return businessProfileSchema.parse({
+        businessName: profile.businessName,
+        businessCategoryId: profile.businessCategoryId,
+        location: {
+          text: profile.locationText,
+          city: profile.city,
+          province: profile.province,
+          district: profile.district,
+          subdistrict: profile.subdistrict,
+        },
+        averagePrice: { min: profile.averagePriceMin, max: profile.averagePriceMax },
+        products: state.products.map(({ name, fnbCategoryId, price }) => ({ name, categoryId: fnbCategoryId, price })),
+        customerSegmentIds: state.customerSegmentIds,
+        salesChannelIds: state.salesChannelIds,
+        businessDescription: profile.businessDescription,
+        notes: profile.notes,
+      });
+    });
+  }
+
   async save(input: unknown, userId: UserId): Promise<BusinessProfileSaveResult> {
     const data = businessProfileSchema.parse(input);
     const [categories, segments, channels] = await Promise.all([

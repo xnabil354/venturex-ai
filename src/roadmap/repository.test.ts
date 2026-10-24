@@ -48,9 +48,9 @@ describe("RoadmapRepository ownership filters", () => {
     const repository = repositoryWithMocks({ roadmapModel: { findOne } as unknown as typeof Roadmap });
     const roadmapId = "50000000-0000-4000-8000-000000000001";
 
-    await expect(repository.findForUser(userId, roadmapId)).resolves.toBeNull();
+    await expect(repository.findForUser(userId, USER_TYPES.ENTREPRENEUR, roadmapId)).resolves.toBeNull();
     expect(findOne).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: roadmapId, userId },
+      where: { id: roadmapId, userId, roadmapType: "STARTUP" },
       include: expect.arrayContaining([
         expect.objectContaining({ as: "steps", separate: true, order: [["sequence", "ASC"]] }),
       ]),
@@ -60,7 +60,7 @@ describe("RoadmapRepository ownership filters", () => {
   it("always scopes list retrieval to the session owner", async () => {
     const findAndCountAll = vi.fn().mockResolvedValue({ rows: [], count: 0 });
     const repository = repositoryWithMocks({ roadmapModel: { findAndCountAll } as unknown as typeof Roadmap });
-    await repository.listForUser(userId, { page: 2, pageSize: 5, type: "STARTUP", sort: "createdAt", order: "ASC" });
+    await repository.listForUser(userId, USER_TYPES.ENTREPRENEUR, { page: 2, pageSize: 5, type: "STARTUP", sort: "createdAt", order: "ASC" });
 
     expect(findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId, roadmapType: "STARTUP" },

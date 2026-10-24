@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/auth/current-user";
 import { resolveOnboardingDestination } from "@/auth/routing";
 import { BusinessProfileForm } from "@/components/onboarding/business-profile-form";
 import { OnboardingLayout } from "@/components/onboarding/onboarding-layout";
+import { BusinessProfileService } from "@/profile/business-service";
 
 export default async function BusinessOnboardingPage() {
   const user = await getCurrentUser();
@@ -16,9 +17,11 @@ export default async function BusinessOnboardingPage() {
     redirect(destination);
   }
 
+  const initialValues = await new BusinessProfileService().getForOnboarding(user.id);
+
   return (
     <OnboardingLayout showBackToSelection>
-      <BusinessProfileForm />
+      <BusinessProfileForm {...(initialValues ? { initialValues } : {})} />
     </OnboardingLayout>
   );
 }

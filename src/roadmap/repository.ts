@@ -50,10 +50,14 @@ export interface RoadmapRepositoryPort {
   loadProfileContext(userId: UserId, transaction: Transaction): Promise<RoadmapProfileContext | null>;
   loadGrowthProfileContext(userId: UserId, transaction: Transaction): Promise<GrowthRoadmapProfileContext | null>;
   loadOpportunityContext(opportunityId: string, userType: UserType, transaction: Transaction): Promise<RoadmapOpportunityContext | null>;
-  findAnalysis(userId: UserId, opportunityId: string, analysisId: string | undefined, transaction: Transaction): Promise<RoadmapAnalysisContext | null>;
+  findAnalysis(userId: UserId, userType: UserType, opportunityId: string, analysisId: string | undefined, transaction: Transaction): Promise<RoadmapAnalysisContext | null>;
   createWithSteps(values: RoadmapCreateValues, transaction: Transaction): Promise<RoadmapDetail>;
-  listForUser(userId: UserId, filter: RoadmapListFilter): Promise<RoadmapPage>;
-  findForUser(userId: UserId, roadmapId: string): Promise<RoadmapDetail | null>;
+  listForUser(userId: UserId, userType: UserType, filter: RoadmapListFilter): Promise<RoadmapPage>;
+  findForUser(userId: UserId, userType: UserType, roadmapId: string): Promise<RoadmapDetail | null>;
+}
+
+function roadmapTypeForUser(userType: UserType): "STARTUP" | "GROWTH" {
+  return userType === "ENTREPRENEUR" ? "STARTUP" : "GROWTH";
 }
 
 export type RoadmapRepositoryModels = {
@@ -306,9 +310,9 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
     return opportunity ? toOpportunityContext(opportunity) : null;
   }
 
-  async findAnalysis(userId: UserId, opportunityId: string, analysisId: string | undefined, transaction: Transaction): Promise<RoadmapAnalysisContext | null> {
+  async findAnalysis(userId: UserId, userType: UserType, opportunityId: string, analysisId: string | undefined, transaction: Transaction): Promise<RoadmapAnalysisContext | null> {
     const analysis = await this.analysisModel.findOne({
-      where: { userId, opportunityId, ...(analysisId ? { id: analysisId } : {}) },
+      where: { userId, userType, opportunityId, ...(analysisId ? { id: analysisId } : {}) },
       order: [["generatedAt", "DESC"], ["id", "ASC"]],
       transaction,
     });
@@ -348,10 +352,10 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
     });
   }
 
-  async listForUser(userId: UserId, filter: RoadmapListFilter): Promise<RoadmapPage> {
+  async listForUser(userId: UserId, userType: UserType, filter: RoadmapListFilter): Promise<RoadmapPage> {
     const where = {
       userId,
-      ...(filter.type ? { roadmapType: filter.type } : {}),
+      roadmapType: roadmapTypeForUser(userType),
       ...(filter.opportunityId ? { opportunityId: filter.opportunityId } : {}),
     };
     const { rows, count } = await this.roadmapModel.findAndCountAll({
@@ -371,9 +375,9 @@ export class RoadmapRepository implements RoadmapRepositoryPort {
     };
   }
 
-  async findForUser(userId: UserId, roadmapId: string): Promise<RoadmapDetail | null> {
+  async findForUser(userId: UserId, userType: UserType, roadmapId: string): Promise<RoadmapDetail | null> {
     const roadmap = await this.roadmapModel.findOne({
-      where: { id: roadmapId, userId },
+      where: { id: roadmapId, userId, roadmapType: roadmapTypeForUser(userType) },
       include: [
         { model: this.opportunityModel, as: "opportunity", attributes: ["id", "name"], required: true },
         { model: this.stepModel, as: "steps", separate: true, order: [["sequence", "ASC"]] },

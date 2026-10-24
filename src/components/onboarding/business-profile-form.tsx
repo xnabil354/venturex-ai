@@ -278,7 +278,7 @@ export function BusinessProfileForm({
     <section aria-labelledby={headingId} className={cx(
       "grid",
       mode === "edit"
-        ? "max-w-[58rem] gap-24 rounded-cards border border-soft-mist bg-paper-white p-16 sm:p-24"
+        ? "mx-auto max-w-[58rem] gap-24 rounded-cards border border-soft-mist bg-paper-white p-16 sm:p-24"
         : "gap-32 border-t border-soft-mist pt-20 sm:pt-24",
     )}>
       <header className={cx("grid", mode === "edit" ? "gap-8 border-b border-soft-mist pb-16" : "gap-12")}>

@@ -119,7 +119,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
     limit?: number,
   ): Promise<readonly OpportunityRecord[]> {
     const saved = await this.savedModel.findAll({
-      where: { userId },
+      where: { userId, userType },
       attributes: ["id"],
       include: [
         {
@@ -144,7 +144,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
 
   async countVisibleForUser(userId: UserId, userType: UserType): Promise<number> {
     return this.savedModel.count({
-      where: { userId },
+      where: { userId, userType },
       include: [{
         model: this.opportunityModel,
         as: "opportunity",
@@ -162,7 +162,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
     page: SavedOpportunityPageOptions,
   ): Promise<readonly OpportunityRecord[]> {
     const saved = await this.savedModel.findAll({
-      where: { userId },
+      where: { userId, userType },
       attributes: ["id"],
       include: [{
         model: this.opportunityModel,
@@ -196,7 +196,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
           model: this.savedModel,
           as: "savedOpportunities",
           attributes: ["id"],
-          where: { userId },
+          where: { userId, userType },
           required: false,
         },
       ],
@@ -221,7 +221,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
   ): Promise<SavedOpportunityWriteResult | null> {
     if (!(await this.isVisible(userType, opportunityId))) return null;
 
-    const where = { userId, opportunityId };
+    const where = { userId, userType, opportunityId };
     let created = false;
     try {
       const [, wasCreated] = await this.savedModel.findOrCreate({
@@ -245,7 +245,7 @@ export class SavedOpportunityRepository implements SavedOpportunityRepositoryPor
   ): Promise<boolean | null> {
     if (!(await this.isVisible(userType, opportunityId))) return null;
 
-    await this.savedModel.destroy({ where: { userId, opportunityId } });
+    await this.savedModel.destroy({ where: { userId, userType, opportunityId } });
     return false;
   }
 

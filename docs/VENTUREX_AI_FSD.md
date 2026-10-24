@@ -216,7 +216,7 @@ Framework:
 | Own Profile Edit | - | ✓ | ✓ |
 | Other User Data | - | ✗ | ✗ |
 
-`*` Hanya pada onboarding awal atau sesuai keputusan perubahan user type yang belum final.
+`*` Pilihan awal tersedia untuk user baru; user `COMPLETED` juga dapat memakai Change User Type sesuai FSD-ONB-002.
 
 ---
 
@@ -517,7 +517,7 @@ UMKM_EXISTING
 
 - Satu user memiliki satu active user type dalam MVP.
 - User tidak boleh menyelesaikan dua onboarding profile secara bersamaan.
-- Perubahan tipe setelah onboarding bukan core MVP.
+- Perubahan tipe setelah onboarding mengikuti FSD-ONB-002 dan tidak menghapus histori persona.
 
 ### Acceptance Criteria
 
@@ -532,21 +532,25 @@ UMKM_EXISTING
 ## FSD-ONB-002 — Change User Type
 
 **PRD Reference:** PRD-ONB-002
-**Priority:** Should Have / Open Decision
+**Priority:** Should Have / Approved implementation
 
-Fungsi ini **tidak dianggap wajib** sampai Product Owner menyetujui perilaku final.
+Fungsi ini diaktifkan untuk akun yang sudah menyelesaikan onboarding. Histori setiap persona tetap terpisah dan tidak dihapus.
 
-Jika diaktifkan:
+Flow yang disetujui:
 
 1. User membuka Profile/Settings.
 2. User memilih `Change User Type`.
 3. Sistem menampilkan warning.
 4. User confirm.
 5. Existing profile tidak dihapus otomatis.
-6. User diarahkan membuat profile untuk tipe baru.
-7. Recommendation menggunakan tipe baru setelah profile selesai.
+6. `users.user_type` diganti secara atomik dan `onboarding_status` kembali ke `USER_TYPE_SELECTED`.
+7. Existing profile tipe baru, jika ada, dimuat sebagai prefill yang harus ditinjau dan disimpan ulang; jika belum ada, form dimulai kosong.
+8. User diarahkan membuat atau mengonfirmasi profile untuk tipe baru.
+9. Recommendation menggunakan tipe baru setelah profile selesai.
 
-**Open Decision:** apakah history lama tetap ditampilkan lintas tipe.
+Workspace aktif hanya membaca histori dengan pasangan `(user_id, user_type)` saat ini. Histori persona lama tetap tersimpan dan muncul kembali jika user berpindah kembali ke persona tersebut.
+
+Server menolak switch untuk user yang belum `COMPLETED`, target persona yang sama, body selain `{ userType }`, dan request lintas origin. Profile lama, private hypothesis, analysis, saved opportunity, dan roadmap tidak dihapus otomatis.
 
 ---
 
@@ -2492,6 +2496,14 @@ This approved v1 case is list-only: show only eligible published curated records
 **When** user B mencoba akses.
 **Then** access ditolak.
 
+# 42.14 FT-ONB-03 — Switch Persona dengan Histori Terpisah
+
+**Given** user sudah `COMPLETED` sebagai salah satu persona dan memiliki profile/histori.
+**When** user mengonfirmasi perpindahan persona.
+**Then** server mengubah persona aktif ke target, mengembalikan onboarding ke `USER_TYPE_SELECTED`, mempertahankan data persona lama, dan menampilkan profile target sebagai prefill bila tersedia.
+
+**And** private history, saved relation, analysis, dan roadmap hanya tampil jika `user_id` serta `user_type` cocok dengan persona aktif.
+
 ---
 
 # 43. End-to-End Acceptance Scenario A
@@ -2632,12 +2644,11 @@ FSD tidak boleh menganggap item berikut sudah final karena PRD masih menandainya
 3. Confidence Score formula;
 4. exact external data source;
 5. Compare final inclusion jika jadwal sempit;
-6. change user type behavior;
-7. exact roadmap duration;
-8. data refresh interval;
-9. hard performance SLA;
-10. exact chart type;
-11. exact authentication mechanism.
+6. exact roadmap duration;
+7. data refresh interval;
+8. hard performance SLA;
+9. exact chart type;
+10. exact authentication mechanism.
 
 Tambahan functional decision yang juga perlu persetujuan:
 

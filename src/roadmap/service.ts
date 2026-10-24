@@ -74,29 +74,24 @@ export class StartupRoadmapService {
 
   async generate(input: { readonly opportunityId: string; readonly analysisId?: string }): Promise<RoadmapDetail> {
     const user = await this.requireUser();
-    if (user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || user.userType === null) {
-      throw new RoadmapUserIncompleteError();
-    }
-    if (user.userType !== USER_TYPES.ENTREPRENEUR && user.userType !== USER_TYPES.UMKM_EXISTING) {
-      throw new RoadmapForbiddenError();
-    }
+    const userType = this.requireCompletedUserType(user);
 
     return this.transactionRunner(async (transaction) => {
       const [profile, growthProfile, opportunity] = await Promise.all([
-        user.userType === USER_TYPES.ENTREPRENEUR
+        userType === USER_TYPES.ENTREPRENEUR
           ? this.repository.loadProfileContext(user.id as UserId, transaction)
           : Promise.resolve(null),
-        user.userType === USER_TYPES.UMKM_EXISTING
+        userType === USER_TYPES.UMKM_EXISTING
           ? this.repository.loadGrowthProfileContext(user.id as UserId, transaction)
           : Promise.resolve(null),
-        this.repository.loadOpportunityContext(input.opportunityId, user.userType!, transaction),
+        this.repository.loadOpportunityContext(input.opportunityId, userType, transaction),
       ]);
-      const generationProfile = user.userType === USER_TYPES.ENTREPRENEUR
+      const generationProfile = userType === USER_TYPES.ENTREPRENEUR
         ? { userType: USER_TYPES.ENTREPRENEUR, profile: requireStartupProfile(profile) }
         : { userType: USER_TYPES.UMKM_EXISTING, profile: requireGrowthProfile(growthProfile) };
       if (!opportunity) throw new RoadmapOpportunityNotFoundError();
 
-      const analysis = await this.repository.findAnalysis(user.id as UserId, opportunity.id, input.analysisId, transaction);
+      const analysis = await this.repository.findAnalysis(user.id as UserId, userType, opportunity.id, input.analysisId, transaction);
       if (input.analysisId && !analysis) throw new RoadmapAnalysisNotFoundError();
       let generated: ReturnType<typeof generateStartupRoadmap> | ReturnType<typeof generateGrowthRoadmap>;
       try {
@@ -111,7 +106,7 @@ export class StartupRoadmapService {
       }
       return this.repository.createWithSteps({
         userId: user.id as UserId,
-        roadmapType: user.userType === USER_TYPES.ENTREPRENEUR ? "STARTUP" : "GROWTH",
+        roadmapType: userType === USER_TYPES.ENTREPRENEUR ? "STARTUP" : "GROWTH",
         opportunityId: opportunity.id,
         analysisId: analysis?.id ?? null,
         generationContext: generated.generationContext,
@@ -122,12 +117,26 @@ export class StartupRoadmapService {
 
   async listForCurrentUser(filter: RoadmapListFilter): Promise<RoadmapPage> {
     const user = await this.requireUser();
-    return this.repository.listForUser(user.id as UserId, filter);
+    const userType = this.requireCompletedUserType(user);
+    return this.repository.listForUser(user.id as UserId, userType, {
+      ...filter,
+      type: userType === USER_TYPES.ENTREPRENEUR ? "STARTUP" : "GROWTH",
+    });
   }
 
   async getForCurrentUser(roadmapId: string): Promise<RoadmapDetail | null> {
     const user = await this.requireUser();
-    return this.repository.findForUser(user.id as UserId, roadmapId);
+    return this.repository.findForUser(user.id as UserId, this.requireCompletedUserType(user), roadmapId);
+  }
+
+  private requireCompletedUserType(user: SafeUser): NonNullable<SafeUser["userType"]> {
+    if (user.onboardingStatus !== ONBOARDING_STATUSES.COMPLETED || !user.userType) {
+      throw new RoadmapUserIncompleteError();
+    }
+    if (user.userType !== USER_TYPES.ENTREPRENEUR && user.userType !== USER_TYPES.UMKM_EXISTING) {
+      throw new RoadmapForbiddenError();
+    }
+    return user.userType;
   }
 
   private async requireUser(): Promise<SafeUser> {

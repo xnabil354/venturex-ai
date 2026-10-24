@@ -31,8 +31,8 @@ import type { OpportunityAnalysisProvider } from "./provider";
 function repository() {
   const rows: OpportunityAnalysisRecord[] = [];
   const repo: OpportunityAnalysisRepositoryPort = {
-    findLatest: vi.fn(async (userId, opportunityId, contextFingerprint) => rows
-      .filter((row) => row.userId === userId && row.opportunityId === opportunityId
+    findLatest: vi.fn(async (userId, userType, opportunityId, contextFingerprint) => rows
+      .filter((row) => row.userId === userId && row.userType === userType && row.opportunityId === opportunityId
         && (row.aiAnalysis as { contextFingerprint?: string } | null)?.contextFingerprint === contextFingerprint)
       .sort((left, right) => right.generatedAt.getTime() - left.generatedAt.getTime())[0] ?? null),
     create: vi.fn(async (values) => {
@@ -79,6 +79,7 @@ function staleRecord(userId = testUser().id, contextFingerprint = "b".repeat(64)
   return {
     id: "b0000000-0000-4000-8000-000000000001",
     userId,
+    userType: context.userType,
     opportunityId: TEST_OPPORTUNITY_ID,
     profileVersion: context.profileVersion,
     opportunityScore: null,
@@ -149,7 +150,7 @@ describe("AIAnalysisService", () => {
     await first.service.generate(TEST_OPPORTUNITY_ID, { consentConfirmed: true, forceRefresh: true });
     const own = createService({ user: testUser(), repo: repo.repo, provider: generatedForOther });
     await expect(own.service.getLatest(TEST_OPPORTUNITY_ID)).resolves.toBeNull();
-    expect(repo.repo.findLatest).toHaveBeenLastCalledWith(testUser().id, TEST_OPPORTUNITY_ID, testAnalysisContext().contextFingerprint);
+    expect(repo.repo.findLatest).toHaveBeenLastCalledWith(testUser().id, "ENTREPRENEUR", TEST_OPPORTUNITY_ID, testAnalysisContext().contextFingerprint);
   });
 
   it("uses a fresh cached result without calling the provider unless forceRefresh is true", async () => {

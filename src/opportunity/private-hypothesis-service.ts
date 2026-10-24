@@ -329,7 +329,7 @@ export class PrivateOpportunityHypothesisService {
   async listForUser(user: SafeUser | null, savedOnly = false): Promise<readonly PrivateOpportunityIdeaDto[]> {
     if (!user) throw new PrivateOpportunityError("UNAUTHENTICATED");
     if (!isEligibleUser(user)) throw new PrivateOpportunityError("FORBIDDEN");
-    return this.repository.listForUser(user.id, savedOnly);
+    return this.repository.listForUser(user.id, user.userType, savedOnly);
   }
 
   async setSavedForUser(user: SafeUser | null, id: string, saved: boolean, reviewed = false, analysisFingerprint?: string): Promise<PrivateOpportunityIdeaDto> {
@@ -345,7 +345,7 @@ export class PrivateOpportunityHypothesisService {
         if (!isEntrepreneurAnalysisFresh(context, item, process.env.AUTH_SECRET, this.now())) throw new PrivateHypothesisStateError("ANALYSIS_CHANGED");
       }
     }
-    const result = await this.repository.setSaved(user.id, id, saved, this.now(), analysisFingerprint);
+    const result = await this.repository.setSaved(user.id, user.userType, id, saved, this.now(), analysisFingerprint);
     if (!result) throw new PrivateOpportunityError("SOURCE_SIGNAL_UNAVAILABLE");
     return result;
   }
@@ -353,7 +353,7 @@ export class PrivateOpportunityHypothesisService {
   async removeForUser(user: SafeUser | null, id: string): Promise<void> {
     if (!user) throw new PrivateOpportunityError("UNAUTHENTICATED");
     if (!isEligibleUser(user)) throw new PrivateOpportunityError("FORBIDDEN");
-    await this.repository.removeForUser(user.id, id);
+    await this.repository.removeForUser(user.id, user.userType, id);
   }
 
   async generateForUser(user: SafeUser | null, rawRequest: unknown, signal?: AbortSignal): Promise<PrivateOpportunityGenerationResult> {

@@ -102,9 +102,9 @@ function makeRepository(overrides: Partial<RoadmapRepositoryPort> = {}) {
     loadProfileContext: vi.fn(async () => profile),
     loadGrowthProfileContext: vi.fn(async () => growthProfile),
     loadOpportunityContext: vi.fn(async () => opportunity),
-    findAnalysis: vi.fn(async (_userId: typeof userId, _opportunityId: string, _analysisId: string | undefined): Promise<RoadmapAnalysisContext | null> => null),
+    findAnalysis: vi.fn(async (_userId: typeof userId, _userType: "ENTREPRENEUR" | "UMKM_EXISTING", _opportunityId: string, _analysisId: string | undefined): Promise<RoadmapAnalysisContext | null> => null),
     createWithSteps: vi.fn(async () => detail),
-    listForUser: vi.fn(async (ownerId, filter) => ({ items: [], page: filter.page, pageSize: filter.pageSize, totalCount: 0, totalPages: 1 })),
+    listForUser: vi.fn(async (ownerId, _userType, filter) => ({ items: [], page: filter.page, pageSize: filter.pageSize, totalCount: 0, totalPages: 1 })),
     findForUser: vi.fn(async () => null),
     ...overrides,
   } satisfies RoadmapRepositoryPort;
@@ -201,7 +201,7 @@ describe("StartupRoadmapService", () => {
   it("requires a supplied analysis to belong to the current user and Opportunity", async () => {
     const repository = makeRepository();
     await expect(new StartupRoadmapService({ currentUserResolver: async () => entrepreneur, repository, transactionRunner: async <T>(callback: (tx: Transaction) => Promise<T>) => callback(transaction) }).generate({ opportunityId, analysisId: "90000000-0000-4000-8000-000000000009" })).rejects.toBeInstanceOf(RoadmapAnalysisNotFoundError);
-    expect(repository.findAnalysis).toHaveBeenCalledWith(userId, opportunityId, "90000000-0000-4000-8000-000000000009", transaction);
+    expect(repository.findAnalysis).toHaveBeenCalledWith(userId, USER_TYPES.ENTREPRENEUR, opportunityId, "90000000-0000-4000-8000-000000000009", transaction);
     expect(repository.createWithSteps).not.toHaveBeenCalled();
   });
 
@@ -210,8 +210,8 @@ describe("StartupRoadmapService", () => {
     const service = new StartupRoadmapService({ currentUserResolver: async () => entrepreneur, repository });
     await service.listForCurrentUser({ page: 1, pageSize: 10, type: "STARTUP" });
     await service.getForCurrentUser(detail.id);
-    expect(repository.listForUser).toHaveBeenCalledWith(userId, { page: 1, pageSize: 10, type: "STARTUP" });
-    expect(repository.findForUser).toHaveBeenCalledWith(userId, detail.id);
+    expect(repository.listForUser).toHaveBeenCalledWith(userId, USER_TYPES.ENTREPRENEUR, { page: 1, pageSize: 10, type: "STARTUP" });
+    expect(repository.findForUser).toHaveBeenCalledWith(userId, USER_TYPES.ENTREPRENEUR, detail.id);
   });
 
   it("propagates persistence failure so the transaction runner can roll back the header and steps", async () => {

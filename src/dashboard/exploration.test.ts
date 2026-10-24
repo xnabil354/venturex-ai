@@ -18,10 +18,10 @@ function idea(id: string, saved = false, query = "kopi susu", geo = "ID"): Priva
 describe("dashboard exploration", () => {
   it.each(["ENTREPRENEUR", "UMKM_EXISTING"] as const)("reads the authenticated %s account and keeps real hypothesis anchors", async userType => {
     const records = Array.from({ length: 5 }, (_, i) => idea(`id-${i}`, i === 0));
-    const listIdeas = vi.fn(async (_id: string, savedOnly?: boolean) => savedOnly ? [records[0]!] : records);
+    const listIdeas = vi.fn(async (_id: string, _userType: "ENTREPRENEUR" | "UMKM_EXISTING", savedOnly?: boolean) => savedOnly ? [records[0]!] : records);
     const result = await loadDashboardExploration({ ...user, userType }, "Kopi", { listIdeas, listRoadmaps: async () => ({ totalCount: 1 }) });
-    expect(listIdeas).toHaveBeenCalledWith(user.id);
-    expect(listIdeas).toHaveBeenCalledWith(user.id, true);
+    expect(listIdeas).toHaveBeenCalledWith(user.id, userType, false);
+    expect(listIdeas).toHaveBeenCalledWith(user.id, userType, true);
     expect(result.opportunities.preview).toHaveLength(3);
     expect(result.opportunities.preview[0]?.href).toBe("/opportunities#hypothesis-id-0");
     expect(result.savedOpportunities.preview[0]?.href).toBe("/saved#hypothesis-id-0");
@@ -50,7 +50,7 @@ describe("dashboard exploration", () => {
 
   it("loads older saved ideas independently and isolates module failures", async () => {
     const result = await loadDashboardExploration(user, "Kopi", {
-      listIdeas: async (_id, savedOnly) => savedOnly ? [idea("older-saved", true)] : Promise.reject(new Error("private database failure")),
+      listIdeas: async (_id, _userType, savedOnly) => savedOnly ? [idea("older-saved", true)] : Promise.reject(new Error("private database failure")),
       listRoadmaps: async () => ({ totalCount: 0 }),
     });
     expect(result.opportunities.status).toBe("ERROR");

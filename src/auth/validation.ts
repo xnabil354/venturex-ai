@@ -31,4 +31,6 @@ export const userTypeSelectionSchema = z.object({
   userType: z.enum([USER_TYPES.ENTREPRENEUR, USER_TYPES.UMKM_EXISTING]),
 });
 
+export const userTypeSwitchSchema = userTypeSelectionSchema.strict();
+
 export type UserTypeSelectionInput = z.infer<typeof userTypeSelectionSchema>;
