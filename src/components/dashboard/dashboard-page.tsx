@@ -57,61 +57,90 @@ function DashboardLayout({
   profileUpdated,
   viewerId,
 }: DashboardLayoutProps) {
+  const explorationSteps = [
+    {
+      content: viewerId ? (
+        <DashboardRadarPreview
+          productQuery={dashboard.userType === USER_TYPES.ENTREPRENEUR ? dashboard.profile.preferredProductType ?? "" : dashboard.profile.businessName}
+          state={dashboard.modules.trends}
+          userId={viewerId}
+        />
+      ) : (
+        <TrendPreviewSection state={dashboard.modules.trends} title="Trend Radar" />
+      ),
+      key: "trends",
+    },
+    {
+      content: <OpportunityPreviewSection state={dashboard.modules.opportunities} title="Opportunity Finder" />,
+      key: "opportunities",
+    },
+    {
+      content: <SavedOpportunityPreviewSection state={dashboard.modules.savedOpportunities} title="Peluang tersimpan" />,
+      key: "saved-opportunities",
+    },
+    ...modules.map((module) => ({
+      content: <ModuleStatusCard description={module.description} href="/roadmaps" state={dashboard.modules[module.key]} title={module.title} />,
+      key: module.key,
+    })),
+  ];
+
   return (
-    <PageContainer>
-      <div className="grid gap-32 py-32 sm:gap-48 sm:py-48 lg:py-64">
-        <DashboardHeader dashboard={dashboard} />
-        {profileUpdated ? (
-          <StatusNotice aria-live="polite" role="status" tone="success">
-            Profil berhasil diperbarui. Informasi di bawah menampilkan data terbaru.
-          </StatusNotice>
-        ) : null}
-        <ProfileSummary
-          action={
-            dashboard.userType === USER_TYPES.ENTREPRENEUR ||
-            dashboard.userType === USER_TYPES.UMKM_EXISTING ? (
-            <Link
-              className="inline-flex min-h-button items-center rounded-small-buttons border border-soft-mist bg-paper-white px-14 py-6 text-body-sm font-w540 text-royal-violet transition-colors hover:border-royal-violet hover:bg-lilac-mist/20 focus-visible:outline-2 focus-visible:outline-royal-violet"
-              href="/profile"
-            >
-              Edit profil
-            </Link>
-            ) : null
-          }
-          statusLabel={profileStatus}
-          title={profileTitle}
-        >
-          {profileSummary}
-        </ProfileSummary>
+    <div className="relative isolate min-h-[calc(100dvh-64px)] bg-warm-parchment">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[url('/images/culinary-craft.jpg')] bg-cover bg-center"
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-paper-white/85" />
+      <PageContainer className="relative z-10">
+        <div className="grid gap-24 py-24 sm:gap-32 sm:py-32 lg:gap-48 lg:py-48">
+          <DashboardHeader dashboard={dashboard} />
+          {profileUpdated ? (
+            <StatusNotice aria-live="polite" role="status" tone="success">
+              Profil berhasil diperbarui. Informasi di bawah menampilkan data terbaru.
+            </StatusNotice>
+          ) : null}
+          <ProfileSummary
+            action={
+              dashboard.userType === USER_TYPES.ENTREPRENEUR ||
+              dashboard.userType === USER_TYPES.UMKM_EXISTING ? (
+                <Link
+                  className="inline-flex min-h-button items-center rounded-small-buttons border border-soft-mist bg-paper-white px-14 py-6 text-body-sm font-w540 text-royal-violet transition-colors hover:border-royal-violet hover:bg-lilac-mist/20 focus-visible:outline-2 focus-visible:outline-royal-violet"
+                  href="/profile"
+                >
+                  Edit profil
+                </Link>
+              ) : null
+            }
+            statusLabel={profileStatus}
+            title={profileTitle}
+          >
+            {profileSummary}
+          </ProfileSummary>
 
-        <section aria-labelledby="dashboard-next-steps" className="grid gap-20">
-          <div className="flex flex-col gap-6 border-b border-soft-mist pb-16 sm:flex-row sm:items-baseline sm:justify-between">
-            <h2 className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal" id="dashboard-next-steps">
-              Lanjutkan eksplorasi
-            </h2>
-            <p className="max-w-[48ch] text-body-sm leading-relaxed text-stone-gray sm:text-right">
-              Mulai dari tren, lanjutkan ide usaha Anda.
-            </p>
-          </div>
+          <section aria-labelledby="dashboard-next-steps" className="grid gap-16 sm:gap-20">
+            <div className="flex flex-col gap-6 border-b border-soft-mist pb-12 sm:flex-row sm:items-baseline sm:justify-between sm:pb-16">
+              <h2 className="text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal" id="dashboard-next-steps">
+                Lanjutkan eksplorasi
+              </h2>
+              <p className="max-w-[48ch] text-body-sm leading-relaxed text-stone-gray sm:text-right">
+                Mulai dari tren, lanjutkan ide usaha Anda.
+              </p>
+            </div>
 
-          <ol aria-label="Perjalanan eksplorasi usaha" className="grid gap-16">
-            {[
-              viewerId ? <DashboardRadarPreview key="trends" state={dashboard.modules.trends} userId={viewerId} productQuery={dashboard.userType === "ENTREPRENEUR" ? dashboard.profile.preferredProductType ?? "" : dashboard.profile.businessName} /> : <TrendPreviewSection key="trends" state={dashboard.modules.trends} title="Trend Radar" />,
-              <OpportunityPreviewSection key="opportunities" state={dashboard.modules.opportunities} title="Opportunity Finder" />,
-              <SavedOpportunityPreviewSection key="saved" state={dashboard.modules.savedOpportunities} title="Peluang tersimpan" />,
-              ...modules.map(module => <ModuleStatusCard key={module.key} description={module.description} state={dashboard.modules[module.key]} title={module.title} href="/roadmaps" />),
-            ].map((content, index, steps) => (
-              <li key={index} className="relative grid min-w-0 grid-cols-[28px_minmax(0,1fr)] gap-10 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-16">
-                {index < steps.length - 1 ? <span aria-hidden="true" className="absolute bottom-[-16px] left-[14px] top-28 w-px bg-soft-mist sm:left-20 sm:top-40" /> : null}
-                <span aria-label={`Langkah ${index + 1}`} className="relative flex size-28 items-center justify-center rounded-full border border-midnight-wine/20 bg-warm-parchment text-caption font-w540 text-midnight-wine sm:size-40">{index + 1}</span>
-                <div className="min-w-0">{content}</div>
-              </li>
-            ))}
-          </ol>
-        </section>
-        {viewerId ? <JourneyReportCard /> : null}
-      </div>
-    </PageContainer>
+            <ol aria-label="Perjalanan eksplorasi usaha" className="grid gap-16">
+              {explorationSteps.map((step, index) => (
+                <li key={step.key} className="relative grid min-w-0 grid-cols-[28px_minmax(0,1fr)] gap-10 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-16">
+                  {index < explorationSteps.length - 1 ? <span aria-hidden="true" className="absolute bottom-[-16px] left-[14px] top-28 w-px bg-soft-mist sm:left-20 sm:top-40" /> : null}
+                  <span aria-label={`Langkah ${index + 1}`} className="relative flex size-28 items-center justify-center rounded-full border border-midnight-wine/20 bg-warm-parchment text-caption font-w540 text-midnight-wine sm:size-40">{index + 1}</span>
+                  <div className="min-w-0">{step.content}</div>
+                </li>
+              ))}
+            </ol>
+          </section>
+          {viewerId ? <JourneyReportCard /> : null}
+        </div>
+      </PageContainer>
+    </div>
   );
 }
 

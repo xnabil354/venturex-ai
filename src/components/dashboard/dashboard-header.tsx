@@ -22,9 +22,9 @@ export type DashboardHeaderProps = {
 
 export function DashboardHeader({ dashboard }: DashboardHeaderProps) {
   return (
-    <header className="grid gap-16 border-b border-soft-mist pb-28">
-      <div className="grid gap-8">
-        <h1 className="text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal sm:text-display sm:leading-display text-balance">
+    <header className="grid gap-12 border-b border-soft-mist pb-20 sm:gap-16 sm:pb-28">
+      <div className="grid gap-6 sm:gap-8">
+        <h1 className="text-subheading font-w460 leading-subheading tracking-[-0.4px] text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:text-display lg:leading-display lg:tracking-display text-balance">
           Selamat datang kembali
         </h1>
         <p className="max-w-[62ch] text-body font-w460 leading-relaxed text-stone-gray">

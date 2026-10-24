@@ -147,8 +147,8 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
                   aria-expanded={isProfileMenuOpen}
                   aria-label="Menu profil"
                   className={cx(
-                    "inline-flex size-48 items-center justify-center rounded-small-buttons border border-white/20 text-paper-white transition-colors hover:border-lilac-mist hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist",
-                    isNavigationActive(pathname, "/profile") ? "bg-white/10 text-lilac-mist" : "bg-white/5",
+                    "inline-flex size-48 items-center justify-center text-paper-white transition-colors hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist",
+                    isNavigationActive(pathname, "/profile") && "text-lilac-mist",
                   )}
                   onClick={() => setIsProfileMenuOpen((current) => !current)}
                   ref={profileButtonRef}
@@ -182,7 +182,7 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
               aria-controls="mobile-navigation-panel"
               aria-expanded={isMenuOpen}
               aria-label={isMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
-              className="inline-flex size-48 items-center justify-center rounded-small-buttons border border-white/20 bg-white/10 text-paper-white transition-[background-color,color] duration-150 ease-out hover:bg-white/20 hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist lg:hidden"
+              className="inline-flex size-48 items-center justify-center text-paper-white transition-colors duration-150 ease-out hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist lg:hidden"
               onClick={() => setIsMenuOpen((current) => !current)}
               ref={menuButtonRef}
               type="button"
