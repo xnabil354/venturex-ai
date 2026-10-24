@@ -22,8 +22,6 @@
     "db:seed:reference": "node --env-file-if-exists=.env --experimental-strip-types scripts/reference-seed.mjs",
     "catalog:import": "node --env-file-if-exists=.env --experimental-strip-types scripts/catalog/import-curated-catalog.mjs",
     "catalog:lifecycle": "node --conditions=react-server --env-file-if-exists=.env --experimental-transform-types scripts/catalog/lifecycle.mjs",
-    "trend:preview": "node --conditions=react-server --experimental-transform-types scripts/trend/preview-brightdata-candidates.mjs",
-    "trend:curate": "node --conditions=react-server --experimental-transform-types scripts/trend/prepare-candidate-curation.mjs",
     "notifications:setup": "node --env-file-if-exists=.env scripts/notifications/setup.mjs",
     "notifications:worker": "node --conditions=react-server --env-file-if-exists=.env scripts/notifications/worker.mjs"
   },

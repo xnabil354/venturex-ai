@@ -2,9 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { screenFnbCandidates } from "./fnb-candidate-screening";
-import type { BrightDataGoogleTrendsBatchCandidate, BrightDataScreenedCandidateBatch } from "./brightdata-google-trends";
-import { getTrendAnalysisAvailability, LiveSignalsError, LiveTrendSignalsService } from "./live-signals";
+import {
+  getTrendAnalysisAvailability,
+  LiveSignalsError,
+  LiveTrendSignalsService,
+  type LiveSignalsCandidate,
+  type ScreenedBatch,
+} from "./live-signals";
 
 const baseEnvironment = {
   NODE_ENV: "test",
@@ -12,7 +16,6 @@ const baseEnvironment = {
   VENTUREX_TRENDS_LIVE_PREVIEW_ENABLED: "true",
   BRIGHTDATA_TRENDS_ENABLED: "true",
   BRIGHTDATA_TRENDS_API_KEY: "not-a-real-key",
-  NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "true",
   AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED: "true",
   AI_PROVIDER: "ninerouter",
   NINEROUTER_BASE_URL: "https://router.example.test/v1",
@@ -20,41 +23,42 @@ const baseEnvironment = {
   NINEROUTER_MODEL: "cx/gpt-6-luna-xhigh",
 };
 
-function observation(query: string, startedAtUnixSeconds = 1_765_000_000): BrightDataGoogleTrendsBatchCandidate {
+function candidate(query: string, classification: "LIKELY_FNB" | "REVIEW_REQUIRED" | "OUT_OF_SCOPE"): LiveSignalsCandidate {
   return {
     query,
-    geo: "ID",
-    volume: "2K+",
-    volumeChange: "+350%",
-    categories: ["provided-category"],
-    active: true,
-    startedAtUnixSeconds,
-    relatedQueries: { availability: "AVAILABLE", values: [] },
-    provenance: {
-      provider: "BRIGHTDATA",
-      zone: "venturex_trends_serp",
-      sourceName: "Google Trends Trending Now",
-      sourceUrl: "https://trends.google.com/trending?geo=ID&hl=id&brd_json=1",
-      retrievedAt: "2026-10-14T04:00:00.000Z",
-    },
+    classification,
+    matchedKeywords: classification === "OUT_OF_SCOPE" ? [] : [query],
+    explanation: classification === "OUT_OF_SCOPE" ? "Out of scope" : "Match",
+    observations: [
+      {
+        startedAtUnixSeconds: 1_765_000_000,
+        active: true,
+        volume: "2K+",
+        volumeChange: "+350%",
+        categories: ["provided-category"],
+        relatedQueries: { availability: "AVAILABLE" },
+        geo: "ID",
+        provenance: {
+          retrievedAt: "2026-10-14T04:00:00.000Z",
+          sourceUrl: "https://trends.google.com/trending?geo=ID&hl=id&brd_json=1",
+        },
+      },
+    ],
   };
 }
 
-function batch(): BrightDataScreenedCandidateBatch {
-  const candidates = screenFnbCandidates([
-    observation("kopi susu"),
-    observation("matcha"),
-    observation("pertandingan sepak bola"),
-  ]);
+function batch(): ScreenedBatch {
   return {
     status: "PARTIAL",
-    candidates,
-    screenedRecords: candidates.length,
+    candidates: [
+      candidate("kopi susu", "LIKELY_FNB"),
+      candidate("matcha", "REVIEW_REQUIRED"),
+      candidate("pertandingan sepak bola", "OUT_OF_SCOPE"),
+    ],
     totalRecords: 3,
     acceptedRecords: 3,
     rejectedRecords: 0,
     fieldAvailability: { relatedQueries: { available: 3, unavailable: 0, invalid: 0, uninspectable: 0 } },
-    rejectionReasons: {},
     screeningSummary: {
       inputRecords: 3,
       acceptedParsedRecords: 3,
@@ -117,8 +121,8 @@ describe("LiveTrendSignalsService", () => {
   });
 
   it("coalesces simultaneous refreshes and then serves cached data without another provider request", async () => {
-    let release: ((value: BrightDataScreenedCandidateBatch) => void) | undefined;
-    const promise = new Promise<BrightDataScreenedCandidateBatch>((resolve) => { release = resolve; });
+    let release: ((value: ScreenedBatch) => void) | undefined;
+    const promise = new Promise<ScreenedBatch>((resolve) => { release = resolve; });
     const provider = { collectAndScreenCandidateBatch: vi.fn(() => promise) };
     const instance = service({ createProvider: () => provider });
     const firstPromise = instance.refresh("user-a");
@@ -163,15 +167,11 @@ describe("LiveTrendSignalsService", () => {
     expect(() => instance.resolve("owner", response.snapshotId, "90000000-0000-4000-8000-000000000001")).toThrow(LiveSignalsError);
   });
 
-  it("keeps Trend inference blocked until feature, source processing, and secure provider configuration are available", () => {
+  it("keeps Trend inference blocked until feature and secure provider configuration are available", () => {
     expect(getTrendAnalysisAvailability({
       ...baseEnvironment,
       AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED: "false",
     })).toEqual({ status: "BLOCKED", reason: "AI_FEATURE_DISABLED" });
-    expect(getTrendAnalysisAvailability({
-      ...baseEnvironment,
-      NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "false",
-    })).toEqual({ status: "BLOCKED", reason: "SOURCE_PROCESSING_NOT_APPROVED" });
     expect(getTrendAnalysisAvailability({
       ...baseEnvironment,
       NINEROUTER_BASE_URL: "http://72.62.247.63:20128/v1",

@@ -133,9 +133,12 @@ Do not treat an external source's index, count, or percentage as a VENTUREX metr
 
 The user-facing Hackathon Trend MVP continues to use an **Internal Persistent Curated Trend Catalog**. It does not consume externally collected candidates in the published Trend catalog or Trend List; the optional candidate-collection extension below is not a dependency of that user-facing path.
 
-#### Approved Bright Data candidate-collection extension (Batch v1)
+#### Approved Bright Data candidate-collection extension (Batch v1) — Decommissioned
 
-The explicitly approved integration batch allows a server-only adapter to collect Google Trends Trending Now candidates for Indonesia through the Bright Data zone venturex_trends_serp. A deterministic keyword screener classifies each candidate as LIKELY_FNB, REVIEW_REQUIRED, or OUT_OF_SCOPE. This is ephemeral candidate triage only.
+> [!NOTE]
+> **Status:** Decommissioned. The Bright Data adapter, screening scripts, and preview components have been removed from the active codebase. Live market signals are provided by SearchApi.io. Historical provenance references in catalog manifests remain preserved.
+
+The explicitly approved integration batch originally allowed a server-only adapter to collect Google Trends Trending Now candidates for Indonesia through the Bright Data zone venturex_trends_serp. A deterministic keyword screener classified each candidate as LIKELY_FNB, REVIEW_REQUIRED, or OUT_OF_SCOPE. This was ephemeral candidate triage only.
 
 The adapter is disabled by default. It reads BRIGHTDATA_TRENDS_ENABLED (true or false, default false), BRIGHTDATA_TRENDS_API_KEY (server-only and required only when enabled), and BRIGHTDATA_TRENDS_TIMEOUT_MS (default 10000; allowed range 250-30000). The zone, provider endpoint, and Google Trends target are fixed by this approved integration. The key must never use a NEXT_PUBLIC variable or appear in logs.
 

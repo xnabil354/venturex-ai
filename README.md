@@ -17,7 +17,9 @@ The current application covers the foundations for:
 - entrepreneur and existing-business profiles, including detailed location data;
 - personalised dashboard and Trend Radar;
 - opportunity discovery, detail, scoring, fit, risk, evidence, saving, and comparison;
-- startup and growth roadmaps; and
+- startup and growth roadmaps, journey completion, and PDF/XLSX reports;
+- sandbox billing, AI credit entitlements, and bounded admin monitoring;
+- weekly Food & Drink notifications with an in-app inbox and optional Web Push; and
 - a curated F&B trend catalogue, with an auditable local review/publication workflow.
 
 Some data and AI integrations are deliberately opt-in or local-demo only. See the relevant configuration and safety notes before enabling them.
@@ -31,6 +33,8 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
 | Database | PostgreSQL 18, Sequelize 6, Umzug migrations |
 | Authentication | NextAuth/Auth.js v5 beta |
 | Validation | Zod 4 |
+| AI and external data | AI SDK, 9Router, SearchApi, Bright Data |
+| Background/output | Web Push, PDFKit, ExcelJS |
 | Tests | Vitest, Testing Library, Playwright |
 | Package manager | pnpm 10 |
 
@@ -46,7 +50,7 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
 
    ```bash
    corepack enable
-   pnpm install
+   corepack pnpm install
    ```
 
 2. Create local environment configuration. Never commit this file or real credentials:
@@ -66,14 +70,14 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
 4. Apply schema migrations and seed reference data:
 
    ```bash
-   pnpm db:migrate
-   pnpm db:seed:reference
+   corepack pnpm db:migrate
+   corepack pnpm db:seed:reference
    ```
 
 5. Run the application:
 
    ```bash
-   pnpm dev
+   corepack pnpm dev
    ```
 
    Open [http://localhost:3000](http://localhost:3000).
@@ -83,6 +87,8 @@ To stop the local database without deleting its named volume:
 ```bash
 docker compose stop postgres
 ```
+
+The project requires Node 24. If dependencies were copied from another machine or built under a different Node major, reinstall them before starting the app. Native modules such as `argon2` must match the active runtime.
 
 ## Common commands
 
@@ -98,6 +104,9 @@ docker compose stop postgres
 | `pnpm db:migrate:status` | Show migration status |
 | `pnpm db:migrate:undo` | Revert the latest migration |
 | `pnpm catalog:import` | Preview the curated-catalog import (read-only by default) |
+| `pnpm catalog:lifecycle` | Review, validate, and publish curated catalogue records |
+| `pnpm notifications:setup` | Generate ignored local Web Push keys |
+| `pnpm notifications:worker` | Run the notification scheduler and push outbox worker |
 
 ## Curated trend catalogue
 
@@ -121,7 +130,9 @@ Copy `.env.example` rather than creating a configuration from scratch. It docume
 
 - application URL, session secret, and PostgreSQL connection settings;
 - connection-pool settings;
-- opt-in Bright Data Google Trends collection and display-rights controls; and
+- opt-in SearchApi Google Trends collection and display-rights controls; and
+- SearchApi Trend Radar, weekly notification, and opportunity-evidence controls;
+- sandbox Duitku and Web Push settings; and
 - server-only 9Router AI-provider configuration, development HTTP restrictions, and isolated synthetic-demo controls.
 
 Keep provider keys server-side. Public HTTP inference, live Trend inference, and live local demos are disabled by default for a reason; enable them only when their explicit confirmation flags and data-processing conditions have been satisfied.
@@ -134,7 +145,13 @@ src/
   auth/            Authentication, session, and user-routing logic
   profile/         Entrepreneur and business-profile modules
   trend/           Trend domain, curation, projection, and provenance
+  reference/       Shared category, segment, and channel reference data
   scoring/         Opportunity, fit, and risk scoring
+  opportunity/     Catalog opportunities and private hypothesis workflows
+  roadmap/         Startup/Growth roadmap generation and persistence
+  billing/         Sandbox payments, entitlements, credits, and admin controls
+  notifications/   Weekly digest inbox, Web Push, and worker logic
+  reports/         Journey progress and PDF/XLSX exports
   ai-analysis/     AI analysis providers and guarded local demo
   catalog/         Curated-catalog import and lifecycle workflow
   components/      Product UI components
@@ -146,6 +163,8 @@ docs/              Product, functional, API, database, and operational specs
 
 ## Documentation
 
+- [Documentation index](docs/README.md)
+- [Current implementation snapshot](docs/Current%20Implementation.md)
 - [Product requirements](docs/VENTUREX_AI_PRD.md)
 - [Functional specification](docs/VENTUREX_AI_FSD.md)
 - [Database design](docs/Database%20Design.md)
@@ -153,6 +172,9 @@ docs/              Product, functional, API, database, and operational specs
 - [Technical stack requirements](docs/Tech%20Stack%20Requirement.md)
 - [Trend Intelligence configuration](docs/Trend%20Intelligence%20Configuration.md)
 - [9Router provider configuration](docs/9Router%20Provider%20Configuration.md)
+- [Billing sandbox](docs/Billing%20Sandbox%20MVP.md)
+- [Weekly trend notifications](docs/Trend%20Notifications.md)
+- [Journey reports](docs/Journey%20Reports.md)
 - [Local synthetic AI demo](docs/Local%20Synthetic%20AI%20Demo.md)
 - [Design system reference](DESIGN.md)
 

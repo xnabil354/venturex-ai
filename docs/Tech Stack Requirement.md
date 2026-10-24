@@ -1,6 +1,8 @@
 # TECH STACK REQUIREMENT
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
+> **Implementation snapshot — 24 October 2026:** versi package, runtime architecture, worker, dan integrasi aktual dirangkum di [Current Implementation](Current%20Implementation.md). `package.json`, `pnpm-lock.yaml`, `next.config.ts`, dan `compose.yaml` tetap menjadi sumber versi/runtime yang dieksekusi.
+
 **Dokumen:** Tech Stack Requirement
 **Versi:** 1.0
 **Status:** Technical Baseline untuk MVP Hackathon

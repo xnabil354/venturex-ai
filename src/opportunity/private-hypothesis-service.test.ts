@@ -69,7 +69,6 @@ const evidence: SearchApiOpportunityEvidence = {
 const environment = {
   AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED: "true",
   NINEROUTER_SEARCHAPI_PROCESSING_CONFIRMED: "true",
-  NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "false",
   AUTH_SECRET: "test-secret-with-more-than-thirty-two-characters-for-hmac",
 };
 

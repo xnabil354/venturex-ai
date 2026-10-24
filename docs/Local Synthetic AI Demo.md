@@ -16,8 +16,6 @@ The route is disabled unless development mode, the private loopback launcher mar
 
 Results carry server-owned provider-mode metadata. Mock output is labeled `Contoh hasil simulasi — bukan respons 9Router live`; live output is labeled `Analisis 9Router — menggunakan profil demo sintetis`. Neither label represents market evidence or business validation. The live label must only be used for an actual provider result. The demo does not persist results.
 
-## Bright Data source preview
+## Bright Data source preview (Decommissioned)
 
-The local page has a separate explicit source-preview action that calls `POST /api/local/trend-source-preview`. Page load makes no provider request. The normal launcher disables collection. A live request requires `--live-brightdata` and both parent-process flags `VENTUREX_LOCAL_DEMO_BRIGHTDATA_LIVE_AUTHORIZED=true` and `VENTUREX_LOCAL_DEMO_BRIGHTDATA_PRECHECK_CONFIRMED=true`. Its process budget permits at most one outbound attempt, including a failed attempt.
-
-The adapter parses and screens observations in memory. The loopback preview displays a bounded list of accepted source observations and original provider fields, with Google attribution. Metric units are not inferred; `started_at` is not described as an observation period. Public display and redistribution rights are not established by this demo. It does not write to the application database, send the observations to 9Router, or create, validate, or publish a VENTUREX Trend or Opportunity. `LIVE_VERIFIED` means an actual provider response passed adapter parsing; it does not mean the signal is factually validated or approved for catalog publication.
+The previous Bright Data source preview panel and endpoint (`POST /api/local/trend-source-preview`) have been decommissioned and removed. VENTUREX AI uses SearchApi.io for live Google Trends signals.

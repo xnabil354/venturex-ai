@@ -1,5 +1,7 @@
 # BUSINESS REQUIREMENT DOCUMENT (BRD)
 
+> **Implementation status — 24 October 2026:** lihat [Current Implementation](Current%20Implementation.md) untuk capability, route, persistence, dan integration yang tersedia sekarang. BRD tetap menjadi sumber kebutuhan bisnis; snapshot implementasi tidak mengubah kebutuhan tanpa keputusan Product Owner.
+
 Product Owner implementation amendment, 21 October 2026: complete the private entrepreneur journey with mandatory exploration product, preliminary risk indicator, paginated archives, owner-scoped Compare and Startup Roadmap from reviewed saved hypotheses. See `Entrepreneur MVP Completion.md` for policy, contracts and acceptance. This connects the active private flow without publishing hypotheses into the archived catalog.
 ## VENTUREX AI — Future Trend Intelligence & Business Growth Navigator
 
@@ -1805,9 +1807,9 @@ The authorized UMKM_EXISTING improvement is specified in [Existing Business Comp
 For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
 
 
-## Approved daily trend notification extension ? 22 October 2026
+## Weekly Food & Drink notification contract — current implementation
 
-The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+The implemented business capability is an opt-in weekly Food & Drink / Worldwide digest for both user roles, published every Monday after 12.00 WIB, with an owner-scoped inbox and optional per-device Web Push. Migration 026 supersedes the earlier configurable daily contract. See [Trend Notifications.md](Trend%20Notifications.md). Notifications do not generate opportunities, scores, analyses, or roadmaps automatically.
 
 
 ## Amendment: journey reports and roadmap completion (22 October 2026)

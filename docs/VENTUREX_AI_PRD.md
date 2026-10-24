@@ -1,5 +1,7 @@
 # PRODUCT REQUIREMENT DOCUMENT (PRD)
 
+> **Implementation status — 24 October 2026:** lihat [Current Implementation](Current%20Implementation.md) untuk fitur, halaman, API, persistence, dan integrasi yang tersedia sekarang. PRD tetap menjadi sumber scope produk; snapshot implementasi tidak mengubah requirement tanpa keputusan Product Owner.
+
 Product Owner implementation amendment, 21 October 2026: `Entrepreneur MVP Completion.md` specifies mandatory exploration product, risk-v1, 12-item archives, private Compare and six-stage Startup Roadmap. Roadmap requires a reviewed saved hypothesis and is created without paid inference; existing analysis is immutable.
 
 Product Owner amendment, 21 October 2026 — Entrepreneur Analyze v2: private hypothesis detail supports an explicit second-stage analysis from full profile, bounded market evidence and model-proposed concept requirements. Display deterministic preliminary Opportunity/Fit scores with factor provenance, coverage, unknown-data states and persisted snapshots. AI must not supply core numeric scores or invented market/financial facts. The versioned preliminary-score policy and API behavior are specified in `Entrepreneur Deep Analysis.md`; it does not replace the curated public Opportunity scoring model or implement Compare/roadmap.
@@ -2449,9 +2451,9 @@ The authorized UMKM_EXISTING improvement is specified in [Existing Business Comp
 For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
 
 
-## Approved daily trend notification extension ? 22 October 2026
+## Weekly Food & Drink notification contract — current implementation
 
-The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+The implemented notification product is an opt-in weekly Food & Drink / Worldwide digest delivered every Monday at 12.00 WIB, with an owner-scoped inbox and optional Web Push. The earlier configurable daily contract is superseded. See [Trend Notifications.md](Trend%20Notifications.md). Notifications do not generate opportunities, scores, analyses, or roadmaps automatically.
 
 
 ## Amendment: journey reports and roadmap completion (22 October 2026)

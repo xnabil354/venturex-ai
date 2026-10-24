@@ -4,8 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { ONBOARDING_STATUSES, USER_TYPES, userIdSchema, type SafeUser } from "../auth/user-types";
-import { screenFnbCandidates } from "../trend/fnb-candidate-screening";
-import type { BrightDataGoogleTrendsBatchCandidate } from "../trend/brightdata-google-trends";
 import type { LiveTrendSignal } from "../trend/live-signals-contract";
 import { LiveSignalsError } from "../trend/live-signals";
 import { TrendSignalAnalysisError, TrendSignalAnalysisService, type TrendSignalAnalysisInput } from "./trend-signal-analysis";
@@ -17,7 +15,6 @@ const env = {
   NINEROUTER_BASE_URL: "https://router.example.test/v1",
   NINEROUTER_API_KEY: "test-key-not-a-credential",
   NINEROUTER_MODEL: "cx/gpt-6-luna-xhigh",
-  NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "true",
 };
 
 const analysis: OpportunityAnalysis = {
@@ -71,29 +68,28 @@ function liveSignal(): LiveTrendSignal {
   };
 }
 
-function providerCandidate(): BrightDataGoogleTrendsBatchCandidate {
-  return {
-    query: "kopi susu",
-    geo: "ID",
-    volume: "2K+",
-    volumeChange: "+350%",
-    categories: ["category"],
-    active: true,
-    startedAtUnixSeconds: 1_765_000_000,
-    relatedQueries: { availability: "AVAILABLE", values: [] },
-    provenance: {
-      provider: "BRIGHTDATA",
-      zone: "venturex_trends_serp",
-      sourceName: "Google Trends Trending Now",
-      sourceUrl: "https://trends.google.com/trending?geo=ID&hl=id&brd_json=1",
-      retrievedAt: "2026-10-14T04:00:00.000Z",
-    },
-  };
-}
-
 function resolvedSignal() {
-  const candidate = screenFnbCandidates([providerCandidate()])[0];
-  if (!candidate) throw new Error("Missing candidate fixture.");
+  const candidate = {
+    query: "kopi susu",
+    classification: "LIKELY_FNB" as const,
+    matchedKeywords: ["kopi susu"],
+    explanation: "Keyword match.",
+    observations: [
+      {
+        startedAtUnixSeconds: 1_765_000_000,
+        active: true,
+        volume: "2K+",
+        volumeChange: "+350%",
+        categories: ["category"],
+        relatedQueries: { availability: "AVAILABLE" as const },
+        geo: "ID" as const,
+        provenance: {
+          retrievedAt: "2026-10-14T04:00:00.000Z",
+          sourceUrl: "https://trends.google.com/trending?geo=ID&hl=id&brd_json=1",
+        },
+      },
+    ],
+  };
   return { snapshotId: request.snapshotId, signal: liveSignal(), candidate, freshness: "CURRENT" as const };
 }
 
@@ -137,7 +133,6 @@ describe("TrendSignalAnalysisService", () => {
   it("rejects unpaid or unverified data policy before profile lookup and provider invocation", async () => {
     for (const blockedEnv of [
       { ...env, AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED: "false" },
-      { ...env, NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED: "false" },
       { ...env, NINEROUTER_BASE_URL: "http://72.62.247.63:20128/v1" },
     ]) {
       const profileBuilder = { build: vi.fn(async () => profileContext(USER_TYPES.ENTREPRENEUR)) };

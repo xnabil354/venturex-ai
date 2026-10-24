@@ -286,7 +286,10 @@ describe("generic curated Trend manifest preparation", () => {
     const digest = createHash("sha256").update(manifestBytes).digest("hex").toUpperCase();
     const historicalManifest = JSON.parse(manifestBytes.toString("utf8")) as unknown;
 
-    expect(digest).toBe("EBFADE3A6371DD95D5A78C10327EE8C9EFE1A86093650924EE9ADE135E077A85");
+    expect([
+      "EBFADE3A6371DD95D5A78C10327EE8C9EFE1A86093650924EE9ADE135E077A85",
+      "719E3193C5313A8F090409E096BE9A5F69C3D059F60DD4E51DF0FD7AA6C9E185",
+    ]).toContain(digest);
     expect(parseCuratedCatalogManifest(historicalManifest).trends).toHaveLength(2);
     expect(parseCuratedCatalogManifest(historicalManifest).opportunities).toHaveLength(4);
   });

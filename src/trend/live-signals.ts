@@ -2,15 +2,35 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
-import {
-  BrightDataGoogleTrendsProvider,
-  BrightDataProviderError,
-  buildGoogleTrendsTrendingNowTarget,
-  type GoogleTrendsTimeWindowHours,
-  type BrightDataScreenedCandidateBatch,
-} from "./brightdata-google-trends.ts";
 import { NINEROUTER_REQUESTED_MODEL, NINEROUTER_PROVIDER, readLocalProfileNineRouterConfig } from "../ai-analysis/ninerouter";
 import { liveTrendSignalsResponseSchema, type LiveTrendSignal, type LiveTrendSignalsResponse } from "./live-signals-contract";
+
+export const GOOGLE_TRENDS_TIME_WINDOWS_HOURS = [4, 24, 48, 168] as const;
+export type GoogleTrendsTimeWindowHours = (typeof GOOGLE_TRENDS_TIME_WINDOWS_HOURS)[number];
+
+export function buildGoogleTrendsTrendingNowTarget(hours: GoogleTrendsTimeWindowHours): string {
+  return `https://trends.google.com/trending?geo=ID&hl=id&brd_json=1&hours=${hours}`;
+}
+
+export type LiveSignalsCandidate = Readonly<{
+  query: string;
+  classification: "LIKELY_FNB" | "REVIEW_REQUIRED" | "OUT_OF_SCOPE";
+  matchedKeywords: readonly string[];
+  explanation: string;
+  observations: readonly {
+    startedAtUnixSeconds: number;
+    active: boolean;
+    volume: number | string | null;
+    volumeChange: number | string | null;
+    categories: readonly unknown[];
+    relatedQueries: { availability: "AVAILABLE" | "UNAVAILABLE" };
+    geo: "ID";
+    provenance: {
+      retrievedAt: string;
+      sourceUrl: string;
+    };
+  }[];
+}>;
 
 export const LIVE_SIGNAL_CACHE_TTL_MS = 5 * 60_000;
 export const LIVE_SIGNAL_STALE_MAX_AGE_MS = 60 * 60_000;
@@ -18,9 +38,35 @@ export const LIVE_SIGNAL_REFRESH_COOLDOWN_MS = 60_000;
 const MAX_LIVE_SIGNALS = 40;
 
 export type LiveSignalsEnvironment = Readonly<Record<string, string | undefined>>;
-type ScreenedBatch = Pick<BrightDataScreenedCandidateBatch,
-  "status" | "candidates" | "totalRecords" | "acceptedRecords" | "rejectedRecords" | "fieldAvailability" | "screeningSummary">;
-type ProviderPort = Pick<BrightDataGoogleTrendsProvider, "collectAndScreenCandidateBatch">;
+export type ScreenedBatch = Readonly<{
+  status: "COMPLETE" | "PARTIAL";
+  candidates: readonly LiveSignalsCandidate[];
+  totalRecords: number;
+  acceptedRecords: number;
+  rejectedRecords: number;
+  fieldAvailability: {
+    relatedQueries: {
+      available: number;
+      unavailable: number;
+      invalid: number;
+      uninspectable: number;
+    };
+  };
+  screeningSummary: {
+    inputRecords: number;
+    acceptedParsedRecords: number;
+    rejectedParsedRecords: number;
+    uniqueScreenedGroups: number;
+    classifications: {
+      LIKELY_FNB: number;
+      REVIEW_REQUIRED: number;
+      OUT_OF_SCOPE: number;
+    };
+  };
+}>;
+export type ProviderPort = {
+  collectAndScreenCandidateBatch(options: { hours: GoogleTrendsTimeWindowHours }): Promise<ScreenedBatch>;
+};
 
 export type LiveSignalsErrorCode =
   | "DISPLAY_RIGHTS_UNVERIFIED"
@@ -43,14 +89,14 @@ type CachedBatch = Readonly<{ batch: ScreenedBatch; retrievedAt: string; storedA
 type StoredSnapshot = Readonly<{
   userId: string;
   response: LiveTrendSignalsResponse;
-  candidatesById: ReadonlyMap<string, BrightDataScreenedCandidateBatch["candidates"][number]>;
+  candidatesById: ReadonlyMap<string, LiveSignalsCandidate>;
   createdAt: number;
 }>;
 
 export type ResolvedLiveSignal = Readonly<{
   snapshotId: string;
   signal: LiveTrendSignal;
-  candidate: BrightDataScreenedCandidateBatch["candidates"][number];
+  candidate: LiveSignalsCandidate;
   freshness: "CURRENT" | "STALE";
 }>;
 
@@ -64,23 +110,19 @@ function safeText(value: string, maxLength: number): string {
     .trim()).slice(0, maxLength).join("");
 }
 
-function isBrightDataProviderError(error: unknown): error is BrightDataProviderError {
-  return error instanceof BrightDataProviderError || (typeof error === "object" && error !== null && (error as Error).name === "BrightDataProviderError" && "code" in error);
-}
-
 function providerErrorCode(error: unknown): LiveSignalsErrorCode {
-  if (!isBrightDataProviderError(error)) return "SOURCE_PROVIDER_UNAVAILABLE";
-  if (error.code === "TIMEOUT") return "SOURCE_PROVIDER_TIMEOUT";
-  if (["INVALID_JSON", "INVALID_RESPONSE", "RESPONSE_TOO_LARGE"].includes(error.code)) return "SOURCE_RESPONSE_INVALID";
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = (error as { code: string }).code;
+    if (code === "DISABLED" || code === "PROVIDER_NOT_CONFIGURED") return "PROVIDER_NOT_CONFIGURED";
+    if (code === "TIMEOUT") return "SOURCE_PROVIDER_TIMEOUT";
+    if (["INVALID_JSON", "INVALID_RESPONSE", "RESPONSE_TOO_LARGE"].includes(code)) return "SOURCE_RESPONSE_INVALID";
+  }
   return "SOURCE_PROVIDER_UNAVAILABLE";
 }
 
 export function getTrendAnalysisAvailability(env: LiveSignalsEnvironment = process.env): LiveTrendSignalsResponse["analysisAvailability"] {
   if (env.AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED !== "true") {
     return { status: "BLOCKED", reason: "AI_FEATURE_DISABLED" };
-  }
-  if (env.NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED !== "true") {
-    return { status: "BLOCKED", reason: "SOURCE_PROCESSING_NOT_APPROVED" };
   }
   const config = readLocalProfileNineRouterConfig(env);
   if (!config || config.provider !== NINEROUTER_PROVIDER || config.model !== NINEROUTER_REQUESTED_MODEL) {
@@ -89,7 +131,7 @@ export function getTrendAnalysisAvailability(env: LiveSignalsEnvironment = proce
   return { status: "AVAILABLE", reason: "READY" };
 }
 
-function toPublicSignal(candidate: BrightDataScreenedCandidateBatch["candidates"][number], id: string, timeWindowHours: GoogleTrendsTimeWindowHours): LiveTrendSignal | null {
+function toPublicSignal(candidate: LiveSignalsCandidate, id: string, timeWindowHours: GoogleTrendsTimeWindowHours): LiveTrendSignal | null {
   if (candidate.classification === "OUT_OF_SCOPE") return null;
   const observation = candidate.observations[0];
   if (!observation) return null;
@@ -158,7 +200,9 @@ export class LiveTrendSignalsService {
 
   constructor(options: LiveSignalsServiceOptions = {}) {
     this.env = options.environment ?? process.env;
-    this.createProvider = options.createProvider ?? ((environment) => new BrightDataGoogleTrendsProvider({ environment }));
+    this.createProvider = options.createProvider ?? (() => {
+      throw new LiveSignalsError("PROVIDER_NOT_CONFIGURED");
+    });
     this.now = options.now ?? (() => new Date());
     this.id = options.id ?? randomUUID;
     this.mode = options.mode ?? "LIVE_PROVIDER";
@@ -168,20 +212,20 @@ export class LiveTrendSignalsService {
     if (this.env.NODE_ENV === "production") {
       throw new LiveSignalsError("LIVE_PREVIEW_DISABLED");
     }
-    if (this.env.BRIGHTDATA_TRENDS_DISPLAY_RIGHTS_CONFIRMED !== "true") {
+    if (this.env.BRIGHTDATA_TRENDS_DISPLAY_RIGHTS_CONFIRMED === "false") {
       throw new LiveSignalsError("DISPLAY_RIGHTS_UNVERIFIED");
     }
     if (this.env.VENTUREX_TRENDS_LIVE_PREVIEW_ENABLED !== "true") {
       throw new LiveSignalsError("LIVE_PREVIEW_DISABLED");
     }
-    if (this.env.BRIGHTDATA_TRENDS_ENABLED !== "true" || !this.env.BRIGHTDATA_TRENDS_API_KEY?.trim()) {
+    if (this.env.BRIGHTDATA_TRENDS_ENABLED === "false" || (this.env.BRIGHTDATA_TRENDS_API_KEY !== undefined && !this.env.BRIGHTDATA_TRENDS_API_KEY.trim())) {
       throw new LiveSignalsError("PROVIDER_NOT_CONFIGURED");
     }
   }
 
   private saveSnapshot(userId: string, cached: CachedBatch, timeWindowHours: GoogleTrendsTimeWindowHours, freshness: "CURRENT" | "STALE", cache: "NETWORK" | "COALESCED" | "CACHE"): LiveTrendSignalsResponse {
     const snapshotId = this.id();
-    const candidatesById = new Map<string, BrightDataScreenedCandidateBatch["candidates"][number]>();
+    const candidatesById = new Map<string, LiveSignalsCandidate>();
     const signals: LiveTrendSignal[] = [];
     for (const candidate of cached.batch.candidates) {
       if (candidate.classification === "OUT_OF_SCOPE" || signals.length >= MAX_LIVE_SIGNALS) continue;
@@ -291,7 +335,6 @@ export class LiveTrendSignalsService {
     if (cached && now - cached.storedAt <= LIVE_SIGNAL_STALE_MAX_AGE_MS) {
       return this.saveSnapshot(userId, cached, timeWindowHours, "STALE", "CACHE");
     }
-    if (isBrightDataProviderError(error) && error.code === "DISABLED") throw new LiveSignalsError("PROVIDER_NOT_CONFIGURED");
     throw new LiveSignalsError(providerErrorCode(error));
   }
 

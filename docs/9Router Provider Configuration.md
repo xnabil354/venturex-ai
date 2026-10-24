@@ -27,7 +27,7 @@ Batch 17G replaces Gemini in the authenticated Opportunity Analysis, authenticat
 | `AI_ANALYSIS_TIMEOUT_MS` | Bounded provider timeout, 1,000–60,000 milliseconds. |
 | `AI_OPPORTUNITY_FINDER_TIMEOUT_MS` | Opportunity Finder total timeout, 1,000–180,000 milliseconds; defaults to 120,000 milliseconds. Keep it below the verified request deadline of the deployment platform. |
 | `NINEROUTER_ALLOW_PUBLIC_HTTP_DEV_ONLY` | Defaults to `false`. When `true` in development, the exact `http://72.62.247.63:20128/v1` endpoint may be used by the isolated `LIVE_SYNTHETIC` demo and legacy consented Trend Signal route. SearchApi-backed Opportunity inference never accepts public HTTP. For backward compatibility, this flag can enable only the exact validated loopback gateway in that flow; prefer `NINEROUTER_ALLOW_LOOPBACK_HTTP_DEV_ONLY`. The bearer key and request context are unencrypted over public HTTP. |
-| `NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED` | Must remain `false` unless the applicable source and service terms permit sending Bright Data observations to 9Router. |
+| `NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED` | Legacy Bright Data gate (decommissioned; Bright Data is no longer used). |
 | `NINEROUTER_SEARCHAPI_PROCESSING_CONFIRMED` | Separate SearchApi Google Trends Explore to 9Router processing opt-in. Defaults to `false`; it never inherits the Bright Data gate. |
 | `AI_ANALYSIS_TRENDS_USER_INFERENCE_ENABLED` | Opt-in for the authenticated Trend Signal inference route; default `false`. |
 | `AI_ANALYSIS_NINEROUTER_SYNTHETIC_SMOKE_ENABLED` | Separate local synthetic smoke gate; default `false`. |

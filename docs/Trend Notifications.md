@@ -1,36 +1,116 @@
-# Daily trend notifications — approved extension, 22 October 2026
+# Weekly Trend Notifications
 
-User-approved extension to BRD retention goals and Discover for both ENTREPRENEUR and UMKM_EXISTING. This document amends the BRD/PRD/FSD, Database Design and API Design by reference. No automated opportunity, analysis or roadmap generation.
+**Implementation status:** active
 
-## Product and functional contract
+**Current contract:** migration `026-rebuild-weekly-food-drink-notifications.ts`
 
-- NOTIF-001: opt-in daily in-app digest, one profile-selected topic, maximum three Top and three Rising queries. Preserve source meaning; searches are not sales or market-size claims. No generated substitute terms. Reject obvious unrelated harmful/adult query terms; do not claim comprehensive semantic moderation.
-- NOTIF-002: configurable HH:mm and Asia/Jakarta, Asia/Makassar or Asia/Jayapura. Default 08:00 WIB and 24h; optional 7d or calendar month-to-date in the existing Radar observation timezone (Asia/Jakarta, first day through today); UI labels this Bulan ini (WIB). Indonesian national web searches. Source observation timezone remains the Radar contract, Asia/Jakarta; schedule timezone is independent.
-- NOTIF-003: owner-only inbox, cursor pagination, unread indicator and explicit mark-read. Opening inbox does not fetch trends. Inbox refresh uses the shared header polling result and does not reset unsaved settings. Results retain query/window/retrieval snapshot.
-- NOTIF-004: browser Web Push is an additional opt-in per device, with explicit permission action, secure-context/unsupported/denied feedback and disable action. In-app works independently. Browser/OS delivery is best effort. iOS requires a supported installed Home Screen web app.
-- NOTIF-005: server worker, no browser timers for delivery. At most one digest per user/local date. A delayed worker catches up only for today's digest, not historical days, and waits if today's configured clock is still in the future. Settings save schedules the next future occurrence; timezone/topic changes never rewrite existing digests. Changed/removed profile selections pause delivery until settings are saved again.
-- NOTIF-006: source failures retry at most three times with five-minute spacing; then advance to next day. Empty usable data creates no fake trend notification and records a neutral status. Push uses a durable outbox, three attempts, expires after one day, deletes invalid 404/410 endpoints. A crash after remote acceptance can cause redelivery; stable notification tags replace duplicates. Exactly-once remote delivery is not claimed.
-- NOTIF-007: short source-independent UI; warm parchment/paper cards, wine CTA, lilac focus, >=44px controls, single-column mobile layout. No provider/model/version labels.
+**Supersedes:** the configurable daily digest contract introduced by migration 021.
 
-## Persistence and API
+VENTUREX menyediakan inbox tren mingguan untuk pengguna `ENTREPRENEUR` dan `UMKM_EXISTING` yang sudah menyelesaikan onboarding. Web Push adalah kanal tambahan yang opsional; inbox tetap berfungsi tanpa permission browser.
 
-Migration 021 adds notification_preferences (user PK/FK, settings, query snapshot, next_run_at, attempts/status), trend_notifications (UUID, owner FK, unique owner/day, immutable digest JSONB (topic selector, topic text, data window, retrieval time, bounded rows), read_at), push_subscriptions (unique endpoint, owner FK, bounded keys, last_test_at) and notification_push_deliveries (unique notification/subscription, state, attempts/next_attempt_at). All owner references cascade on delete. Due/unread indexes support workers/inbox. Raw SQL is parameterized through Sequelize; job claims use transactional FOR UPDATE SKIP LOCKED. No existing business tables are repurposed.
+## Product contract
 
-Authenticated, completed-user, private/no-store APIs for both personas:
-- GET/PATCH /api/v1/notifications/preferences: read state/options; strict complete settings on PATCH, server resolves and snapshots profile topic.
-- GET /api/v1/notifications?before=<UUID>: 20 records, compound created_at/id cursor, unread count and authenticated userId for client account-isolation checks. A changed account reloads the private UI rather than merging another account's inbox.
-- PATCH /api/v1/notifications: strict {id: UUID}, owner-scoped mark-read.
-- POST/DELETE /api/v1/notifications/push: validated subscription registration/removal for current owner. DELETE accepts endpoint. POST accepts browser subscription.
-- POST /api/v1/notifications/push/test: explicit current-device generic test with per-subscription 60-second cooldown.
-- GET /api/v1/notifications/push/context: current owner identifier for service-worker account isolation.
+- Pengguna hanya dapat mengaktifkan atau menonaktifkan notifikasi.
+- Category dimiliki server dan selalu `Food & Drink`.
+- Scope dimiliki server dan selalu `Worldwide`.
+- Jadwal dimiliki server: setiap Senin pukul 12.00 WIB.
+- Digest memakai data Google Trends bulan berjalan, dari tanggal 1 sampai hari pengambilan dalam timezone Asia/Jakarta.
+- Maksimum tiga Top dan tiga Rising query yang usable disimpan.
+- Interest penelusuran bukan bukti penjualan, market size, revenue, profit, atau permintaan komersial.
+- Tidak ada generated substitute term ketika provider tidak menghasilkan data usable.
+- Completion, score, opportunity, analysis, atau roadmap tidak dibuat otomatis dari notifikasi.
 
-Mutations require same-origin and bounded bodies. Endpoints accept only known HTTPS push-service hosts to avoid arbitrary outbound URLs. Private subscription keys are never listed. Workers validate onboarding/persona and current topic before fetching data. Logout revokes current-device subscription before signing out; queued push checks current session owner before showing.
+Konfigurasi topik profil, pilihan timezone/jam/periode, unread state, mark-read, dan push-test adalah bagian kontrak historis dan tidak tersedia pada implementasi sekarang.
 
-## Operations and acceptance
+## Schedule dan retry
 
-`pnpm notifications:setup` generates local VAPID keys into ignored `.notifications-vapid.json` without printing secrets. Configure VAPID subject as a contact mailto or public HTTPS URL for deployment. `pnpm notifications:worker` loads .env and optional ignored `.notifications-vapid.json`, polls each minute and exits on SIGINT/SIGTERM. `pnpm dev` and `pnpm start` launch both Next and the worker and stop both on shutdown. Deployments that invoke Next directly or use standalone output must supervise `pnpm notifications:worker` separately with source files/runtime dependencies and the same database/key configuration. A dedicated PostgreSQL advisory lease elects one scheduler per database; additional workers stay on standby. Shared provider deduplication remains process-local and is not preserved across leader restarts.
+`nextWeeklyRun()` menghitung Senin berikutnya pukul 12.00 WIB. Worker hanya menerbitkan digest bila tick terjadi pada hari Senin setelah jam tersebut. Job yang terlambat ke hari lain tidak diputar ulang; schedule langsung dimajukan ke minggu berikutnya.
 
-Verify schedule boundaries in all three zones, monthly date boundaries, unique daily publication, simultaneous worker claims, source empty/failure, profile drift, pagination/ownership, denied/unsupported push, invalid endpoints, outbox retry, logout and responsive UI. Live push requires browser permission and network reachability to its push service; report unverified OS delivery honestly.
+Untuk setiap pengguna dan `week_start` hanya boleh ada satu notification. Source failure dicoba maksimal tiga kali dengan jarak lima menit. Setelah batas tercapai, status menjadi `UNAVAILABLE` dan schedule maju ke minggu berikutnya. Provider response tanpa Top/Rising usable menghasilkan status `NO_DATA`, bukan notification palsu.
 
+## Data source dan filtering
 
-Implementation references: [Next.js PWA guide](https://nextjs.org/docs/app/guides/progressive-web-apps), [Push subscription API](https://developer.mozilla.org/en-US/docs/Web/API/PushManager/subscribe), [web-push](https://github.com/web-push-libs/web-push).
+Worker menggunakan adapter SearchApi Google Trends melalui `foodAndDrinkRelatedQueries()` dengan request month-to-date:
+
+```text
+period: custom-date
+startDate: YYYY-MM-01
+endDate: hari ini di Asia/Jakarta
+geo: worldwide
+property: web
+```
+
+Row dinormalisasi dan dideduplikasi case-insensitively. Query kosong, terlalu panjang, duplikat, atau yang cocok dengan bounded harmful/adult term filter dibuang. Filter ini bukan klaim moderasi semantik lengkap.
+
+## Persistence
+
+Tabel aktif:
+
+- `notification_preferences` — toggle, next run, attempt count, dan safe operational status;
+- `trend_notifications` — immutable weekly digest JSONB, owner, `week_start`, dan creation time;
+- `push_subscriptions` — endpoint dan key per perangkat, maksimum lima perangkat per user; dan
+- `notification_push_deliveries` — durable outbox per notification/subscription.
+
+Migration 026 menghapus data preferensi/subscription/digest lama sebelum mengubah schema. Legacy `settings`, `topic_query`, `local_date`, `read_at`, dan `last_test_at` tidak lagi tersedia.
+
+## API
+
+Semua endpoint memerlukan session, onboarding selesai, persona valid, dan menghasilkan response private/no-store.
+
+| Method | Path | Contract |
+| --- | --- | --- |
+| `GET` | `/api/v1/notifications` | Inbox 20 item dengan cursor UUID `before` |
+| `GET` | `/api/v1/notifications/preferences` | Toggle, status, server-owned category/scope/schedule, push capability |
+| `PATCH` | `/api/v1/notifications/preferences` | Strict `{ "enabled": boolean }` |
+| `POST` | `/api/v1/notifications/push` | Registrasi subscription perangkat yang tervalidasi |
+| `DELETE` | `/api/v1/notifications/push` | Hapus endpoint milik current user |
+| `GET` | `/api/v1/notifications/push/context` | `userId` untuk account isolation di service worker |
+
+Mutations memerlukan exact same-origin dan body JSON maksimum 8192 byte. Endpoint push hanya menerima HTTPS host yang di-allowlist untuk FCM, Mozilla, Apple, atau Windows Push. Private subscription keys tidak pernah dikembalikan oleh list API.
+
+## Web Push behavior
+
+- Web Push membutuhkan VAPID config, secure context, service worker, dan permission eksplisit pengguna.
+- Menonaktifkan preference menghapus seluruh subscription perangkat milik user dalam transaksi yang sama.
+- Endpoint tidak boleh dimiliki akun lain dan setiap user dibatasi lima perangkat.
+- Push delivery hanya berlaku untuk notification yang masih berumur maksimum delapan hari.
+- Status HTTP 404/410 dari push service menghapus subscription yang invalid.
+- Kegagalan lain dicoba maksimal tiga kali dengan jarak lima menit.
+- Remote push bersifat at-least-once/best effort; exactly-once delivery tidak diklaim.
+
+## Worker operations
+
+```bash
+pnpm notifications:setup
+pnpm notifications:worker
+```
+
+`notifications:setup` membuat VAPID key lokal pada `.notifications-vapid.json` yang diabaikan Git. Worker memuat `.env` dan file key tersebut, mengambil PostgreSQL advisory lock khusus, lalu memproses tick setiap menit. Hanya satu worker per database menjadi leader; worker lain berada pada status standby.
+
+`pnpm dev` dan `pnpm start` menjalankan Next.js bersama worker melalui `scripts/notifications/run-app.mjs`. Deployment yang menjalankan Next secara langsung harus mengawasi `pnpm notifications:worker` sebagai proses terpisah.
+
+## Required environment
+
+```text
+DATABASE_URL
+TREND_RADAR_SEARCHAPI_ENABLED=true
+SEARCHAPI_API_KEY
+WEB_PUSH_PUBLIC_KEY       # opsional untuk inbox-only
+WEB_PUSH_PRIVATE_KEY      # opsional untuk inbox-only
+WEB_PUSH_SUBJECT          # mailto: atau HTTPS URL
+```
+
+## Verification
+
+Minimal verification harus mencakup:
+
+- perhitungan Senin 12.00 WIB dan month-to-date boundaries;
+- satu digest per user/week dan skip missed-day replay;
+- source empty, retry, dan unavailable state;
+- ownership serta cursor pagination;
+- strict preference body dan same-origin mutation;
+- device cap, cross-account endpoint rejection, dan unsubscribe;
+- push 404/410 cleanup, retry outbox, serta stale delivery; dan
+- leader election ketika lebih dari satu worker aktif.
+
+Physical-device delivery pada iOS/Android/desktop tetap harus dilaporkan sebagai `NOT RUN` sampai benar-benar diuji pada HTTPS deployment dan perangkat nyata.

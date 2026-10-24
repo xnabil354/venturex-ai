@@ -1,5 +1,7 @@
 # FUNCTIONAL SPECIFICATION DOCUMENT (FSD)
 
+> **Implementation status — 24 October 2026:** lihat [Current Implementation](Current%20Implementation.md) untuk pemetaan fungsi ke route, service, migration, dan integration yang benar-benar aktif. FSD tetap menjadi kontrak perilaku; perbedaan implementasi harus diperlakukan sebagai gap atau change request, bukan sebagai perubahan requirement implisit.
+
 Entrepreneur MVP completion amendment (21 October 2026): see `Entrepreneur MVP Completion.md` for the private flow implementations of product validation, risk-v1, archive paging, Compare 2–3 owner-scoped analyzed hypotheses and idempotent six-stage Startup Roadmap. These extend the active private hypothesis path; catalog endpoints remain separate.
 
 Amendment 21 October 2026 — Entrepreneur Analyze v2: the owner-scoped `/opportunities/hypotheses/{id}` detail adds an explicit second-stage analysis action using full persisted profile, hypothesis, one-year search history and a bounded local listing sample. AI proposes qualitative concept requirements only; the server computes transparent preliminary Opportunity/Fit scores, with coverage and missing-data rules. Persist a versioned snapshot in the existing hypothesis JSONB; no migration or public catalog mutation. Provider failures remain partial, not fabricated facts. See `Entrepreneur Deep Analysis.md` for formulas, API, persistence, access and failure behavior. V1 transient simulator notes are historical; Compare/roadmap remain deferred.
@@ -2855,9 +2857,9 @@ The authorized UMKM_EXISTING improvement is specified in [Existing Business Comp
 For Existing only, Trend Radar and Finder accept an optional queryKey: business (default), category, or product:0 through product:19. The server resolves it against the authenticated current profile and active category; client query text is never accepted. Selection is explicit and does not trigger provider requests. This supersedes the 18 October no-selector rule for Existing; Entrepreneur query behavior remains unchanged. Score weights, coverage, missing-data rules, risk thresholds, snapshot freshness and persistence behavior are defined in the linked configuration.
 
 
-## Approved daily trend notification extension ? 22 October 2026
+## Weekly Food & Drink notification contract — current implementation
 
-The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+The active flow accepts only a strict enabled toggle. A server worker creates at most one Food & Drink / Worldwide digest per user/week on Monday after 12.00 WIB, persists up to three usable Top and Rising rows, and queues optional Web Push. Missed days are not replayed. See [Trend Notifications.md](Trend%20Notifications.md).
 
 
 ## Amendment: journey reports and roadmap completion (22 October 2026)

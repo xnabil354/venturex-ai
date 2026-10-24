@@ -1,5 +1,7 @@
 # DATABASE DESIGN
 
+> **Implementation snapshot — 24 October 2026:** migration aktual berjalan dari `001` sampai `027` dan dirangkum di [Current Implementation](Current%20Implementation.md#persistence-dan-migration). Bagian logical design di dokumen ini dapat memuat tabel proposal; hanya migration di `db/migrations` yang menentukan schema runtime. Migration 026 menggantikan kontrak notifikasi harian lama dengan digest Food & Drink mingguan.
+
 21 October recovery refinement: optional analysis.planningContext.timeCommitment preserves historical capacity; roadmap generatorVersion also accepts personalized-v3 and personalized-v4 (22 October text correction). Compare recovers from unavailable owner-scoped choices with a neutral notice. See Entrepreneur MVP Completion.md.
 21 October refinement: optional hypothesis.analysis.referenceLabels retains category/channel display names for new snapshots; optional startupRoadmap.generatorVersion identifies personalized-v2. Legacy JSON remains readable; no migration or historic rewrite. See Entrepreneur MVP Completion.md.
 
@@ -2073,9 +2075,9 @@ For Existing only, Trend Radar and Finder accept an optional queryKey: business 
 The existing optional businessAnalysis JSONB snapshot may include conceptAlignmentVersion: business-concept-alignment-v1 after a successful independent semantic review. Existing request shapes and database columns are unchanged. Legacy snapshots remain stored but require reanalysis before new Compare/Growth use. See [Existing Business Completion.md](Existing%20Business%20Completion.md) for fail-closed, retry and compatibility rules.
 
 
-## Approved daily trend notification extension ? 22 October 2026
+## Weekly Food & Drink notification contract — current implementation
 
-The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+Migration 026 resets the legacy notification rows and removes configurable settings, profile topic, unread state, and push-test timestamps. The active schema stores an enabled toggle and schedule state, one immutable digest per user/week, device subscriptions, and a durable push outbox. See [Trend Notifications.md](Trend%20Notifications.md).
 
 
 ## Amendment: journey reports and roadmap completion (22 October 2026)

@@ -1,5 +1,7 @@
 # API DESIGN
 
+> **Implementation snapshot — 24 October 2026:** daftar route handler yang benar-benar tersedia ada di [Current Implementation](Current%20Implementation.md#api-yang-benar-benar-memiliki-route-handler). Dokumen ini juga menyimpan target/proposal kontrak; keberadaan spesifikasi endpoint di bawah tidak otomatis berarti endpoint tersebut telah diimplementasikan. Khususnya, halaman curated Trends dan beberapa read flow memakai server-side services tanpa REST route publik.
+
 21 October recovery refinement: optional analysis.planningContext.timeCommitment preserves historical capacity; roadmap generatorVersion also accepts personalized-v3 and personalized-v4 (22 October text correction). Compare recovers from unavailable owner-scoped choices with a neutral notice. See Entrepreneur MVP Completion.md.
 21 October refinement: analysis responses may include optional referenceLabels; roadmap metadata may include generatorVersion personalized-v2. Compare supports from=finder|saved for return navigation; IDs remain owner validated. See Entrepreneur MVP Completion.md.
 
@@ -3537,9 +3539,9 @@ For Existing only, Trend Radar and Finder accept an optional queryKey: business 
 The existing optional businessAnalysis JSONB snapshot may include conceptAlignmentVersion: business-concept-alignment-v1 after a successful independent semantic review. Existing request shapes and database columns are unchanged. Legacy snapshots remain stored but require reanalysis before new Compare/Growth use. See [Existing Business Completion.md](Existing%20Business%20Completion.md) for fail-closed, retry and compatibility rules.
 
 
-## Approved daily trend notification extension ? 22 October 2026
+## Weekly Food & Drink notification contract — current implementation
 
-The product owner approved daily in-app digests and optional per-device Web Push for both user roles. Requirements NOTIF-001 through NOTIF-007, scheduling semantics, owner-scoped APIs, migration 021 and delivery limitations are specified in [Trend Notifications.md](Trend%20Notifications.md). This extension does not generate opportunities, scores or roadmaps automatically.
+Migration 026 supersedes the earlier configurable daily digest. The active API exposes a server-owned Food & Drink / Worldwide digest every Monday at 12.00 WIB, a strict enabled toggle, owner-scoped inbox, and optional per-device Web Push. Current endpoint and delivery semantics are specified in [Trend Notifications.md](Trend%20Notifications.md). Notifications do not generate opportunities, scores, analyses, or roadmaps automatically.
 
 
 ## Amendment: journey reports and roadmap completion (22 October 2026)

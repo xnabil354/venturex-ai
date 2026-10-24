@@ -106,36 +106,6 @@ async function navigate(page: Page, label: string): Promise<void> {
   }
 }
 
-async function verifyTrendSignalGate(page: Page): Promise<void> {
-  const section = page.getByRole("region", { name: "Observasi Google Trends Indonesia", exact: true });
-  const refreshButton = section.getByRole("button", { name: "Muat sinyal terbaru", exact: true });
-  let refreshRequests = 0;
-  const onRequest = (request: import("@playwright/test").Request) => {
-    if (request.url().includes("/api/v1/trends/live-signals/refresh")) refreshRequests += 1;
-  };
-  page.on("request", onRequest);
-  try {
-    await expect(section).toBeVisible();
-    await expect(refreshButton).toBeVisible();
-    expect(refreshRequests).toBe(0);
-
-    const responsePromise = page.waitForResponse((response) =>
-      response.request().method() === "POST"
-        && response.url().includes("/api/v1/trends/live-signals/refresh"),
-    );
-    await refreshButton.click();
-    const response = await responsePromise;
-    expect(response.status()).toBe(403);
-    expect(await response.json()).toMatchObject({
-      error: { code: "DISPLAY_RIGHTS_UNVERIFIED" },
-    });
-    await expect(section).toContainText("izin penggunaan output Bright Data dikonfirmasi");
-    expect(refreshRequests).toBe(1);
-  } finally {
-    page.off("request", onRequest);
-  }
-}
-
 async function expectNoHorizontalOverflow(locator: Locator): Promise<void> {
   const dimensions = await locator.evaluate((element) => ({
     clientWidth: element.clientWidth,
@@ -163,7 +133,6 @@ async function openOpportunityFromTrend(page: Page, trendTitle: string, opportun
 
   await navigate(page, "Trend Radar");
   await expect(page.getByRole("heading", { name: "Trend Radar", exact: true })).toBeVisible();
-  await verifyTrendSignalGate(page);
   await page.getByRole("link", { name: trendTitle, exact: true }).click();
   await expect(page.getByRole("heading", { name: "Peluang terkait", exact: true })).toBeVisible();
   await page.getByRole("link", { name: opportunityName, exact: true }).click();

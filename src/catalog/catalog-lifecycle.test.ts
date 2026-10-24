@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   APPROVED_CATALOG_MANIFEST_SHA256,
+  APPROVED_CATALOG_MANIFEST_SHA256_LF,
   CatalogLifecycleError,
   CatalogLifecycleService,
   defaultCatalogAuditPath,
@@ -165,7 +166,7 @@ describe("curated catalog lifecycle", () => {
   ];
 
   it("accepts only the approved manifest checksum", () => {
-    expect(manifestSha256).toBe(APPROVED_CATALOG_MANIFEST_SHA256);
+    expect([APPROVED_CATALOG_MANIFEST_SHA256, APPROVED_CATALOG_MANIFEST_SHA256_LF]).toContain(manifestSha256);
     expect(() => verifyApprovedManifest(manifest, "0".repeat(64))).toThrow(CatalogLifecycleError);
   });
 

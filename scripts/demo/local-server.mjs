@@ -9,14 +9,12 @@ if (resolve(process.cwd()) !== resolve(projectRoot)) {
 }
 const args = process.argv.slice(2);
 const liveRequested = args.includes("--live-synthetic");
-const brightDataLiveRequested = args.includes("--live-brightdata");
 const webpackRequested = args.includes("--webpack");
-const positional = args.filter((arg) => arg !== "--live-synthetic" && arg !== "--live-brightdata" && arg !== "--webpack");
+const positional = args.filter((arg) => arg !== "--live-synthetic" && arg !== "--webpack");
 if (args.filter((arg) => arg === "--live-synthetic").length > 1
-  || args.filter((arg) => arg === "--live-brightdata").length > 1
   || args.filter((arg) => arg === "--webpack").length > 1
   || positional.length > 1) {
-  process.stderr.write("Gunakan: node scripts/demo/local-server.mjs [port-lokal] [--live-synthetic] [--live-brightdata] [--webpack]\n");
+  process.stderr.write("Gunakan: node scripts/demo/local-server.mjs [port-lokal] [--live-synthetic] [--webpack]\n");
   process.exit(2);
 }
 
@@ -30,13 +28,6 @@ const liveGates = process.env.AI_ANALYSIS_SYNTHETIC_DEMO_LIVE_AUTHORIZED === "tr
   && process.env.AI_ANALYSIS_NINEROUTER_SYNTHETIC_SMOKE_ENABLED === "true";
 if (liveRequested && !liveGates) {
   process.stderr.write("Mode LIVE_SYNTHETIC memerlukan otorisasi server-side dan flag smoke 9Router sintetis yang eksplisit. Tidak ada klaim tier billing.\n");
-  process.exit(2);
-}
-if (brightDataLiveRequested && (
-  process.env.VENTUREX_LOCAL_DEMO_BRIGHTDATA_LIVE_AUTHORIZED !== "true"
-  || process.env.VENTUREX_LOCAL_DEMO_BRIGHTDATA_PRECHECK_CONFIRMED !== "true"
-)) {
-  process.stderr.write("Preview live Bright Data memerlukan otorisasi dan konfirmasi precheck pada proses lokal.\n");
   process.exit(2);
 }
 
@@ -53,9 +44,6 @@ const child = spawn(process.execPath, nextArgs, {
     VENTUREX_SYNTHETIC_DEMO_PORT: portInput,
     AI_ANALYSIS_SYNTHETIC_DEMO_PROVIDER_MODE: liveRequested ? "LIVE_SYNTHETIC" : "MOCK",
     AI_ANALYSIS_SYNTHETIC_DEMO_LIVE_AUTHORIZED: liveRequested ? "true" : "false",
-    BRIGHTDATA_TRENDS_ENABLED: brightDataLiveRequested ? "true" : "false",
-    VENTUREX_LOCAL_DEMO_BRIGHTDATA_LIVE_AUTHORIZED: brightDataLiveRequested ? "true" : "false",
-    VENTUREX_LOCAL_DEMO_BRIGHTDATA_PRECHECK_CONFIRMED: brightDataLiveRequested ? "true" : "false",
   },
 });
 

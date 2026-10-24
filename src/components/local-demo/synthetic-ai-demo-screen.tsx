@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { syntheticDemoFixtureIdSchema, syntheticDemoResultSchema, type SyntheticDemoFixtureId, type SyntheticDemoResult } from "@/ai-analysis/synthetic-demo/contracts";
-import { BrightDataSourcePreviewPanel } from "@/components/local-demo/brightdata-source-preview-panel";
 import { Button } from "@/components/ui/button";
 
 const personas: readonly { readonly id: SyntheticDemoFixtureId; readonly label: string; readonly description: string }[] = [
@@ -86,7 +85,7 @@ export function SyntheticAIDemoScreen() {
         <p className="mb-12 text-body-sm font-w540 text-royal-violet">Ruang demonstrasi lokal</p>
         <h1 className="max-w-3xl text-heading-lg font-w460 tracking-heading-lg">Analisis Peluang AI</h1>
         <p className="mt-12 max-w-2xl text-body-sm leading-relaxed text-stone-gray">
-          Lihat alur analisis dengan profil dan konsep sintetis tetap. Halaman ini tidak memakai akun atau data usaha nyata maupun database. Pratinjau Bright Data tersedia hanya lewat tindakan manual dan dapat tetap tidak dijalankan.
+          Lihat alur analisis dengan profil dan konsep sintetis tetap. Halaman ini tidak memakai akun atau data usaha nyata maupun database.
         </p>
       </header>
 
@@ -96,8 +95,6 @@ export function SyntheticAIDemoScreen() {
           Demo menggunakan profil dan data contoh. Hasilnya bukan data usaha nyata.
         </p>
       </section>
-
-      <BrightDataSourcePreviewPanel />
 
       <section aria-labelledby="persona-heading" className="grid gap-24 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-24">

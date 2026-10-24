@@ -49,15 +49,6 @@ function safeNames(values: readonly string[], maximum = 12): string[] {
   return values.slice(0, maximum).map((value) => text(value, 120)).filter((value): value is string => Boolean(value));
 }
 
-function brightDataEvidencePresent(context: OpportunityAnalysisContext): boolean {
-  const sources = [...context.trend.evidence, ...context.evidence.opportunity];
-  return sources.some((source) => {
-    const sourceName = "sourceName" in source ? source.sourceName : null;
-    const sourceReference = "sourceReference" in source ? source.sourceReference : null;
-    return /google\s*trends|bright\s*data/iu.test(`${sourceName ?? ""} ${sourceReference ?? ""}`);
-  });
-}
-
 /** Build the only profile/context payload allowed to leave the application server. */
 export function buildOpportunityAnalysisProviderContext(context: OpportunityAnalysisContext): Record<string, unknown> {
   const profile = context.profile.type === "ENTREPRENEUR"
@@ -177,9 +168,6 @@ export class NineRouterOpportunityAnalysisProvider implements OpportunityAnalysi
   }
 
   async generate(context: OpportunityAnalysisContext): Promise<OpportunityAnalysis> {
-    if (brightDataEvidencePresent(context) && this.env.NINEROUTER_BRIGHTDATA_PROCESSING_CONFIRMED !== "true") {
-      throw new AIAnalysisProviderUnavailableError();
-    }
     try {
       return await generateNineRouterJson({
         config: this.config,

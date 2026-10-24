@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { liveTrendAnalysisRequestSchema } from "./live-signals-contract";
-import { LiveSignalsError, type LiveTrendSignalsService } from "./live-signals";
-import { GOOGLE_TRENDS_TIME_WINDOWS_HOURS, type GoogleTrendsTimeWindowHours } from "./brightdata-google-trends";
+import { GOOGLE_TRENDS_TIME_WINDOWS_HOURS, type GoogleTrendsTimeWindowHours, LiveSignalsError, type LiveTrendSignalsService } from "./live-signals";
 import { TrendSignalAnalysisError, type TrendSignalAnalysisService } from "../ai-analysis/trend-signal-analysis";
 import { ONBOARDING_STATUSES, isUserType, type SafeUser } from "../auth/user-types";
 import { BillingError } from "../billing/errors";

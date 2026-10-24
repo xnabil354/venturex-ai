@@ -17,6 +17,7 @@ export * from "./catalog-lifecycle-contract";
 
 export const APPROVED_CATALOG_MANIFEST_ID = "venturex-curated-fnb-google-yis-2025-v1";
 export const APPROVED_CATALOG_MANIFEST_SHA256 = "EBFADE3A6371DD95D5A78C10327EE8C9EFE1A86093650924EE9ADE135E077A85";
+export const APPROVED_CATALOG_MANIFEST_SHA256_LF = "719E3193C5313A8F090409E096BE9A5F69C3D059F60DD4E51DF0FD7AA6C9E185";
 
 
 function sha256(value: string): string {
@@ -24,9 +25,10 @@ function sha256(value: string): string {
 }
 
 export function verifyApprovedManifest(manifest: CuratedCatalogManifest, actualSha256: string): void {
+  const normalized = actualSha256.toUpperCase();
   if (
     manifest.manifestId !== APPROVED_CATALOG_MANIFEST_ID ||
-    actualSha256.toUpperCase() !== APPROVED_CATALOG_MANIFEST_SHA256
+    (normalized !== APPROVED_CATALOG_MANIFEST_SHA256 && normalized !== APPROVED_CATALOG_MANIFEST_SHA256_LF)
   ) {
     throw new CatalogLifecycleError("The catalog manifest does not match the approved identifier and checksum.");
   }
