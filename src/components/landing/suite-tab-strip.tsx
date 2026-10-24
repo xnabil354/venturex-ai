@@ -8,14 +8,14 @@ export function SuiteTabStrip() {
   const [activeTab, setActiveTab] = useState<"entrepreneur" | "umkm">("entrepreneur");
 
   return (
-    <section id="alur-solusi" className="py-64 lg:py-96 scroll-mt-24">
+    <section id="alur-solusi" className="scroll-mt-24 py-48 sm:py-64 lg:py-96">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
         {/* Section Heading */}
         <div className="max-w-[760px]">
           <p className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
             Dua Jalur Solusi Terarah
           </p>
-          <h2 className="mt-12 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal text-balance">
+          <h2 className="mt-12 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg text-balance">
             Dirancang khusus untuk tahap bisnis Anda saat ini.
           </h2>
           <p className="mt-16 text-body text-stone-gray text-balance">
@@ -38,7 +38,7 @@ export function SuiteTabStrip() {
               aria-controls="panel-entrepreneur"
               onClick={() => setActiveTab("entrepreneur")}
               className={cx(
-                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2",
+                "flex min-h-[44px] items-center justify-start gap-12 rounded-[6px] px-16 py-14 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2 sm:justify-center sm:px-24 sm:py-16",
                 activeTab === "entrepreneur"
                   ? "bg-lilac-mist text-ink-charcoal font-w540"
                   : "bg-paper-white text-stone-gray hover:text-ink-charcoal font-w460"
@@ -61,7 +61,7 @@ export function SuiteTabStrip() {
               aria-controls="panel-umkm"
               onClick={() => setActiveTab("umkm")}
               className={cx(
-                "flex items-center justify-center gap-12 rounded-[6px] px-24 py-16 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2",
+                "flex min-h-[44px] items-center justify-start gap-12 rounded-[6px] px-16 py-14 text-left transition-[background-color,color] duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2 sm:justify-center sm:px-24 sm:py-16",
                 activeTab === "umkm"
                   ? "bg-lilac-mist text-ink-charcoal font-w540"
                   : "bg-paper-white text-stone-gray hover:text-ink-charcoal font-w460"
@@ -85,9 +85,9 @@ export function SuiteTabStrip() {
               id="panel-entrepreneur"
               role="tabpanel"
               aria-labelledby="tab-entrepreneur"
-              className="rounded-cards border border-soft-mist bg-paper-white p-24 sm:p-40"
+              className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-32 lg:p-40"
             >
-              <div className="grid gap-40 lg:grid-cols-2 lg:items-center">
+              <div className="grid gap-28 lg:grid-cols-2 lg:items-center lg:gap-40">
                 <div>
                   <span className="inline-flex rounded-pills bg-warm-parchment px-12 py-4 text-caption font-w540 text-royal-violet">
                     Jalur A &middot; Memulai dari Nol
@@ -123,7 +123,7 @@ export function SuiteTabStrip() {
                   <div className="mt-32">
                     <Link
                       href="/register"
-                      className="inline-flex min-h-[44px] items-center justify-center gap-8 rounded-buttons bg-midnight-wine px-24 text-body-sm font-w460 text-paper-white transition-colors hover:bg-midnight-wine/90"
+                      className="inline-flex min-h-[44px] w-full items-center justify-center gap-8 rounded-buttons bg-midnight-wine px-24 text-body-sm font-w460 text-paper-white transition-colors hover:bg-midnight-wine/90 sm:w-auto"
                     >
                       <span>Mulai Sebagai Calon Pengusaha</span>
                       <span aria-hidden="true">&rarr;</span>
@@ -175,9 +175,9 @@ export function SuiteTabStrip() {
               id="panel-umkm"
               role="tabpanel"
               aria-labelledby="tab-umkm"
-              className="rounded-cards border border-soft-mist bg-paper-white p-24 sm:p-40"
+              className="rounded-cards border border-soft-mist bg-paper-white p-20 sm:p-32 lg:p-40"
             >
-              <div className="grid gap-40 lg:grid-cols-2 lg:items-center">
+              <div className="grid gap-28 lg:grid-cols-2 lg:items-center lg:gap-40">
                 <div>
                   <span className="inline-flex rounded-pills bg-warm-parchment px-12 py-4 text-caption font-w540 text-royal-violet">
                     Jalur B &middot; Mengembangkan Bisnis Aktif
@@ -213,7 +213,7 @@ export function SuiteTabStrip() {
                   <div className="mt-32">
                     <Link
                       href="/register"
-                      className="inline-flex min-h-[44px] items-center justify-center gap-8 rounded-buttons bg-midnight-wine px-24 text-body-sm font-w460 text-paper-white transition-colors hover:bg-midnight-wine/90"
+                      className="inline-flex min-h-[44px] w-full items-center justify-center gap-8 rounded-buttons bg-midnight-wine px-24 text-body-sm font-w460 text-paper-white transition-colors hover:bg-midnight-wine/90 sm:w-auto"
                     >
                       <span>Mulai Sebagai UMKM Existing</span>
                       <span aria-hidden="true">&rarr;</span>

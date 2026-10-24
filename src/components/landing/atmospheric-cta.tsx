@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function AtmosphericCta() {
   return (
-    <section className="relative overflow-hidden bg-deep-lagoon border-t border-white/10 py-64 lg:py-80 text-paper-white shadow-2xl">
+    <section className="relative overflow-hidden border-t border-white/10 bg-deep-lagoon py-48 text-paper-white shadow-2xl sm:py-64 lg:py-80">
       {/* Decorative Radial Atmospheric Glows in Green & Emerald Tokens */}
       <div
         className="pointer-events-none absolute -top-40 -left-40 h-[400px] w-[400px] rounded-full bg-emerald-400/20 blur-[140px]"
@@ -19,7 +19,7 @@ export function AtmosphericCta() {
             <span className="text-caption font-w540 uppercase tracking-widest text-emerald-300">
               Siap Memulai Keputusan yang Lebih Cerdas?
             </span>
-            <h2 className="mt-16 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-paper-white sm:text-display sm:leading-display sm:tracking-display text-balance">
+          <h2 className="mt-16 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-paper-white sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:text-display lg:leading-display lg:tracking-display text-balance">
               Bangun bisnis kuliner dengan fondasi data pasar yang kuat.
             </h2>
             <p className="mt-16 text-body font-w460 text-paper-white/85 leading-body max-w-[560px]">
@@ -27,10 +27,10 @@ export function AtmosphericCta() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-12 sm:flex-row lg:flex-col lg:items-stretch shrink-0">
+          <div className="flex w-full shrink-0 flex-col gap-12 sm:w-auto sm:flex-row lg:flex-col lg:items-stretch">
             <Link
               href="/register"
-              className="inline-flex min-h-[48px] items-center justify-center gap-8 rounded-buttons bg-paper-white px-28 text-body font-w540 text-deep-lagoon transition-[background-color,transform] hover:bg-emerald-100/90 active:translate-y-px shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-deep-lagoon"
+              className="inline-flex min-h-[48px] w-full items-center justify-center gap-8 rounded-buttons bg-paper-white px-28 text-body font-w540 text-deep-lagoon shadow-md transition-[background-color,transform] hover:bg-emerald-100/90 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-deep-lagoon sm:w-auto"
             >
               <span>Daftar Sekarang &mdash; Gratis</span>
               <span aria-hidden="true">&rarr;</span>
@@ -38,7 +38,7 @@ export function AtmosphericCta() {
 
             <Link
               href="/login"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-small-buttons border border-paper-white/30 bg-paper-white/10 px-20 text-body-sm font-w460 text-paper-white transition-colors hover:bg-paper-white/20 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-deep-lagoon"
+              className="inline-flex min-h-[44px] w-full items-center justify-center rounded-small-buttons border border-paper-white/30 bg-paper-white/10 px-20 text-center text-body-sm font-w460 text-paper-white transition-colors hover:bg-paper-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-deep-lagoon sm:w-auto"
             >
               Sudah punya akun? Masuk
             </Link>

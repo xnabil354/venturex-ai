@@ -42,7 +42,7 @@ export function HeroSection() {
             <div className="relative z-30 mx-auto max-w-[640px] xl:max-w-[700px] px-16 sm:px-24 text-center my-auto">
                 {/* Monumental Headline */}
                 <h1 className="text-[32px] leading-[1.12] sm:text-[44px] sm:leading-[1.08] lg:text-[48px] xl:text-[54px] lg:leading-[1.05] font-w460 tracking-tight text-paper-white text-balance">
-                    Ubah tren F&amp;B menjadi keputusan bisnis yang presisi.
+                    Future Trend Intelligence & Business Growth Navigator untuk Ekosistem Food & Beverage
                 </h1>
 
                 {/* Editorial Subheadline */}

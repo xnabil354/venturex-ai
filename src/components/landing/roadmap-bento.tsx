@@ -29,7 +29,7 @@ export function RoadmapBento() {
   ];
 
   return (
-    <section id="alur-roadmap" className="py-64 lg:py-96 bg-paper-white border-t border-soft-mist scroll-mt-24">
+    <section id="alur-roadmap" className="scroll-mt-24 border-t border-soft-mist bg-paper-white py-48 sm:py-64 lg:py-96">
       <div className="mx-auto max-w-[1200px] px-16 sm:px-24">
         {/* Section Header */}
         <div className="mx-auto max-w-[1200px] text-center">
@@ -38,7 +38,7 @@ export function RoadmapBento() {
             VENTUREX Action Roadmap
           </span>
 
-          <h2 className="mt-16 text-heading-lg font-w460 leading-heading-lg tracking-heading-lg text-ink-charcoal sm:text-display sm:leading-display sm:tracking-display text-balance">
+          <h2 className="mt-16 text-heading-sm font-w460 leading-heading-sm tracking-heading-sm text-ink-charcoal sm:text-heading-lg sm:leading-heading-lg sm:tracking-heading-lg lg:text-display lg:leading-display lg:tracking-display text-balance">
             Roadmap validasi untuk mengambil langkah berikutnya.
           </h2>
 
@@ -46,7 +46,7 @@ export function RoadmapBento() {
             Setelah menyimpan peluang yang telah dianalisis, Anda dapat membuat panduan langkah bertahap sesuai persona dan konteks usaha.
           </p>
 
-          <div className="mt-28 flex items-center justify-center gap-16">
+          <div className="mt-28 flex flex-col items-stretch justify-center gap-8 sm:flex-row sm:items-center sm:gap-16">
             <Link
               href="/register"
               className="inline-flex min-h-[44px] items-center justify-center rounded-buttons bg-midnight-wine px-20 text-body-sm font-w460 text-paper-white hover:bg-midnight-wine/90 focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
@@ -55,7 +55,7 @@ export function RoadmapBento() {
             </Link>
             <a
               href="#simulasi-skor"
-              className="inline-flex min-h-[44px] items-center gap-6 px-4 py-8 rounded-sm text-body-sm font-w460 text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
+              className="inline-flex min-h-[44px] items-center justify-center gap-6 rounded-sm px-4 py-8 text-body-sm font-w460 text-royal-violet hover:underline focus-visible:outline-2 focus-visible:outline-royal-violet focus-visible:outline-offset-2"
             >
               <span>Uji Simulasi Peluang</span>
               <span aria-hidden="true">&rarr;</span>
@@ -64,9 +64,9 @@ export function RoadmapBento() {
         </div>
 
         {/* Bento Grid (Superhuman Docs Style) */}
-        <div className="mt-48 grid gap-20 lg:grid-cols-12">
+        <div className="mt-32 grid gap-16 sm:mt-40 sm:gap-20 lg:mt-48 lg:grid-cols-12">
           {/* Top Wide Bento: Weekly Milestone Stages */}
-          <div className="lg:col-span-12 rounded-cards bg-warm-parchment p-24 sm:p-40 border border-soft-mist shadow-sm">
+          <div className="rounded-cards border border-soft-mist bg-warm-parchment p-20 shadow-sm sm:p-32 lg:col-span-12 lg:p-40">
             <div className="flex items-center justify-between border-b border-soft-mist pb-16">
               <div>
                 <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
@@ -110,7 +110,7 @@ export function RoadmapBento() {
           </div>
 
           {/* Bottom Left Bento: Calon Pengusaha */}
-          <div className="lg:col-span-6 rounded-cards bg-paper-white p-24 sm:p-32 border border-soft-mist shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-royal-violet/30">
+          <div className="rounded-cards border border-soft-mist bg-paper-white p-20 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-royal-violet/30 hover:shadow-xl sm:p-24 lg:col-span-6 lg:p-32">
             <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
               Untuk Pemula
             </span>
@@ -133,7 +133,7 @@ export function RoadmapBento() {
           </div>
 
           {/* Bottom Right Bento: UMKM Existing */}
-          <div className="lg:col-span-6 rounded-cards bg-paper-white p-24 sm:p-32 border border-soft-mist shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-royal-violet/30">
+          <div className="rounded-cards border border-soft-mist bg-paper-white p-20 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-royal-violet/30 hover:shadow-xl sm:p-24 lg:col-span-6 lg:p-32">
             <span className="text-caption font-w540 uppercase tracking-wider text-royal-violet">
               Untuk Bisnis Berjalan
             </span>

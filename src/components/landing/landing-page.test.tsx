@@ -16,7 +16,7 @@ describe("LandingPage Component", () => {
         expect(
             screen.getByRole("heading", {
                 level: 1,
-                name: /Ubah tren F&B menjadi keputusan bisnis yang presisi\./i,
+                name: /Future Trend Intelligence & Business Growth Navigator untuk Ekosistem Food & Beverage Indonesia\./i,
             }),
         ).toBeDefined();
 
@@ -128,14 +128,11 @@ describe("LandingPage Component", () => {
         expect(screen.getByText("Tinjau hasil dan tentukan langkah")).toBeDefined();
     });
 
-    it("renders 4-column footer with brand, legal sections, and ghost watermark", () => {
+    it("renders the brand at left and product solutions at right in the footer", () => {
         render(<LandingPage />);
 
         expect(screen.getByText("Solusi Produk")).toBeDefined();
-        expect(screen.getByText("Persona Pengguna")).toBeDefined();
-        expect(screen.getByText("Metodologi & Data")).toBeDefined();
-        expect(screen.getByText("Platform & Keamanan")).toBeDefined();
-        expect(screen.getByText(/Mendukung SDG 8: Pertumbuhan Ekonomi Inklusif & Berkelanjutan\./i)).toBeDefined();
+        expect(screen.getByText("Growth Roadmap (UMKM Existing)")).toBeDefined();
 
         const venturexMarks = screen.getAllByText("VENTUREX");
         expect(venturexMarks.length).toBeGreaterThanOrEqual(2);
