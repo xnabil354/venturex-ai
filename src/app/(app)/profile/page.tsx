@@ -5,7 +5,7 @@ import { resolveOnboardingDestination } from "@/auth/routing";
 import { ONBOARDING_STATUSES, USER_TYPES } from "@/auth/user-types";
 import { BusinessProfileForm } from "@/components/onboarding/business-profile-form";
 import { EntrepreneurProfileForm } from "@/components/onboarding/entrepreneur-profile-form";
-import { PageContainer } from "@/components/ui";
+import { ProfileSurface } from "@/components/profile/profile-surface";
 import {
   BusinessProfileForbiddenError,
   BusinessProfileNotFoundError,
@@ -38,11 +38,12 @@ export default async function ProfilePage() {
     }
 
     return (
-      <PageContainer>
-        <div className="grid gap-24 py-32 sm:gap-32 sm:py-48 lg:py-64">
-          <EntrepreneurProfileForm initialValues={initialValues} mode="edit" />
-        </div>
-      </PageContainer>
+      <ProfileLayout
+        description="Perbarui konteks usaha yang dipakai VENTUREX untuk menyusun peluang, analisis, dan langkah berikutnya."
+        title="Profil entrepreneur"
+      >
+        <EntrepreneurProfileForm initialValues={initialValues} mode="edit" />
+      </ProfileLayout>
     );
   }
 
@@ -64,13 +65,43 @@ export default async function ProfilePage() {
     }
 
     return (
-      <PageContainer>
-        <div className="grid gap-24 py-32 sm:gap-32 sm:py-48 lg:py-64">
-          <BusinessProfileForm initialValues={initialValues} mode="edit" />
-        </div>
-      </PageContainer>
+      <ProfileLayout
+        description="Tinjau identitas, produk, dan cara Anda melayani pelanggan agar konteks usaha tetap akurat."
+        title={initialValues.businessName || "Profil bisnis"}
+      >
+        <BusinessProfileForm initialValues={initialValues} mode="edit" />
+      </ProfileLayout>
     );
   }
 
   redirect("/dashboard");
+}
+
+function ProfileLayout({
+  children,
+  description,
+  title,
+}: {
+  readonly children: React.ReactNode;
+  readonly description: string;
+  readonly title: string;
+}) {
+  return (
+    <ProfileSurface>
+      <div className="py-24 sm:py-40">
+        <header className="grid gap-20 rounded-cards border border-midnight-wine bg-midnight-wine p-20 text-paper-white sm:grid-cols-[minmax(0,1fr)_minmax(15rem,0.45fr)] sm:items-end sm:gap-32 sm:p-28">
+          <div className="max-w-[46rem]">
+            <p className="text-caption font-w540 uppercase tracking-[0.14em] text-lilac-mist">Ruang kerja Anda</p>
+            <h1 className="mt-8 text-heading-lg font-w460 tracking-heading-lg">{title}</h1>
+            <p className="mt-12 max-w-[58ch] text-body leading-relaxed text-paper-white/75">{description}</p>
+          </div>
+          <div className="rounded-small-buttons border border-white/15 bg-white/10 p-14">
+            <p className="text-caption font-w540 uppercase tracking-[0.12em] text-lilac-mist">Pembaruan profil</p>
+            <p className="mt-5 text-body-sm leading-relaxed text-paper-white/80">Lengkapi setiap bagian, lalu simpan perubahan pada langkah terakhir.</p>
+          </div>
+        </header>
+        <div className="mt-24">{children}</div>
+      </div>
+    </ProfileSurface>
+  );
 }

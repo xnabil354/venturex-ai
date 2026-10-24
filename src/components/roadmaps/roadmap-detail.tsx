@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import type { RoadmapDetail } from "@/roadmap/domain";
-import { Badge, Card, PageContainer } from "@/components/ui";
+import { Card } from "@/components/ui";
+import { RoadmapSurface } from "./roadmap-surface";
 
 const rupiah = new Intl.NumberFormat("id-ID");
 
@@ -10,131 +11,81 @@ export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail
   const label = roadmap.roadmapType === "GROWTH" ? "Growth Roadmap" : "Startup Roadmap";
 
   return (
-    <PageContainer>
-      <div className="grid gap-24 py-32 sm:py-48 lg:py-64">
-        <Link
-          className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet"
-          href="/roadmaps"
-        >
-          Kembali ke Roadmap
-        </Link>
+    <RoadmapSurface>
+      <div className="grid gap-24 py-24 sm:gap-32 sm:py-48 lg:py-64">
+        <Link className="inline-flex min-h-button w-fit items-center text-body-sm font-w540 text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet" href="/roadmaps">Kembali ke roadmap</Link>
 
-        <header className="grid max-w-[76ch] gap-12 border-b border-soft-mist pb-24">
-          <Badge className="w-fit" tone="wash">{context.method.replaceAll("_", " ")}</Badge>
-          <h1 className="text-heading-lg font-w460 text-ink-charcoal sm:text-display">{label}</h1>
-          <p className="text-body text-ink-charcoal">
-            Opportunity: <Link className="text-royal-violet underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-royal-violet" href={`/opportunities/${roadmap.opportunity.id}`}>{roadmap.opportunity.name}</Link>
+        <header className="grid max-w-[76ch] gap-12 rounded-cards bg-midnight-wine p-20 text-paper-white sm:p-28">
+          <h1 className="text-heading-sm font-w460 sm:text-heading-lg">{label}</h1>
+          <p className="text-body leading-relaxed text-paper-white">
+            Peluang: <Link className="text-lilac-mist underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-paper-white" href={`/opportunities/${roadmap.opportunity.id}`}>{roadmap.opportunity.name}</Link>
           </p>
-          <p className="max-w-[76ch] text-body-sm leading-body-sm text-stone-gray">
-            Roadmap ini berisi langkah awal, bukan prediksi.
-          </p>
+          <p className="max-w-[66ch] text-body-sm leading-relaxed text-paper-white/80">Roadmap ini berisi langkah awal berdasarkan konteks tersimpan, bukan prediksi atau jaminan hasil.</p>
         </header>
 
-        {/* Stepper Timeline Stages */}
-        <div className="grid gap-16">
-          <div className="border-b border-soft-mist pb-12">
-            <h2 className="text-heading-sm font-w460 text-ink-charcoal">
-              Tahapan Eksekusi Bertahap
-            </h2>
+        <section className="grid gap-16" aria-labelledby="roadmap-steps-title">
+          <div className="grid gap-6 border-b border-soft-mist pb-12">
+            <h2 id="roadmap-steps-title" className="text-heading-sm font-w460">Tahapan pelaksanaan</h2>
+            <p className="text-body-sm leading-relaxed text-stone-gray">Kerjakan satu tahap, catat hasilnya, lalu gunakan pembelajaran tersebut untuk menentukan langkah berikutnya.</p>
           </div>
-
-          <ol className="relative grid gap-16">
+          <ol className="grid gap-12 sm:gap-16">
             {roadmap.steps.map((step) => (
               <li key={step.id}>
-                <Card className="grid gap-16 p-20 sm:p-28 transition-all duration-300 border-[#ded8cb] bg-[#faf9f6] hover:border-midnight-wine/40 hover:shadow-md">
-                  <div className="flex flex-wrap items-baseline justify-between gap-8 border-b border-soft-mist pb-12">
-                    <div className="flex items-center gap-10">
-                      <span className="flex size-28 items-center justify-center rounded-full border border-midnight-wine bg-midnight-wine text-caption font-w540 text-paper-white shadow-xs">
-                        {step.sequence}
-                      </span>
-                      <h2 className="text-label-bold font-w540 text-ink-charcoal">
-                        <span className="mr-8 text-stone-gray">{step.sequence}.</span>
-                        {step.stage}
-                      </h2>
-                    </div>
-                    <Badge tone="wash">{step.timeline}</Badge>
+                <Card className="grid gap-16 p-16 transition-colors duration-200 hover:border-royal-violet/40 sm:p-20 md:p-24">
+                  <div className="flex flex-wrap items-center gap-10 border-b border-soft-mist pb-12">
+                    <span className="flex size-28 shrink-0 items-center justify-center rounded-full bg-midnight-wine text-caption font-w540 text-paper-white">{step.sequence}</span>
+                    <h3 className="min-w-0 flex-1 text-label-bold font-w540">{step.stage}</h3>
+                    <p className="text-caption font-w540 text-royal-violet">{step.timeline}</p>
                   </div>
-                  <div className="grid gap-12 sm:grid-cols-3">
-                    <div className="grid gap-4 rounded-small-buttons bg-warm-parchment p-14 border border-[#ded8cb] transition-colors hover:border-midnight-wine/30 sm:col-span-1">
-                      <h3 className="text-caption font-w540 uppercase tracking-wider text-midnight-wine">Tindakan</h3>
-                      <p className="text-body-sm font-w540 leading-relaxed text-ink-charcoal">{step.action}</p>
+                  <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 rounded-small-buttons bg-lilac-mist/35 p-14 md:col-span-2 lg:col-span-1">
+                      <h4 className="text-caption font-w540 text-midnight-wine">Tindakan</h4>
+                      <p className="wrap-anywhere text-body-sm font-w540 leading-relaxed">{step.action}</p>
                     </div>
-                    <div className="grid gap-4 rounded-small-buttons bg-warm-parchment p-14 border border-[#ded8cb] transition-colors hover:border-midnight-wine/30 sm:col-span-1">
-                      <h3 className="text-caption font-w540 uppercase tracking-wider text-stone-gray">Tujuan</h3>
-                      <p className="text-body-sm leading-relaxed text-stone-gray">{step.objective}</p>
+                    <div className="grid gap-4 rounded-small-buttons bg-warm-parchment p-14">
+                      <h4 className="text-caption font-w540 text-ink-charcoal">Tujuan</h4>
+                      <p className="wrap-anywhere text-body-sm leading-relaxed text-stone-gray">{step.objective}</p>
                     </div>
-                    <div className="grid gap-4 rounded-small-buttons bg-warm-parchment p-14 border border-[#ded8cb] transition-colors hover:border-midnight-wine/30 sm:col-span-1">
-                      <h3 className="text-caption font-w540 uppercase tracking-wider text-stone-gray">Hasil yang diharapkan</h3>
-                      <p className="text-body-sm leading-relaxed text-stone-gray">{step.expectedOutput}</p>
+                    <div className="grid gap-4 rounded-small-buttons bg-warm-parchment p-14">
+                      <h4 className="text-caption font-w540 text-ink-charcoal">Hasil yang diharapkan</h4>
+                      <p className="wrap-anywhere text-body-sm leading-relaxed text-stone-gray">{step.expectedOutput}</p>
                     </div>
                   </div>
                 </Card>
               </li>
             ))}
           </ol>
-        </div>
+        </section>
 
-        {/* Context & Limitations Panel */}
-        <Card className="grid max-w-[76ch] gap-16 p-20 sm:p-28 border-[#ded8cb] bg-[#faf9f6]">
-          <div className="flex items-center gap-8 border-b border-soft-mist pb-12">
-            <h2 className="text-label-bold text-ink-charcoal">Konteks dan keterbatasan</h2>
+        <Card className="grid max-w-[76ch] gap-16 p-16 sm:p-20 md:p-24">
+          <div className="border-b border-soft-mist pb-12">
+            <h2 className="text-label-bold font-w540">Konteks dan keterbatasan</h2>
           </div>
           <RoadmapProfileSnapshot roadmap={roadmap} />
-          <p className="text-body-sm text-stone-gray">Mode konteks: {context.contextMode === "LIMITED_CONTEXT" ? "Terbatas" : "Lengkap"}</p>
-          {context.unavailableInputs.length > 0 ? (
-            <p className="text-body-sm text-stone-gray">Belum tersedia: {context.unavailableInputs.join(", ")}.</p>
-          ) : (
-            <p className="text-body-sm text-stone-gray">Score dan Risk tercatat tersedia sebagai konteks tambahan, bukan prediksi.</p>
-          )}
-          <p className="text-body-sm text-stone-gray">
-            Sinyal tersimpan — Opportunity Score: {context.availableSignals.opportunityScore ?? "Tidak tersedia"}; Fit Score: {context.availableSignals.fitScore ?? "Tidak tersedia"}; Risk: {context.availableSignals.riskLevel ?? "Tidak tersedia"}.
-          </p>
-          <div className="grid gap-6 border-t border-soft-mist pt-12">
-            <h3 className="text-body-sm font-w540 text-ink-charcoal">Asumsi</h3>
-            <ul className="grid gap-4 list-disc pl-20 text-stone-gray">
-              {context.assumptions.map((item) => <li className="text-body-sm leading-body-sm" key={item}>{item}</li>)}
-            </ul>
+          <div className="grid gap-6 text-body-sm leading-relaxed text-stone-gray">
+            <p>Mode konteks: {context.contextMode === "LIMITED_CONTEXT" ? "Terbatas" : "Lengkap"}</p>
+            <p>{context.unavailableInputs.length > 0 ? `Belum tersedia: ${context.unavailableInputs.join(", ")}.` : "Score dan Risk tercatat tersedia sebagai konteks tambahan, bukan prediksi."}</p>
+            <p>Sinyal tersimpan — Opportunity Score: {context.availableSignals.opportunityScore ?? "Tidak tersedia"}; Fit Score: {context.availableSignals.fitScore ?? "Tidak tersedia"}; Risk: {context.availableSignals.riskLevel ?? "Tidak tersedia"}.</p>
           </div>
-          <div className="grid gap-6 border-t border-soft-mist pt-12">
-            <h3 className="text-body-sm font-w540 text-ink-charcoal">Batasan</h3>
-            <ul className="grid gap-4 list-disc pl-20 text-stone-gray">
-              {context.limitations.map((item) => <li className="text-body-sm leading-body-sm" key={item}>{item}</li>)}
-            </ul>
-          </div>
-          {context.evidence.length > 0 ? (
-            <div className="grid gap-6 border-t border-soft-mist pt-12">
-              <h3 className="text-body-sm font-w540 text-ink-charcoal">Sumber yang tercatat</h3>
-              <ul className="grid gap-4 list-disc pl-20 text-stone-gray">
-                {context.evidence.map((item) => <li className="text-body-sm leading-body-sm" key={item.id}>{item.sourceName}{item.sourceReference ? ` — ${item.sourceReference}` : ""}</li>)}
-              </ul>
-              <p className="text-caption text-stone-gray">Pencatatan sumber tidak berarti sumber telah diverifikasi.</p>
-            </div>
-          ) : null}
+          <RoadmapContextList title="Asumsi" items={context.assumptions} />
+          <RoadmapContextList title="Batasan" items={context.limitations} />
+          {context.evidence.length > 0 ? <div className="grid gap-6 border-t border-soft-mist pt-12"><h3 className="text-body-sm font-w540">Sumber yang tercatat</h3><ul className="grid list-disc gap-4 pl-20 text-body-sm leading-relaxed text-stone-gray">{context.evidence.map((item) => <li key={item.id}>{item.sourceName}{item.sourceReference ? ` — ${item.sourceReference}` : ""}</li>)}</ul><p className="text-caption text-stone-gray">Pencatatan sumber tidak berarti sumber telah diverifikasi.</p></div> : null}
         </Card>
       </div>
-    </PageContainer>
+    </RoadmapSurface>
   );
+}
+
+function RoadmapContextList({ title, items }: { readonly title: string; readonly items: readonly string[] }) {
+  return <div className="grid gap-6 border-t border-soft-mist pt-12"><h3 className="text-body-sm font-w540">{title}</h3><ul className="grid list-disc gap-4 pl-20 text-body-sm leading-relaxed text-stone-gray">{items.map((item) => <li key={item}>{item}</li>)}</ul></div>;
 }
 
 function RoadmapProfileSnapshot({ roadmap }: { readonly roadmap: RoadmapDetail }) {
   if (roadmap.roadmapType === "GROWTH") {
     const profile = roadmap.generationContext.profileInputs;
-    return (
-      <div className="grid gap-6 rounded-small-buttons bg-warm-parchment p-14 border border-[#ded8cb]">
-        <p className="text-body-sm text-stone-gray">Profil bisnis yang digunakan: {profile.businessName}; {profile.businessCategory}; {profile.location}.</p>
-        <p className="text-body-sm text-stone-gray">Rentang harga rata-rata pada profil: Rp {rupiah.format(profile.averagePriceRange.min)}–Rp {rupiah.format(profile.averagePriceRange.max)}. Rentang ini bukan biaya atau hasil margin.</p>
-        <p className="text-body-sm text-stone-gray">Produk aktif: {profile.products.map((product) => `${product.name}${product.listedPrice === null ? " (harga tidak dicantumkan)" : ` (harga tercatat Rp ${rupiah.format(product.listedPrice)})`}`).join(", ")}.</p>
-        <p className="text-body-sm text-stone-gray">Segmen pelanggan: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}.</p>
-        {profile.businessDescription ? <p className="text-body-sm text-stone-gray">Deskripsi bisnis: {profile.businessDescription}</p> : null}
-      </div>
-    );
+    return <div className="grid gap-6 rounded-small-buttons bg-warm-parchment p-14 text-body-sm leading-relaxed text-stone-gray"><p>Profil bisnis yang digunakan: {profile.businessName}; {profile.businessCategory}; {profile.location}.</p><p>Rentang harga rata-rata pada profil: Rp {rupiah.format(profile.averagePriceRange.min)}–Rp {rupiah.format(profile.averagePriceRange.max)}. Rentang ini bukan biaya atau hasil margin.</p><p>Produk aktif: {profile.products.map((product) => `${product.name}${product.listedPrice === null ? " (harga tidak dicantumkan)" : ` (harga tercatat Rp ${rupiah.format(product.listedPrice)})`}`).join(", ")}.</p><p>Segmen pelanggan: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}.</p>{profile.businessDescription ? <p>Deskripsi bisnis: {profile.businessDescription}</p> : null}</div>;
   }
 
   const profile = roadmap.generationContext.profileInputs;
-  return (
-    <div className="grid gap-6 rounded-small-buttons bg-warm-parchment p-14 border border-[#ded8cb]">
-      <p className="text-body-sm text-stone-gray">Profil yang digunakan: {profile.location}; {profile.experienceLevel}; {profile.timeCommitment}; anggaran profil Rp {rupiah.format(profile.budgetRange.min)}–Rp {rupiah.format(profile.budgetRange.max)}.</p>
-      <p className="text-body-sm text-stone-gray">Segmen: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}; minat: {profile.interests.join(", ")}.</p>
-    </div>
-  );
+  return <div className="grid gap-6 rounded-small-buttons bg-warm-parchment p-14 text-body-sm leading-relaxed text-stone-gray"><p>Profil yang digunakan: {profile.location}; {profile.experienceLevel}; {profile.timeCommitment}; anggaran profil Rp {rupiah.format(profile.budgetRange.min)}–Rp {rupiah.format(profile.budgetRange.max)}.</p><p>Segmen: {profile.customerSegments.join(", ")}; channel: {profile.salesChannels.join(", ")}; minat: {profile.interests.join(", ")}.</p></div>;
 }

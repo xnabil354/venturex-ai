@@ -11,7 +11,7 @@ export function TrendList({ productQuery = "", currentYear, today, viewerId, que
             Trend Radar
           </h1>
           <p className="text-body leading-relaxed text-stone-gray">
-            Baca kueri terkait untuk produk usaha di profil Anda. Data Google Trends belum ditinjau sebagai Trend VENTUREX.
+            Baca kueri terkait untuk produk usaha di profil Anda. 
           </p>
         </header>
         {!productQuery ? <p className="mb-24 rounded-cards border border-soft-mist bg-paper-white p-16 text-body-sm">Lengkapi produk usaha untuk mulai eksplorasi. <Link className="inline-flex min-h-button items-center text-royal-violet underline focus-visible:outline-2 focus-visible:outline-royal-violet" href="/profile">Edit profil</Link></p> : null}

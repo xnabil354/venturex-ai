@@ -6,7 +6,7 @@ import { EntrepreneurRiskView } from "./entrepreneur-risk-view";
 const number = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 });
 export function PrivateComparison({ items, from = "saved", removedCount = 0 }: { readonly items: readonly PrivateOpportunityIdeaDto[]; readonly from?: "saved" | "finder"; readonly removedCount?: number }) {
   return <PageContainer><div className="mx-auto grid max-w-[1120px] gap-24 py-32 sm:py-48">
-    <Link href={from === "finder" ? "/opportunities" : "/saved"} className="inline-flex min-h-button items-center text-body-sm text-royal-violet underline focus-visible:outline-2 focus-visible:outline-royal-violet">Kembali ke daftar peluang</Link>
+    <Link href={from === "finder" ? "/opportunities" : "/saved"} className="inline-flex min-h-button items-center text-body-sm text-royal-violet underline focus-visible:outline-2 focus-visible:outline-royal-violet"><span className="px-1" aria-hidden="true">←</span>Kembali ke daftar peluang</Link>
     <header className="grid gap-12"><h1 className="text-heading-sm font-w460 sm:text-heading-lg">Bandingkan peluang</h1><p className="max-w-[72ch] text-body-sm leading-relaxed text-stone-gray">Tinjau skor, risiko, dan bukti sebelum menentukan konsep yang ingin diuji.</p></header>
     {removedCount > 0 ? <StatusNotice tone="info" role="status">Pilihan yang tidak tersedia atau belum memiliki skor lengkap telah dikeluarkan. {items.length < 2 ? "Pilih peluang lain dari daftar untuk membandingkan minimal dua peluang." : "Anda dapat melanjutkan dengan pilihan yang tersedia."}</StatusNotice> : null}
     <div className={`grid min-w-0 gap-16 ${items.length === 3 ? "lg:grid-cols-3" : "md:grid-cols-2"}`}>{items.map(item => {
