@@ -39,6 +39,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 COPY --from=builder --chown=nextjs:nodejs /app/db/migrations ./db/migrations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/db.mjs ./scripts/db.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/change-admin-password.mjs ./scripts/change-admin-password.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/reference-seed.mjs ./scripts/reference-seed.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/notifications/run-app.mjs ./scripts/notifications/run-app.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/notifications/worker.mjs ./scripts/notifications/worker.mjs

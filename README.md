@@ -61,6 +61,8 @@ Some data and AI integrations are deliberately opt-in or local-demo only. See th
 
    Replace `AUTH_SECRET` with a locally generated secret. For a fresh database, also set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters before migrations. It becomes the password for `adminventurex@gmail.com`; remove the variable after migrations. The remaining default database settings match `compose.yaml`.
 
+   To change that admin password later, run `node --env-file=.env scripts/change-admin-password.mjs` in an interactive terminal. The script prompts twice without echoing the password and updates the existing admin account.
+
 3. Start PostgreSQL:
 
    ```bash
@@ -106,6 +108,8 @@ The production Compose setup runs the app and PostgreSQL. It publishes the app o
    ```bash
    docker compose --env-file .env.production up -d app
    ```
+
+   To change the admin password on this deployment after rebuilding the image, run `docker compose --env-file .env.production exec app node scripts/change-admin-password.mjs` from an interactive terminal. This uses the app container's configured `DATABASE_URL`; verify the deployment before entering the new password.
 
 3. Check startup and health:
 
