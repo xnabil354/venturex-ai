@@ -301,6 +301,40 @@ describe("9Router Chat Completions adapter", () => {
     }]);
   });
 
+  it("classifies an outer application deadline separately from a client disconnect", async () => {
+    const controller = new AbortController();
+    const fetcher = vi.fn<typeof fetch>((_input, init) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason), { once: true });
+    }));
+    const diagnostics: unknown[] = [];
+    const pending = generateNineRouterJson({ config, system: "x", prompt: "deadline",
+      schema: opportunityAnalysisSchema, fetcher, signal: controller.signal,
+      onDiagnostic: diagnostic => diagnostics.push(diagnostic) });
+    const assertion = expect(pending).rejects.toMatchObject({ category: "TIMEOUT" });
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+    controller.abort(new DOMException("Application deadline", "TimeoutError"));
+    await assertion;
+    expect(diagnostics).toMatchObject([{ category: "TIMEOUT", abortOrigin: "APPLICATION_TIMEOUT", timeoutCategory: "APPLICATION_DEADLINE" }]);
+  });
+
+  it("records safe metadata for AI paths without a custom diagnostic callback", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const logger = vi.spyOn(console, "info").mockImplementation(() => {});
+    try {
+      await generateNineRouterJson({ config, system: "PRIVATE_SYSTEM", prompt: "PRIVATE_PROFILE",
+        schema: opportunityAnalysisSchema, fetcher: async () => completion(JSON.stringify(testAnalysis)) });
+      expect(logger).toHaveBeenCalledWith("venturex_ai_provider_result", expect.objectContaining({ category: "SUCCESS", upstreamStatus: 200, schemaValidationOutcome: "PASSED" }));
+      const logged = JSON.stringify(logger.mock.calls);
+      expect(logged).not.toContain("PRIVATE_SYSTEM");
+      expect(logged).not.toContain("PRIVATE_PROFILE");
+      expect(logged).not.toContain(config.apiKey);
+      expect(logged).not.toContain(testAnalysis.summary);
+    } finally {
+      logger.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("distinguishes an upstream HTTP timeout response from the local request deadline", async () => {
     const fetcher = vi.fn<typeof fetch>(async () => new Response("timeout", { status: 504 }));
     const diagnostics: unknown[] = [];

@@ -1,5 +1,53 @@
 # AI Provider Configuration — 9Router
 
+## Opportunity and score reliability audit, 25 October 2026
+
+All generation flows use the guarded `generateNineRouterJson` transport. Calls
+without a custom diagnostic handler now emit the same bounded, safe metadata to
+`venturex_ai_provider_result`: request correlation, timing, HTTP status and schema
+outcome, without prompts, responses or private profile values. Existing custom
+Finder diagnostics remain intact. An outer AbortSignal with TimeoutError is
+classified as an application deadline rather than a client disconnect.
+
+Entrepreneur detail analysis checks cancellation before provider work, after
+market evidence loading, when AI fails and immediately before persistence. A
+cancelled request no longer becomes a newly saved partial snapshot. Genuine
+provider failures retain the documented partial-data behavior and missing-score
+rules. Business analysis already checks cancellation before persistence.
+
+Live synthetic probes for ayam bakar madu and ayam bakar Padang exercised the
+real 9Router requirements call and deterministic detail-score service. Both
+returned validated requirements and available Opportunity/Fit scores. The probe
+used synthetic profile/market data and an in-memory repository; it does not prove
+availability of the same factors for a real account. No real profile was sent
+and no account records were changed. Shared transport and both persona services
+passed 232 offline tests; two opt-in live tests were skipped in that run. A
+separate opt-in live run of the full private hypothesis pipeline passed for both
+Entrepreneur and UMKM with synthetic profiles/evidence and mocked persistence,
+including schema and grounding validation. This does not test live SearchApi
+retrieval or authenticated browser interactions.
+
+The production image was rebuilt and deployed successfully. The public health
+endpoint and container-to-gateway HTTPS/model-discovery probe passed. The 9Router
+systemd service was running with zero restarts during verification, and its
+health-check timer was active. The rollback image is
+`venturex-ai:before-ai-reliability-20261025`.
+
+## Docker production transport repair, 25 October 2026
+
+The active app was recreated from `compose.yaml` without the former production
+overlay and inherited `http://localhost:20128/v1` from its environment file.
+Inside Docker, this addressed the app container rather than the host's systemd
+9Router, producing `NETWORK` / `ECONNREFUSED` before receiving HTTP headers.
+All required transport settings now live in `compose.yaml`: HTTPS Nginx at
+`https://venturex.web.id/v1`, a host-gateway domain mapping, and the private subnet
+matching the Nginx allow rule. The legacy overlay remains compatible but is no
+longer required. `NINEROUTER_CONTAINER_BASE_URL` optionally selects another HTTPS
+gateway; API credentials still come from the ignored environment file.
+`./deploy/verify-ai` checks live container transport and model discovery without
+inference or printing credentials. This fix does not change generation schemas,
+timeouts, grounding validation or the no-retry contract.
+
 ## Grounding geography repair, 21 October 2026
 
 The hybrid materializer previously compared a SearchApi geographic code (`ID`, `US`, or the empty Worldwide code) with a localized display label (`Indonesia`, `Seluruh dunia`). This deterministic server mismatch rejected otherwise schema-valid responses with `FACT_REFERENCE_MISMATCH` before their fact references were checked. It affected both Entrepreneur and existing-business profiles and was independent of the selected product or model.

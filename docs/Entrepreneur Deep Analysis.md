@@ -4,6 +4,12 @@ Acuan: BRD Step 5 Analyze dan bagian 18–19, PRD-SCORE-001–007, FSD-SCORE-001
 
 ## Alur
 
+Reliability repair, 25 October 2026: pembatalan request diperiksa sebelum
+panggilan provider, setelah pengambilan bukti, ketika AI gagal, dan sebelum
+penyimpanan. Request yang dibatalkan tidak disimpan sebagai analisis parsial baru.
+Kegagalan provider yang sebenarnya tetap mengikuti aturan hasil parsial dan
+insufficient data; angka skor tidak dibuat untuk mengganti faktor yang kosong.
+
 1. Buka **Lihat Detail Score** dari Finder atau Saved sebagai ENTREPRENEUR.
 2. Halaman membaca hipotesis berdasarkan `{ id, userId, userType: ENTREPRENEUR }`, profil terbaru dan referensi aktif. Membuka halaman tidak memanggil provider.
 3. Pengguna dapat mengonfirmasi estimasi modal minimum, menyetujui pemrosesan dan menekan **Analisis peluang ini**.

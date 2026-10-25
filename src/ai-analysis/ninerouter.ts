@@ -165,7 +165,10 @@ function mapProviderError(error: unknown, signal: AbortSignal | undefined, outbo
     if (error.statusCode === 408 || error.statusCode === 504) return new NineRouterError("UPSTREAM_TIMEOUT", error.statusCode, true);
     if (typeof error.statusCode === "number") return new NineRouterError("UPSTREAM_HTTP", error.statusCode, true);
   }
-  if (signal?.aborted) return new NineRouterError("CLIENT_ABORTED", null, outboundAttempted);
+  if (signal?.aborted) return new NineRouterError(
+    signal.reason instanceof Error && signal.reason.name === "TimeoutError" ? "TIMEOUT" : "CLIENT_ABORTED",
+    null, outboundAttempted,
+  );
   if (hasErrorName(error, new Set(["TimeoutError"]))) return new NineRouterError("TIMEOUT", null, outboundAttempted);
   return new NineRouterError("NETWORK", null, outboundAttempted);
 }
@@ -555,7 +558,7 @@ export async function generateNineRouterJson<T>(options: {
   } finally {
     release?.();
     try {
-      options.onDiagnostic?.({
+      const diagnostic: NineRouterDiagnostic = {
         requestId,
         provider: NINEROUTER_PROVIDER,
         model: config.model,
@@ -582,7 +585,13 @@ export async function generateNineRouterJson<T>(options: {
         durationMs: Math.max(0, Date.now() - startedAt),
         category,
         outboundAttempted: diagnostics.outboundAttempted,
-      });
+      };
+      if (options.onDiagnostic) options.onDiagnostic(diagnostic);
+      else if (process.env.NODE_ENV !== "test") {
+        // Other AI paths share the same safe metadata when they have no logger.
+        // Never log prompts, response content, profile values or credentials.
+        console.info("venturex_ai_provider_result", diagnostic);
+      }
     } catch {
       // Safe diagnostics must never alter the provider result.
     }

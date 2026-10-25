@@ -1,3 +1,21 @@
+/** Use the configured public origin rather than Next's internal container URL. */
+export function hasTrustedApplicationOrigin(request: Request): boolean {
+  const value = request.headers.get("origin");
+  if (!value) return false;
+  try {
+    const origin = new URL(value);
+    const expected = new URL(process.env.APP_URL ?? request.url);
+    return (origin.protocol === "http:" || origin.protocol === "https:")
+      && origin.pathname === "/"
+      && !origin.username && !origin.password && !origin.search && !origin.hash
+      && (expected.protocol === "http:" || expected.protocol === "https:")
+      && !expected.username && !expected.password
+      && origin.origin === expected.origin;
+  } catch {
+    return false;
+  }
+}
+
 export function isSameOriginRequest(request: Request): boolean {
   const originValue = request.headers.get("origin");
   const hostValue = request.headers.get("host");

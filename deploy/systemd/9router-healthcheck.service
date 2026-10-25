@@ -1,0 +1,12 @@
+[Unit]
+Description=Check local 9Router responsiveness and recover a hung process
+After=9router.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/9router-healthcheck
+TimeoutStartSec=45
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

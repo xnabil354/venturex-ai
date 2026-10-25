@@ -8,6 +8,15 @@ Users explicitly mark each private roadmap stage completed after carrying out it
 
 Progress is separate from immutable roadmap JSON. `journey_roadmap_progress`: opportunity FK, owner FK, roadmap fingerprint, stage ordinal, completed timestamp; composite primary key opportunity/fingerprint/stage. Mutations lock the owner-scoped opportunity row. Progress is never inferred for existing records. Fingerprints identify the entire roadmap snapshot, so a different roadmap cannot inherit completion. Reopening a stage relocks downloads. No financial projections or new AI calls are generated during export.
 
+Production proxy fix, 25 October 2026: report progress mutations validate the
+browser Origin against the server-configured `APP_URL`. Next.js can construct
+`request.url` using its internal container hostname and port even behind HTTPS
+Nginx, so that internal URL is not the public origin. Without `APP_URL`, local
+requests retain an exact request-origin comparison. Missing/malformed or foreign
+origins remain forbidden; forwarded headers do not authorize an origin. The same
+fix applies to notification mutations. Ownership, stage bounds, fingerprint
+checks and the completion gate are unchanged.
+
 ## API
 
 - GET `/api/v1/reports/journeys?page=1`: paginated private roadmap choices with completion counts and availability.

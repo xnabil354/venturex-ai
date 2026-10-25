@@ -31,6 +31,35 @@ function fixture() {
 }
 
 describe("entrepreneur second-stage analysis", () => {
+  it("does not contact providers or persist when the request is already cancelled", async () => {
+    const f = fixture();
+    const signal = AbortSignal.abort();
+    await expect(f.service.analyze(f.user, f.item.id, { consent: true }, signal)).rejects.toMatchObject({ code: "UNAVAILABLE" });
+    expect(f.market.interestOverTime).not.toHaveBeenCalled();
+    expect(f.generate).not.toHaveBeenCalled();
+    expect(f.repository.saveEntrepreneurAnalysis).not.toHaveBeenCalled();
+  });
+  it("does not turn an AI cancellation into a saved partial analysis", async () => {
+    const f = fixture();
+    const controller = new AbortController();
+    f.generate.mockImplementation(async () => {
+      controller.abort();
+      throw new Error("cancelled");
+    });
+    await expect(f.service.analyze(f.user, f.item.id, { consent: true }, controller.signal)).rejects.toMatchObject({ code: "UNAVAILABLE" });
+    expect(f.repository.saveEntrepreneurAnalysis).not.toHaveBeenCalled();
+  });
+  it("does not start AI after cancellation while market evidence is loading", async () => {
+    const f = fixture();
+    const controller = new AbortController();
+    f.market.interestOverTime.mockImplementation(async () => {
+      controller.abort();
+      throw new Error("cancelled");
+    });
+    await expect(f.service.analyze(f.user, f.item.id, { consent: true }, controller.signal)).rejects.toMatchObject({ code: "UNAVAILABLE" });
+    expect(f.generate).not.toHaveBeenCalled();
+    expect(f.repository.saveEntrepreneurAnalysis).not.toHaveBeenCalled();
+  });
   it("returns an archived snapshot without calling profile or providers", async () => {
     const f = fixture();
     const result = await f.service.analyze(f.user, f.item.id, { consent: true, capitalMin: 500000 });

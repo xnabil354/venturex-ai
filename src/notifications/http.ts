@@ -12,6 +12,7 @@ import {
 } from "./contract";
 import { NotificationRepository } from "./repository";
 import { pushConfig } from "./push";
+import { hasTrustedApplicationOrigin } from "@/lib/http-request";
 
 type NotificationSection = "inbox" | "preferences" | "push" | "context";
 
@@ -31,12 +32,7 @@ class HttpError extends Error {
 }
 function assertSameOrigin(request: Request): void {
   // ASVS 3.5.1: state changes require an exact same-origin request.
-  const origin = request.headers.get("origin");
-  try {
-    if (!origin || new URL(origin).origin !== new URL(request.url).origin)
-      throw new HttpError(403, "Permintaan tidak diizinkan.");
-  } catch (error) {
-    if (error instanceof HttpError) throw error;
+  if (!hasTrustedApplicationOrigin(request)) {
     throw new HttpError(403, "Permintaan tidak diizinkan.");
   }
 }

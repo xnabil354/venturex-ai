@@ -20,6 +20,17 @@ services:
       AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       ADMIN_BOOTSTRAP_PASSWORD: ""
+      # localhost in .env.production would refer to this container, not the VPS.
+      # Use host Nginx TLS even when no extra Compose file is supplied.
+      NINEROUTER_BASE_URL: ${NINEROUTER_CONTAINER_BASE_URL:-https://venturex.web.id/v1}
+      NINEROUTER_LOOPBACK_TUNNEL_CONFIRMED: "false"
+    extra_hosts:
+      - "venturex.web.id:host-gateway"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     depends_on:
@@ -80,6 +91,11 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
@@ -95,3 +111,10 @@ services:
 
 volumes:
   venturex_postgres_data:
+
+# Must match the private /v1/ allow rule in deploy/nginx/venturex.web.id.conf.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+./deploy/compose exec -T app node --input-type=module < deploy/check-ai.mjs

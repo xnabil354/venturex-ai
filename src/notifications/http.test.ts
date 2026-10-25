@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
@@ -32,6 +32,16 @@ function request(method = "GET", body?: unknown, origin = "http://localhost:3000
 }
 
 describe("notification API boundaries", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it("accepts the public origin behind the production proxy", async () => {
+    vi.stubEnv("APP_URL", "https://venturex.web.id");
+    const response = await notificationHttp(new Request("https://0.0.0.0:3000/api/v1/notifications/preferences", {
+      method: "PATCH", headers: { origin: "https://venturex.web.id", "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: true }),
+    }), "preferences");
+    expect(response.status).toBe(200);
+    expect(mocks.setEnabled).toHaveBeenCalledWith("owner", true);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.user.mockResolvedValue({ id: "owner", userType: "UMKM_EXISTING", onboardingStatus: "COMPLETED" });

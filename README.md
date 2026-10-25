@@ -94,6 +94,14 @@ docker compose -f compose.yaml -f compose.dev.yaml stop postgres
 
 The production Compose setup runs the app and PostgreSQL. It publishes the app only on `127.0.0.1:3000` by default for a host-installed Nginx reverse proxy; set `APP_PORT` if that port is already in use. PostgreSQL has no published port.
 
+On this VPS, `compose.yaml` configures the container's 9Router connection through
+`https://venturex.web.id/v1` and maps that domain to the Docker host gateway.
+The host Nginx private `/v1/` proxy and the `172.21.0.0/16` Compose network must
+remain aligned. `localhost:20128` inside the app container does not reach the
+host systemd service. No extra production Compose file is required. For a
+different HTTPS gateway, set `NINEROUTER_CONTAINER_BASE_URL`; credentials
+continue to come from `.env.production`.
+
 1. Copy `.env.production.example` to `.env.production` on the VPS. Set `APP_URL` to the HTTPS domain Nginx will serve; Compose also passes it to Auth.js as `AUTH_URL` so redirects use the public origin behind the proxy. Generate unique `AUTH_SECRET` and `POSTGRES_PASSWORD` values, and put the same database password in `DATABASE_URL`. The database host in that URL must remain `postgres`. For a fresh database, set a unique `ADMIN_BOOTSTRAP_PASSWORD` of at least 32 characters. Migration 024 uses it for the initial admin account `adminventurex@gmail.com`.
 2. Build the production image, apply pending migrations, and seed reference data:
 
@@ -117,6 +125,7 @@ The production Compose setup runs the app and PostgreSQL. It publishes the app o
    docker compose --env-file .env.production ps
    docker compose --env-file .env.production logs --tail=100 app
    curl http://127.0.0.1:3000/api/health
+   ./deploy/verify-ai
    ```
 
 The PostgreSQL data volume is named `venturex_postgres_data`. Back it up before applying migrations to a database that contains data. Do not run `docker compose down -v` unless you intend to delete that database volume.

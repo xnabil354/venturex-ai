@@ -198,6 +198,24 @@ Provider data selalu diperlakukan sebagai evidence terbatas. Search interest buk
 
 ## Proses background dan command operasional
 
+Deployment VPS `venturex.web.id` memakai `compose.yaml`, dijalankan dengan
+`./deploy/compose` atau `docker compose --env-file .env.production`.
+`compose.production.yaml` hanya dipertahankan untuk kompatibilitas perintah lama.
+Pengaturan HTTPS AI, host gateway, subnet privat dan rotasi log ada di file utama,
+sehingga tidak hilang ketika app dibuat ulang tanpa file tambahan. Next.js dan
+notification worker berada dalam container aplikasi; PostgreSQL memakai volume
+persisten. Nginx host meneruskan HTTPS ke `127.0.0.1:3000`. 9Router berjalan
+langsung melalui systemd, dengan restart otomatis dan timer pemeriksaan HTTP.
+Transport AI dari container memakai HTTPS Nginx pada `/v1/`, dibatasi ke jaringan
+Docker dan loopback. Runbook dan batas verifikasi ada di `deploy/README.txt`.
+Mutasi progres laporan dan notifikasi memvalidasi origin terhadap `APP_URL`
+publik agar hostname internal Next.js di dalam container tidak menyebabkan 403.
+`./deploy/verify-ai` memeriksa konfigurasi HTTPS, resolusi host, keterjangkauan
+gateway dan keberadaan model dari dalam container tanpa melakukan inferensi.
+Adapter AI bersama mencatat metadata aman bila pemanggil tidak memasang logger
+khusus; deadline aplikasi dibedakan dari client abort. Analisis detail Entrepreneur
+yang dibatalkan tidak disimpan sebagai snapshot parsial baru.
+
 | Command | Fungsi |
 | --- | --- |
 | `pnpm dev` | Menjalankan Next.js dan notification worker terkoordinasi |

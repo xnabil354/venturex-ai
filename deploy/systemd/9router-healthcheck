@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+# An intentional systemctl stop must stay stopped.
+systemctl is-active --quiet 9router.service || exit 0
+for attempt in 1 2 3; do
+    if curl --fail --silent --output /dev/null --max-time 10 http://127.0.0.1:20128/dashboard; then
+        exit 0
+    fi
+    if [ "$attempt" -lt 3 ]; then sleep 2; fi
+done
+printf '%s\n' '9Router failed three local HTTP checks; restarting service.'
+systemctl try-restart 9router.service

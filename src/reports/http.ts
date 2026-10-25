@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/auth/current-user";
 import { DashboardQueryService } from "@/dashboard/service";
 import { JourneyRepository, JourneyStateError } from "./repository";
 import { buildJourneyReport } from "./model";
+import { hasTrustedApplicationOrigin } from "@/lib/http-request";
 
 const headers = { "Cache-Control": "private, no-store", Vary: "Cookie", "X-Content-Type-Options": "nosniff" };
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers });
@@ -27,8 +28,7 @@ export async function journeyHttp(request: Request, id?: string, progressOnly = 
     }
     if (!z.string().uuid().safeParse(id).success) return fail(400, "Peluang tidak valid.");
     if (request.method === "PATCH") {
-      const origin = request.headers.get("origin");
-      if (!origin || new URL(origin).origin !== new URL(request.url).origin) return fail(403, "Permintaan tidak diizinkan.");
+      if (!hasTrustedApplicationOrigin(request)) return fail(403, "Permintaan tidak diizinkan.");
       const reader = request.body?.getReader();
       if (!reader) return fail(400, "Data belum lengkap.");
       const chunks: Uint8Array[] = []; let size = 0;

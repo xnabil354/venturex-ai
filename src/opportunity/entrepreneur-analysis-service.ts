@@ -106,6 +106,10 @@ export class EntrepreneurAnalysisService {
     const config = readLocalProfileNineRouterConfig(env);
     if (!config || !isLocalProfileNineRouterTransportAllowed(config.baseURL, env)) throw new EntrepreneurAnalysisError("UNAVAILABLE");
     const run = async (): Promise<EntrepreneurAnalysis> => {
+      const ensureActive = () => {
+        if (signal?.aborted) throw new EntrepreneurAnalysisError("UNAVAILABLE");
+      };
+      ensureActive();
       const warnings: string[] = [];
       const market = this.dependencies.market ?? getSearchApiGoogleTrendsAdapter();
       const source = item.source;
@@ -118,6 +122,7 @@ export class EntrepreneurAnalysisService {
         query ? market.interestOverTime(query, { period: "1y", property, geo }) : Promise.reject(new Error("MISSING_QUERY")),
         city && product ? market.localCompetitors(product, city, context.profile.location?.province) : Promise.reject(new Error("MISSING_LOCAL_CONTEXT")),
       ]);
+      ensureActive();
       const trend = series.status === "fulfilled" ? summarizeTrend(series.value, geo, series.value.retrievedAt) : null;
       const competitors = local.status === "fulfilled" ? local.value : null;
       if (!trend) warnings.push("Histori pencarian belum dapat diambil; faktor terkait tetap memakai bukti yang tersedia atau ditandai kosong.");
@@ -137,6 +142,8 @@ export class EntrepreneurAnalysisService {
         requirements = sanitizeRequirements(validated, context);
         if (requirements.categoryId !== validated.categoryId || requirements.customerSegmentIds.length !== validated.customerSegmentIds.length || requirements.salesChannelIds.length !== validated.salesChannelIds.length) warnings.push("Referensi konsep yang tidak cocok dengan katalog aktif tidak dipakai dalam perhitungan.");
       } catch (error) {
+        // A cancelled request must not overwrite a snapshot with partial results.
+        ensureActive();
         if (env.NODE_ENV !== "test") console.warn("venturex_entrepreneur_analysis_partial", { phase: "AI_REQUIREMENTS", category: error instanceof NineRouterError ? error.category : "REFERENCE_OR_CONTENT_INVALID", upstreamStatus: error instanceof NineRouterError ? error.upstreamStatus : null });
         requirements = old?.inputFingerprint === fingerprint ? old.requirements : null;
         model = requirements ? old?.model ?? null : null;
@@ -149,6 +156,7 @@ export class EntrepreneurAnalysisService {
         ...decision, targetConsumer: target || item.hypothesis.targetCustomer,
         competition: competitors?.sampleCount ? `Ditemukan ${competitors.sampleCount} listing yang cocok dengan kota profil dalam sampel pencarian. Ini indikasi listing pesaing, bukan seluruh pesaing atau pangsa pasar.` : competitors?.diagnostics?.receivedCount === 0 ? "Pencarian belum mengembalikan listing usaha. Sampel kompetitor belum dapat dinilai." : competitors?.diagnostics ? `Dari ${competitors.diagnostics.inspectedCount} listing yang diperiksa, belum ada alamat valid yang cocok dengan kota profil. Lihat rincian penyaringan.` : "Persaingan belum dapat dinilai dari sampel yang tersedia.",
         trend, competitors, warnings: warnings.slice(0, 8) });
+      ensureActive();
       if (!await repo.saveEntrepreneurAnalysis(user.id, id, snapshot)) throw new EntrepreneurAnalysisError("NOT_FOUND");
       return snapshot;
     };

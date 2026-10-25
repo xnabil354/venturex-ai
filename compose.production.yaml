@@ -1,0 +1,4 @@
+# Compatibility with earlier deployment commands. Required production networking
+# and AI settings now live in compose.yaml so they cannot be omitted.
+services:
+  app: {}
