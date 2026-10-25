@@ -32,10 +32,10 @@ export function RoadmapDetailView({ roadmap }: { readonly roadmap: RoadmapDetail
             {roadmap.steps.map((step) => (
               <li key={step.id}>
                 <Card className="grid gap-16 p-16 transition-colors duration-200 hover:border-royal-violet/40 sm:p-20 md:p-24">
-                  <div className="flex flex-wrap items-center gap-10 border-b border-soft-mist pb-12">
+                  <div className="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-x-10 gap-y-4 border-b border-soft-mist pb-12 sm:grid-cols-[28px_minmax(0,1fr)_auto]">
                     <span className="flex size-28 shrink-0 items-center justify-center rounded-full bg-midnight-wine text-caption font-w540 text-paper-white">{step.sequence}</span>
                     <h3 className="min-w-0 flex-1 text-label-bold font-w540">{step.stage}</h3>
-                    <p className="text-caption font-w540 text-royal-violet">{step.timeline}</p>
+                    <p className="col-start-2 min-w-0 wrap-anywhere text-caption font-w540 text-royal-violet sm:col-start-3 sm:text-right">{step.timeline}</p>
                   </div>
                   <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
                     <div className="grid gap-4 rounded-small-buttons bg-lilac-mist/35 p-14 md:col-span-2 lg:col-span-1">

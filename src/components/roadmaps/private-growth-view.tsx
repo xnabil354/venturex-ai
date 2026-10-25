@@ -25,10 +25,10 @@ export function PrivateGrowthView({ item }: { item: PrivateOpportunityIdeaDto })
           {plan.steps.map((step, index) => (
             <li key={step.stage}>
               <Card className="grid gap-16 p-16 sm:p-20 md:p-24">
-                <div className="flex flex-wrap items-center gap-10 border-b border-soft-mist pb-12">
+                <div className="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-x-10 gap-y-4 border-b border-soft-mist pb-12 sm:grid-cols-[28px_minmax(0,1fr)_auto]">
                   <span className="flex size-28 shrink-0 items-center justify-center rounded-full bg-deep-lagoon text-caption font-w540 text-paper-white">{index + 1}</span>
                   <h2 className="min-w-0 flex-1 text-label-bold font-w540">{step.stage}</h2>
-                  <p className="text-caption font-w540 text-royal-violet">{step.timeline}</p>
+                  <p className="col-start-2 min-w-0 wrap-anywhere text-caption font-w540 text-royal-violet sm:col-start-3 sm:text-right">{step.timeline}</p>
                 </div>
                 <p className="max-w-[72ch] wrap-anywhere text-body-sm font-w540 leading-relaxed">{step.action}</p>
                 <dl className="grid gap-10 text-body-sm sm:grid-cols-2 lg:grid-cols-3">
