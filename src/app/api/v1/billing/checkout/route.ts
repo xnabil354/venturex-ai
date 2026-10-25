@@ -49,9 +49,11 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     console.error("venturex_billing_checkout_failed", { requestId, errorName: error instanceof Error ? error.name : "UnknownError" });
     const code = error instanceof BillingError ? error.code : "CHECKOUT_UNAVAILABLE";
-    const message = code === "CHECKOUT_UPSTREAM_TIMEOUT"
+    const message = code === "PLAN_ALREADY_ACTIVE"
+      ? error instanceof BillingError ? error.message : "Paket ini masih aktif."
+      : code === "CHECKOUT_UPSTREAM_TIMEOUT"
       ? "Duitku sandbox belum merespons. Coba lagi beberapa saat lagi."
       : "Checkout belum dapat dibuat. Coba lagi nanti.";
-    return Response.json({ error: { code, message }, requestId }, { status: 503, headers });
+    return Response.json({ error: { code, message }, requestId }, { status: code === "PLAN_ALREADY_ACTIVE" ? 409 : 503, headers });
   }
 }

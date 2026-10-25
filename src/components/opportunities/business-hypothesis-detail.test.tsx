@@ -24,7 +24,7 @@ it("requires explicit consent and preserves previous snapshot on failure", async
   render(<BusinessHypothesisDetail item={privateBusinessFixture()} initialFresh />);
   expect(fetch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("checkbox")); fireEvent.click(screen.getByRole("button", { name: "Perbarui analisis" }));
-  await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Analisis gagal dimuat"));
+  await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Analisis gagal dimuat"));
   expect(screen.getByText("Business Fit")).toBeTruthy();
   expect(JSON.parse(fetch.mock.calls[0]?.[1].body)).toEqual({ consent: true, refresh: true, proposedPrice: { min: 12000, max: 18000 } });
 });

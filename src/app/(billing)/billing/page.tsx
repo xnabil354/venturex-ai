@@ -2,13 +2,15 @@ import { getCurrentUser } from "@/auth/current-user";
 import { formatRupiah } from "@/billing/catalog";
 import { BillingService } from "@/billing/service";
 import { BillingCheckoutButton } from "@/components/billing/billing-checkout-button";
+import { BillingPaymentStatus } from "@/components/billing/billing-payment-status";
 import { BillingSurface } from "@/components/billing/billing-surface";
 import { Card } from "@/components/ui";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }: { readonly searchParams: Promise<{ payment?: string | string[] }> }) {
+  const { payment } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const billing = new BillingService();
@@ -24,12 +26,14 @@ export default async function BillingPage() {
   return (
     <BillingSurface>
       <div className="py-24 sm:py-40">
+        <BillingPaymentStatus initialSummary={summary} showNotice={payment === "verifying"} />
         <section className="overflow-hidden rounded-cards border border-midnight-wine bg-midnight-wine text-paper-white">
           <div className="grid gap-24 p-20 sm:p-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)] lg:items-end lg:gap-32 lg:p-32">
             <div className="max-w-[48rem]">
               <p className="text-caption font-w540 uppercase tracking-[0.14em] text-lilac-mist">Paket & kredit</p>
               <h1 className="mt-8 text-heading-lg font-w460 tracking-heading-lg">Kendalikan akses AI Anda.</h1>
               <p className="mt-12 max-w-[58ch] text-body leading-relaxed text-paper-white/75">Pilih paket untuk mengaktifkan AI selama 30 hari, lalu tambah kredit kapan pun dibutuhkan.</p>
+              {summary?.requiresRenewal ? <p className="mt-12 max-w-[58ch] text-body-sm leading-relaxed text-paper-white">Masa paket Anda telah berakhir. Aktifkan paket baru untuk kembali menggunakan aplikasi.</p> : null}
             </div>
             {summary ? (
               <div className="grid gap-8 sm:grid-cols-3 lg:grid-cols-1">
@@ -82,7 +86,7 @@ export default async function BillingPage() {
                           <p className={isPro ? "mt-6 text-body-sm leading-relaxed text-paper-white/75" : "mt-6 text-body-sm leading-relaxed text-stone-gray"}>Kredit paket berlaku selama periode paket aktif.</p>
                         </div>
                         <div className="mt-20">
-                          <BillingCheckoutButton productCode={product.code} variant={isPro ? "inverse" : "primary"}>Pilih {product.plan}</BillingCheckoutButton>
+                          <BillingCheckoutButton plan={product.plan} productCode={product.code} variant={isPro ? "inverse" : "primary"}>Pilih {product.plan}</BillingCheckoutButton>
                         </div>
                       </Card>
                     );

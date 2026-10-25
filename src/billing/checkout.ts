@@ -46,7 +46,7 @@ export async function createDuitkuPopInvoice(input: {
         email: input.email,
         itemDetails: [{ name: input.productDetails, price: input.amount, quantity: 1 }],
         callbackUrl: new URL("/api/v1/billing/duitku/callback", baseUrl).toString(),
-        returnUrl: new URL("/billing/return", baseUrl).toString(),
+        returnUrl: new URL("/billing?payment=verifying", baseUrl).toString(),
         expiryPeriod: 60,
         signature: createDuitkuSignature(env.DUITKU_MERCHANT_CODE, input.merchantOrderId, input.amount, env.DUITKU_API_KEY),
       }),

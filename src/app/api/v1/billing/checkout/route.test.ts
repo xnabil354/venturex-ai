@@ -14,6 +14,7 @@ vi.mock("@/billing/service", () => ({
 vi.mock("@/billing/checkout", () => ({ createDuitkuPopInvoice: mocks.createInvoice }));
 
 import { POST } from "./route";
+import { BillingError } from "@/billing/errors";
 
 const user = { id: "90000000-0000-4000-8000-000000000001", email: "member@example.com", userType: "ENTREPRENEUR", onboardingStatus: "COMPLETED" } as const;
 
@@ -45,5 +46,14 @@ describe("Billing checkout route", () => {
     const response = await POST(request());
     expect(response.status).toBe(503);
     expect((await response.json()).error.code).toBe("CHECKOUT_UNAVAILABLE");
+  });
+
+  it("returns a conflict without creating a Duitku invoice for an active same-plan purchase", async () => {
+    mocks.user.mockResolvedValue({ ...user, id: "90000000-0000-4000-8000-000000000003" });
+    mocks.createPendingPayment.mockRejectedValueOnce(new BillingError("PLAN_ALREADY_ACTIVE", "Paket Premium masih aktif."));
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect((await response.json()).error.code).toBe("PLAN_ALREADY_ACTIVE");
+    expect(mocks.createInvoice).not.toHaveBeenCalled();
   });
 });

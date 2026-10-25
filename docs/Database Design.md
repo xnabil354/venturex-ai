@@ -2060,6 +2060,8 @@ Migration `023-create-billing.ts` adds `billing_accounts`, `billing_payments`, `
 
 Migration `024-create-admin-billing-controls.ts` separates operators into `admins`, disables the migrated legacy customer's login without deleting user-owned records, and adds versioned product/usage settings plus append-only operator audit logs. `billing_payments.granted_credits` is a payment-time entitlement snapshot used during settlement and scheduled-plan activation.
 
+Saldo kredit untuk header tetap dibaca dari `credit_lots`. Transaksi yang mengubah saldo atau entitlement memanggil PostgreSQL `pg_notify('venturex_billing_changed', user_id)` di dalam transaksi; notifikasi hanya terkirim setelah commit. Kanal ini hanya sinyal invalidasi untuk SSE, bukan sumber angka saldo atau pengganti ledger.
+
 Retain optional competitors.diagnostics in existing analysis JSONB: receivedCount, inspectedCount (maximum 20), invalidCount, outsideCityCount and duplicateCount. sampleCount is the unique locally matching count; at most five example places remain stored. Counters contain no extra raw addresses. The Competition disclosure shows these counters, distinguishes empty provider results from filtered results and keeps zero samples unknown. Old snapshots without diagnostics remain readable. Provider error envelopes are not treated as empty search evidence.
 
 The local Maps cache key moves to LOCAL_COMPETITOR_SAMPLE_V2, and input fingerprints include competitor matching version 2, preventing reuse of old empty samples for new analyses. Saved permanent snapshots stay immutable. Reanalysis applies only to unsaved hypotheses using existing consent and owner checks; the scoring formula and weights do not change.

@@ -23,15 +23,17 @@ export default async function AppLayout({
     redirect(resolveOnboardingDestination(user));
   }
 
-  let availableCredits: number | undefined;
+  let initialBillingSummary: Awaited<ReturnType<BillingService["summaryForUser"]>> | null = null;
   try {
-    availableCredits = (await new BillingService().summaryForUser(user.id)).availableCredits;
+    initialBillingSummary = await new BillingService().summaryForUser(user.id);
   } catch {
     // Credit availability must not prevent access to the rest of the application.
   }
 
+  if (initialBillingSummary?.requiresRenewal) redirect("/billing");
+
   return (
-    <AppShell userEmail={user.email} {...(availableCredits === undefined ? {} : { availableCredits })}>
+    <AppShell userEmail={user.email} initialBillingSummary={initialBillingSummary} redirectOnExpiredPlan>
       {children}
     </AppShell>
   );

@@ -8,6 +8,7 @@ import { getSequelize } from "@/db/sequelize";
 
 import { BILLING_PRODUCTS, type AiUsageKind, type BillingProductCode, type PlanTier } from "./catalog";
 import { BillingError } from "./errors";
+import { BILLING_EVENT_CHANNEL } from "./events";
 
 type AccountRow = {
   readonly active_plan: PlanTier;
@@ -32,6 +33,7 @@ export type BillingSummary = {
   readonly scheduledPlan: PlanTier | null;
   readonly scheduledStartsAt: string | null;
   readonly canUseAi: boolean;
+  readonly requiresRenewal: boolean;
   readonly availableCredits: number;
   readonly expiringCredits: number;
   readonly topupCredits: number;
@@ -60,6 +62,10 @@ export class BillingService {
     return this.databaseInstance;
   }
 
+  private async notifyChanged(userId: string, transaction: Transaction): Promise<void> {
+    await this.sequelize.query(`SELECT pg_notify('${BILLING_EVENT_CHANNEL}', $1)`, { bind: [userId], transaction });
+  }
+
   async summaryForUser(userId: UserId): Promise<BillingSummary> {
     await this.ensureAccount(userId);
     await this.activateScheduledPlan(userId);
@@ -85,6 +91,7 @@ export class BillingService {
       scheduledPlan: safeAccount.scheduled_plan,
       scheduledStartsAt: safeAccount.scheduled_starts_at?.toISOString() ?? null,
       canUseAi: planIsActive(safeAccount, now) || hasFreeTrial,
+      requiresRenewal: safeAccount.active_plan !== "FREE" && safeAccount.plan_ends_at !== null && safeAccount.plan_ends_at <= now,
       availableCredits: Number(values.total),
       expiringCredits: Number(values.expiring),
       topupCredits: Number(values.topup),
@@ -96,6 +103,16 @@ export class BillingService {
     const paymentId = randomUUID();
     const merchantOrderId = `VX-${Date.now()}-${randomUUID().replaceAll("-", "").slice(0, 12)}`;
     const amount = await this.sequelize.transaction(async (transaction) => {
+      const product = BILLING_PRODUCTS[productCode];
+      if (product.kind === "PLAN") {
+        const [account] = await this.sequelize.query<AccountRow>(
+          "SELECT active_plan, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1 FOR UPDATE",
+          { bind: [userId], type: QueryTypes.SELECT, transaction },
+        );
+        if (account && planIsActive(account, new Date()) && account.active_plan === product.plan) {
+          throw new BillingError("PLAN_ALREADY_ACTIVE", `Paket ${product.plan} masih aktif. Pilih paket lain atau tunggu masa aktif berakhir.`);
+        }
+      }
       const [settings] = await this.sequelize.query<{ amount: number; granted_credits: number }>(
         "SELECT amount, granted_credits FROM billing_product_settings WHERE product_code = $1 FOR SHARE",
         { bind: [productCode], type: QueryTypes.SELECT, transaction },
@@ -167,6 +184,7 @@ export class BillingService {
       if (input.resultCode !== "00") {
         await this.sequelize.query("UPDATE billing_payments SET status = 'FAILED', updated_at = now() WHERE id = $1", { bind: [payment.id], transaction });
         await this.sequelize.query("UPDATE billing_webhook_events SET outcome = 'NOT_PAID' WHERE id = $1", { bind: [eventId], transaction });
+        await this.notifyChanged(payment.user_id, transaction);
         return;
       }
       await this.sequelize.query(`UPDATE billing_payments SET status = 'PAID', duitku_reference = $2, payment_method = $3, paid_at = now(), updated_at = now() WHERE id = $1`, {
@@ -174,6 +192,7 @@ export class BillingService {
       });
       await this.applyPaidProduct(payment, transaction);
       await this.sequelize.query("UPDATE billing_webhook_events SET outcome = 'PAID_APPLIED' WHERE id = $1", { bind: [eventId], transaction });
+      await this.notifyChanged(payment.user_id, transaction);
     });
     return "ACK";
   }
@@ -201,6 +220,7 @@ export class BillingService {
       const lotId = randomUUID();
       await this.sequelize.query(`INSERT INTO credit_lots (id, user_id, source, initial_credits, remaining_credits) VALUES ($1, $2, 'TRIAL', 5, 5)`, { bind: [lotId, userId], transaction });
       await this.sequelize.query(`INSERT INTO credit_ledger_entries (id, user_id, lot_id, kind, credits_delta, reference) VALUES ($1, $2, $3, 'GRANT', 5, $4)`, { bind: [randomUUID(), userId, lotId, `trial:${userId}`], transaction });
+      await this.notifyChanged(userId, transaction);
     });
   }
 
@@ -270,6 +290,7 @@ export class BillingService {
         await this.sequelize.query("UPDATE credit_lots SET remaining_credits = remaining_credits - $2 WHERE id = $1", { bind: [allocation.lotId, allocation.credits], transaction });
         await this.sequelize.query(`INSERT INTO credit_ledger_entries (id, user_id, lot_id, kind, credits_delta, usage_kind, reference) VALUES ($1, $2, $3, 'RESERVATION', $4, $5, $6)`, { bind: [randomUUID(), userId, allocation.lotId, -allocation.credits, usage, `reserve:${reference}:${allocation.lotId}`], transaction });
       }
+      if (allocations.length > 0) await this.notifyChanged(userId, transaction);
       return { allocations };
     });
   }
@@ -282,10 +303,15 @@ export class BillingService {
 
   private async releaseReservation(userId: UserId, allocations: ReadonlyArray<{ lotId: string; credits: number }>, usage: AiUsageKind, reference: string): Promise<void> {
     await this.sequelize.transaction(async (transaction) => {
+      let changed = false;
       for (const allocation of allocations) {
         const [released] = await this.sequelize.query<{ id: string }>(`INSERT INTO credit_ledger_entries (id, user_id, lot_id, kind, credits_delta, usage_kind, reference) VALUES ($1, $2, $3, 'RELEASE', $4, $5, $6) ON CONFLICT (reference) DO NOTHING RETURNING id`, { bind: [randomUUID(), userId, allocation.lotId, allocation.credits, usage, `release:${reference}:${allocation.lotId}`], type: QueryTypes.SELECT, transaction });
-        if (released) await this.sequelize.query("UPDATE credit_lots SET remaining_credits = remaining_credits + $2 WHERE id = $1", { bind: [allocation.lotId, allocation.credits], transaction });
+        if (released) {
+          await this.sequelize.query("UPDATE credit_lots SET remaining_credits = remaining_credits + $2 WHERE id = $1", { bind: [allocation.lotId, allocation.credits], transaction });
+          changed = true;
+        }
       }
+      if (changed) await this.notifyChanged(userId, transaction);
     });
   }
 
@@ -301,6 +327,7 @@ export class BillingService {
       const ends = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
       await this.sequelize.query(`UPDATE billing_accounts SET active_plan = $2, plan_starts_at = $3, plan_ends_at = $4, scheduled_plan = NULL, scheduled_starts_at = NULL, scheduled_payment_id = NULL, updated_at = now() WHERE user_id = $1`, { bind: [userId, product.plan!, now, ends], transaction });
       await this.grantLot(userId, payment.id, "PLAN", payment.granted_credits, ends, transaction);
+      await this.notifyChanged(userId, transaction);
     });
   }
 }

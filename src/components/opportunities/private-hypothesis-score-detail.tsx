@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button, Card, PageContainer, RupiahInput, StatusNotice } from "@/components/ui";
+import { useCreditGate } from "@/components/billing/billing-state";
 import type { PrivateOpportunityIdeaDto } from "@/opportunity/private-hypothesis";
 import { entrepreneurAnalysisSchema, type EntrepreneurAnalysis, type AnalysisScore } from "@/opportunity/entrepreneur-analysis-contract";
 import type { PrivateFitOptions, PrivateFitProfile } from "@/scoring/private-hypothesis-score";
@@ -32,6 +33,7 @@ function ScoreCard({ title, result, accent, generating }: { title: string; resul
 export function PrivateHypothesisScoreDetail({ item, profile, options, initialFresh = false }: {
   readonly item: PrivateOpportunityIdeaDto; readonly profile: PrivateFitProfile & Partial<Pick<EntrepreneurOpportunityProfileContext, "experienceLevel" | "timeCommitment">>; readonly options: PrivateFitOptions; readonly initialFresh?: boolean;
 }) {
+  const creditGate = useCreditGate("DETAILED_ANALYSIS");
   const [analysis, setAnalysis] = useState<EntrepreneurAnalysis | undefined>(item.hypothesis.analysis);
   const [fresh, setFresh] = useState(initialFresh);
   const [capital, setCapital] = useState(item.hypothesis.analysis?.capitalMin?.toString() ?? "");
@@ -72,7 +74,9 @@ export function PrivateHypothesisScoreDetail({ item, profile, options, initialFr
     const timeout = setTimeout(() => current.abort(), 175_000);
     setGenerating(true); setError(null); setSaveError(null);
     try {
+      if (!await creditGate.check()) return;
       const response = await fetch(`/api/v1/opportunities/ideas/${item.id}/analysis`, { method: "POST", credentials: "same-origin", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ consent: true, refresh: true, capitalMin: capitalNumber }), signal: current.signal });
+      if (await creditGate.handleRejection(response)) return;
       const payload: unknown = await response.json();
       if (!response.ok) {
         const message = "Analisis belum dapat diperbarui. Hasil sebelumnya tetap tersedia.";
@@ -83,7 +87,7 @@ export function PrivateHypothesisScoreDetail({ item, profile, options, initialFr
       setAnalysis(parsed.data); setFresh(true); setReviewed(false);
     } catch {
       setError(current.signal.aborted ? "Waktu tunggu analisis berakhir. Muat ulang halaman untuk memeriksa apakah hasil sudah tersimpan." : "Koneksi analisis terputus. Hasil sebelumnya tetap tersedia.");
-    } finally { clearTimeout(timeout); controller.current = null; setGenerating(false); }
+    } finally { clearTimeout(timeout); controller.current = null; setGenerating(false); void creditGate.refresh?.().catch(() => {}); }
   }
 
   const source = item.source;
@@ -102,10 +106,11 @@ export function PrivateHypothesisScoreDetail({ item, profile, options, initialFr
       <p className="text-caption leading-relaxed text-stone-gray">Minat: {options.categories.filter(option => profile.interestCategoryIds.includes(option.id)).map(option => option.name).join(", ") || "belum tersedia"} · Kanal: {options.channels.filter(option => profile.salesChannelIds.includes(option.id)).map(option => option.name).join(", ") || "belum tersedia"}. Pengalaman, waktu, lokasi, segmen, dan konteks profil relevan dibaca dari server saat analisis dijalankan.</p>
       <div className="grid gap-12 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <RupiahInput aria-label="Estimasi modal minimum dalam rupiah" disabled={generating || saving} id="analysis-capital-min" label="Estimasi modal minimum konsep (opsional)" onValueChange={digits => { setCapital(digits); setReviewed(false); }} placeholder="500.000" value={capital} />
-        <Button className="w-full sm:w-auto" disabled={!consent || generating || saving} loading={generating} loadingText="AI sedang menganalisis..." onClick={() => void analyze()} variant="primary">{analysis ? "Perbarui analisis" : "Analisis peluang ini"}</Button>
+        <Button className="w-full sm:w-auto" disabled={!consent || generating || saving || creditGate.blocked} loading={generating} loadingText="AI sedang menganalisis..." onClick={() => void analyze()} variant="primary">{analysis ? "Perbarui analisis" : "Analisis peluang ini"}</Button>
       </div>
       <label className="flex min-h-button cursor-pointer items-start gap-10 text-body-sm leading-relaxed"><input checked={consent} className="mt-[3px] size-16 shrink-0 accent-midnight-wine" disabled={generating} onChange={event => setConsent(event.target.checked)} type="checkbox" /><span>Saya setuju konteks bisnis dan bukti terpilih diproses untuk analisis ini.</span></label>
       {generating ? <StatusNotice role="status" tone="info">Mengambil bukti pasar dan menyusun analisis. Halaman ini akan menampilkan hasil setelah tersimpan.</StatusNotice> : null}
+      {creditGate.notice}
       {error ? <StatusNotice role="alert" tone="error"><span className="text-midnight-wine">{error}</span></StatusNotice> : null}
       {analysis && (!fresh || dirty) ? <StatusNotice role="status" tone="info">Hasil di bawah adalah analisis tersimpan. Profil, estimasi, atau masa berlaku hasil perlu diperbarui; jalankan analisis untuk memakai konteks terbaru.</StatusNotice> : null}
     </Card> : <StatusNotice tone="success" role="status">Peluang tersimpan permanen. Analisis ini disimpan sebagai catatan keputusan Anda.</StatusNotice>}

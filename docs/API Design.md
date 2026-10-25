@@ -203,6 +203,12 @@ Product API:
 
 Billing uses additive v1 endpoints: `GET /api/v1/billing`, `POST /api/v1/billing/checkout`, and provider-only `POST /api/v1/billing/duitku/callback`. Checkout accepts only a catalog product code; the server owns price, credits, owner, order ID, and entitlement. The return URL has no authority to settle a transaction. See `docs/Billing Sandbox MVP.md` for the full contract.
 
+Checkout rejects an active Premium-to-Premium or Pro-to-Pro purchase with `409 PLAN_ALREADY_ACTIVE` before inserting a pending payment or contacting Duitku. Other plan transitions and top-ups retain their existing behavior.
+
+`GET /api/v1/billing` also returns `usageCosts: [{ usage, credits }]` alongside the existing summary fields so the browser can check the current tariff before an AI action. `GET /api/v1/billing/events` is an authenticated, private, non-cacheable SSE stream with `ready`, `changed`, and `unavailable` events; event payloads contain no balance or user data. On `ready` or `changed` the browser fetches the authoritative billing summary, while `unavailable` marks the stream as disconnected. PostgreSQL notifications are emitted inside the credit mutation transaction and delivered after commit. AI routes remain the final authority for entitlement and credit sufficiency.
+
+The summary also includes `requiresRenewal: boolean`, true only when a previously active paid plan has expired and no scheduled replacement is active. Protected application pages redirect such users to `/billing`; billing and billing-return pages remain accessible. This page-level redirect does not replace the existing authorization and entitlement checks on API routes.
+
 Operator endpoints are restricted server-side to an `ADMIN` session: `GET /api/v1/admin/transactions`, `GET /api/v1/admin/billing/settings`, `PATCH /api/v1/admin/billing/products/{productCode}`, and `PATCH /api/v1/admin/billing/usage/{usageKind}`. Mutations require the same origin, strict JSON bodies, bounded numeric values, and a configuration version; they never alter payment status or historical payment snapshots.
 
 Contoh:

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge, Button, Card, EmptyState, PageContainer, StatusNotice } from "@/components/ui";
+import { useCreditGate } from "@/components/billing/billing-state";
 import type { StatusNoticeTone } from "@/components/ui/status-notice";
 import { cx } from "@/lib/cx";
 import {
@@ -99,6 +100,7 @@ export function PrivateOpportunityFinder({
   readonly profileActionRequired?: boolean;
 }) {
   const router = useRouter();
+  const creditGate = useCreditGate("OPPORTUNITY_HYPOTHESIS");
   const [items, setItems] = useState(initialItems);
   const comparisonKey = comparisonOwnerId ? `venturex:compare:${comparisonOwnerId}` : null;
   const [fallbackIds, setFallbackIds] = useState<readonly string[]>([]);
@@ -210,6 +212,7 @@ export function PrivateOpportunityFinder({
     setError(null);
     setNotice(null);
     try {
+      if (!await creditGate.check()) return;
       const response = await fetch("/api/v1/opportunities/ideas", {
         method: "POST",
         credentials: "same-origin",
@@ -221,6 +224,7 @@ export function PrivateOpportunityFinder({
           disclosureVersion: OPPORTUNITY_SEARCHAPI_DISCLOSURE_VERSION,
         }),
       });
+      if (await creditGate.handleRejection(response)) return;
       const payload = await response.json() as unknown;
       if (!response.ok) {
         setError(apiError(payload) ?? "Hipotesis AI belum tersedia.");
@@ -247,6 +251,7 @@ export function PrivateOpportunityFinder({
       setError("Koneksi ke layanan AI terputus. Periksa Opportunity Finder sebelum mencoba kembali.");
     } finally {
       setGenerating(false);
+      void creditGate.refresh?.().catch(() => {});
     }
   }
 
@@ -472,7 +477,8 @@ export function PrivateOpportunityFinder({
                 <span className="flex size-28 items-center justify-center rounded-full border border-midnight-wine bg-midnight-wine text-caption font-w540 text-paper-white">3</span>
                 <h3 className="text-body-sm font-w540 text-ink-charcoal">Buat hipotesis AI</h3>
               </div>
-              <Button disabled={!providerAvailable || !sourceProcessingApproved || initialLoadFailed || !profileContextAvailable || !consent || generating || !selectedSource} loading={generating} loadingText="AI sedang menganalisis..." onClick={() => void generate()} type="button" variant="primary">
+              {creditGate.notice}
+              <Button disabled={!providerAvailable || !sourceProcessingApproved || initialLoadFailed || !profileContextAvailable || !consent || generating || !selectedSource || creditGate.blocked} loading={generating} loadingText="AI sedang menganalisis..." onClick={() => void generate()} type="button" variant="primary">
                 Buat Hipotesis dengan AI
               </Button>
             </div>

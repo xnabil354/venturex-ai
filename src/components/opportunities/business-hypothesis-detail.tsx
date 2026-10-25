@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, PageContainer, StatusNotice } from "@/components/ui";
+import { useCreditGate } from "@/components/billing/billing-state";
 import { RupiahInput } from "@/components/ui/rupiah-input";
 import type { PrivateOpportunityIdeaDto } from "@/opportunity/private-hypothesis";
 import { hasVerifiedBusinessConcept, businessAnalysisSchema, type BusinessAnalysis } from "@/opportunity/business-analysis-contract";
@@ -24,12 +25,15 @@ export function BusinessHypothesisDetail({ item: initial, initialFresh }: { item
   const [max, setMax] = useState<string>(analysis?.proposedPrice ? String(analysis.proposedPrice.max) : "");
   const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [messageTone, setMessageTone] = useState<"info" | "success" | "error">("info");
   const router = useRouter();
+  const creditGate = useCreditGate("DETAILED_ANALYSIS");
   async function perform(kind: "analysis" | "save" | "roadmap") {
     if (busy) return;
     setBusy(true); setMessage(""); setMessageTone("info");
     try {
       if (kind === "analysis" && ((min === "") !== (max === "") || (min !== "" && (!Number.isSafeInteger(Number(min)) || !Number.isSafeInteger(Number(max)) || Number(min) < 0 || Number(max) < Number(min))))) throw new Error("Isi kedua batas harga dengan Rupiah bulat, maksimum tidak lebih kecil dari minimum.");
+      if (kind === "analysis" && !await creditGate.check()) return;
       const response = await fetch(kind === "save" ? "/api/v1/opportunities/ideas" : `/api/v1/opportunities/ideas/${item.id}/${kind === "analysis" ? "analysis" : "roadmap"}`, { method: kind === "save" ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(kind === "analysis" ? { consent, refresh: true, proposedPrice: min === "" ? null : { min: Number(min), max: Number(max) } } : kind === "save" ? { id: item.id, saved: !item.saved } : {}), signal: AbortSignal.timeout(175_000) });
+      if (kind === "analysis" && await creditGate.handleRejection(response)) return;
       const body = await response.json();
       if (!response.ok) throw new Error(kind === "analysis" ? "Analisis gagal dimuat. Coba lagi." : kind === "save" ? "Penyimpanan gagal. Coba lagi." : "Roadmap belum dapat dibuat. Coba lagi.");
       if (kind === "analysis") { const next = businessAnalysisSchema.parse(body.data); setAnalysis(next); setFresh(true); setMessageTone("success"); setMessage("Analisis tersimpan. Tinjau faktor, risiko dan batasan sebelum mengambil keputusan."); }
@@ -37,7 +41,7 @@ export function BusinessHypothesisDetail({ item: initial, initialFresh }: { item
       else router.push(`/opportunities/hypotheses/${item.id}/roadmap`);
       router.refresh();
     } catch (error) { setMessageTone("error"); setMessage(error instanceof Error ? error.message : "Permintaan belum berhasil; hasil sebelumnya tetap tersedia."); }
-    finally { setBusy(false); }
+    finally { setBusy(false); if (kind === "analysis") void creditGate.refresh?.().catch(() => {}); }
   }
   return <HypothesisDetailSurface><PageContainer><div className="mx-auto grid max-w-[1040px] gap-24 py-24 sm:py-32 lg:py-40">
     <Link href={item.saved ? "/saved" : "/opportunities"} className={link}>Kembali ke peluang</Link>
@@ -46,7 +50,8 @@ export function BusinessHypothesisDetail({ item: initial, initialFresh }: { item
     {analysis && !hasVerifiedBusinessConcept(analysis) ? <StatusNotice tone="info">Perbarui analisis untuk memeriksa kesesuaiannya dengan peluang ini.</StatusNotice> : analysis && !fresh ? <StatusNotice tone="info">Analisis sudah lama atau profil berubah. Perbarui sebelum membuat roadmap.</StatusNotice> : null}
     <Card className="grid gap-16 bg-warm-parchment p-16 sm:p-20"><h2 className="text-subheading font-w460">Analisis pengembangan bisnis</h2><p className="max-w-[72ch] text-body-sm leading-relaxed text-stone-gray">Analisis memakai konteks bisnis dan bukti terpilih. Hasilnya adalah panduan awal.</p>
       <fieldset disabled={busy} className="grid gap-12"><legend className="mb-8 text-body-sm font-w540">Estimasi harga konsep baru (opsional)</legend><p className="text-caption text-stone-gray">Per unit penawaran yang akan diuji; bukan modal, biaya, margin atau harga otomatis dari produk lama.</p><div className="grid gap-16 sm:grid-cols-2"><RupiahInput id="business-price-min" label="Harga minimum" value={min} onValueChange={value => { setMin(value); setFresh(false); }} /><RupiahInput id="business-price-max" label="Harga maksimum" value={max} onValueChange={value => { setMax(value); setFresh(false); }} /></div><label className="flex min-h-button items-start gap-12 py-8 text-body-sm leading-relaxed"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-4 size-20 shrink-0 accent-midnight-wine focus-visible:outline-2 focus-visible:outline-royal-violet" />Saya menyetujui pemrosesan profil bisnis dan bukti terpilih untuk analisis ini.</label></fieldset>
-      <Button disabled={busy || !consent} onClick={() => perform("analysis")}>{busy ? "Memproses…" : analysis ? "Perbarui analisis" : "Analisis peluang bisnis"}</Button>
+      {creditGate.notice}
+      <Button disabled={busy || !consent || creditGate.blocked} onClick={() => perform("analysis")}>{busy ? "Memproses…" : analysis ? "Perbarui analisis" : "Analisis peluang bisnis"}</Button>
     </Card>
     {analysis && hasVerifiedBusinessConcept(analysis) ? <><div className="grid min-w-0 gap-20 lg:grid-cols-2"><BusinessScore title="Opportunity Score" result={analysis.opportunity} /><BusinessScore title="Business Fit" result={analysis.fit} /></div>
       <Card className="grid gap-16 p-16 sm:p-20"><h2 className="text-subheading font-w460">Risiko pelaksanaan awal: {analysis.risk.level === "UNKNOWN" ? "Belum dapat ditentukan" : analysis.risk.level}</h2><ul className="grid list-disc gap-8 pl-20 text-body-sm leading-relaxed">{analysis.risk.reasons.map(v => <li key={v}>{v}</li>)}</ul><h3 className="text-body font-w540">Target konsumen</h3><p className="text-body-sm leading-relaxed">{analysis.targetConsumer}</p><h3 className="text-body font-w540">Kompetisi</h3><p className="text-body-sm leading-relaxed">{analysis.competition}</p>{analysis.competitors?.places.map(p => <a key={p.url} href={p.url} target="_blank" rel="noreferrer" className={link}>{p.name}</a>)}<h3 className="text-body font-w540">Batasan dan kebutuhan awal</h3><ul className="grid list-disc gap-8 pl-20 text-body-sm leading-relaxed text-stone-gray">{[...(analysis.requirements?.initialNeeds ?? []), ...(analysis.requirements?.assumptions ?? []), ...analysis.warnings].map((v, i) => <li key={i}>{v}</li>)}</ul></Card></> : null}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { OPPORTUNITY_ANALYSIS_DISCLOSURE_VERSION, opportunityAnalysisDtoSchema, type OpportunityAnalysisDto } from "@/ai-analysis/domain";
 import { Button } from "@/components/ui/button";
+import { useCreditGate } from "@/components/billing/billing-state";
 
 type AnalysisState = {
   readonly loading: boolean;
@@ -64,6 +65,7 @@ const fields = [
 ] as const;
 
 export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: string }) {
+  const creditGate = useCreditGate("DETAILED_ANALYSIS");
   const [state, setState] = useState<AnalysisState>({
     loading: true,
     generating: false,
@@ -92,6 +94,7 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
   async function generate() {
     setState((current) => ({ ...current, generating: true, error: null, providerUnavailable: false }));
     try {
+      if (!await creditGate.check()) return;
       const response = await fetch(`/api/v1/opportunities/${encodeURIComponent(opportunityId)}/analysis`, {
         method: "POST",
         credentials: "same-origin",
@@ -103,6 +106,7 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
           forceRefresh: state.analysis !== null,
         }),
       });
+      if (await creditGate.handleRejection(response)) return;
       const analysis = await readResponse(response);
       if (!analysis) throw new Error("ANALYSIS_UNAVAILABLE");
       setState({ loading: false, generating: false, analysis, error: null, providerUnavailable: false });
@@ -111,6 +115,8 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
       setState((current) => ({ ...current, loading: false, generating: false, error: copy.message, providerUnavailable: copy.unavailable }));
     } finally {
       setConsent(false);
+      setState((current) => ({ ...current, generating: false }));
+      void creditGate.refresh?.().catch(() => {});
     }
   }
 
@@ -167,12 +173,13 @@ export function AIAnalysisSection({ opportunityId }: { readonly opportunityId: s
       </div>
       <Button
         className="w-fit"
-        disabled={state.loading || state.generating || !consent}
+        disabled={state.loading || state.generating || !consent || creditGate.blocked}
         onClick={() => void generate()}
         type="button"
       >
         {state.generating ? "Membuat AI Analysis…" : state.analysis ? "Generate ulang AI Analysis" : state.error ? "Coba lagi" : "Generate AI Analysis"}
       </Button>
+      {creditGate.notice}
     </div>
   );
 }

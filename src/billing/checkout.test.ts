@@ -48,7 +48,7 @@ describe("createDuitkuPopInvoice", () => {
       customerVaName: "VENTUREX",
       itemDetails: [{ name: "10 kredit", price: 20_000, quantity: 1 }],
       callbackUrl: "https://example.ngrok-free.dev/api/v1/billing/duitku/callback",
-      returnUrl: "https://example.ngrok-free.dev/billing/return",
+      returnUrl: "https://example.ngrok-free.dev/billing?payment=verifying",
     });
   });
 });

@@ -17,7 +17,9 @@ Premium dan Pro hanya berbeda pada jatah kredit. Tarif aksi AI adalah Buat hipot
 
 Aksi AI berbayar membutuhkan paket Premium/Pro aktif atau kredit Free trial yang tersisa. Ketika paket berakhir, akun kembali ke Free dan aksi berbayar terkunci, meski kredit top up masih tersisa. Sistem memakai lot yang akan kedaluwarsa paling awal terlebih dahulu.
 
-Pembelian plan sebelum periode aktif berakhir dijadwalkan sesudah periode tersebut. Upgrade Premium ke Pro terjadi segera, tanpa prorata; sisa kredit plan Premium hangus dan top up tetap ada. Tidak ada auto-debit, refund, maupun perubahan finansial oleh admin.
+Setelah paket berbayar yang pernah aktif berakhir tanpa paket pengganti yang sudah aktif, setiap halaman aplikasi terproteksi mengarahkan pengguna ke `/billing`. `/billing` dan `/billing/return` tetap dapat dibuka untuk perpanjangan dan verifikasi pembayaran. Pengguna Free yang belum pernah memiliki paket berbayar tidak terkena pengalihan ini. Tab yang sedang terbuka mengalihkan ke billing setelah pembaruan status saat batas masa paket, event billing, atau fokus ulang. Akses halaman dipulihkan setelah callback pembayaran mengaktifkan paket baru; kredit top up yang tersisa tetap tersimpan.
+
+Pembelian plan sebelum periode aktif berakhir dijadwalkan sesudah periode tersebut, kecuali paket yang sama dengan paket aktif: Premium aktif tidak dapat membeli Premium lagi dan Pro aktif tidak dapat membeli Pro lagi. UI menonaktifkan tombolnya; checkout server juga menolak sebelum membuat order. Upgrade Premium ke Pro terjadi segera, tanpa prorata; sisa kredit plan Premium hangus dan top up tetap ada. Tidak ada auto-debit, refund, maupun perubahan finansial oleh admin.
 
 ## Integrasi Duitku
 
@@ -39,9 +41,12 @@ Harga dan jatah kredit dikonfigurasi di database. Checkout menyimpan snapshot ha
 ## Kontrak API
 
 - `GET /api/v1/billing` — status paket dan saldo untuk pemilik sesi.
-- `POST /api/v1/billing/checkout` — `{ "productCode": "PREMIUM_30" | "PRO_30" | "CREDITS_10" | "CREDITS_30" | "CREDITS_100" }`; respons membawa URL POP. Same-origin dan rate limited.
+- `GET /api/v1/billing/events` — stream SSE privat untuk memberi tahu sesi pemilik ketika saldo atau entitlement berubah; browser mengambil ulang saldo dari `GET /api/v1/billing`.
+- `POST /api/v1/billing/checkout` — `{ "productCode": "PREMIUM_30" | "PRO_30" | "CREDITS_10" | "CREDITS_30" | "CREDITS_100" }`; respons membawa URL POP. Same-origin dan rate limited. Paket yang sama dengan paket aktif ditolak dengan `409 PLAN_ALREADY_ACTIVE` tanpa invoice baru.
 - `POST /api/v1/billing/duitku/callback` — endpoint provider, bukan endpoint browser.
-- `GET /billing/return` — hasil redirect visual, tanpa perubahan financial state.
+- `GET /billing?payment=verifying` — URL kembali dari Duitku yang langsung menampilkan pemberitahuan verifikasi di halaman billing; tidak mengubah status finansial. URL lama `/billing/return` tetap mengarahkan ke alamat ini untuk invoice yang sudah terbit.
+
+Ringkasan billing juga memuat tarif kedua aksi AI yang saat ini berlaku. UI memeriksa saldo dan tarif terkini sebelum mengirim aksi, menampilkan blok peringatan jika kredit kurang, serta tetap mengandalkan validasi kredit transaksional di server. Notifikasi perubahan saldo dikirim setelah transaksi berhasil; reconnect stream dan tab yang kembali aktif mengambil ulang ringkasan untuk memulihkan event yang terlewat.
 
 ## Verifikasi
 

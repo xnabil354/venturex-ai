@@ -38,7 +38,7 @@ function makeUser(overrides: Partial<SafeUser> = {}): SafeUser {
 describe("authenticated app layout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.summaryForUser.mockResolvedValue({ availableCredits: 5 });
+    mocks.summaryForUser.mockResolvedValue({ availableCredits: 5, requiresRenewal: false });
     mocks.currentAdmin.mockResolvedValue(null);
     mocks.redirect.mockImplementation((destination: string): never => {
       throw new Error(`REDIRECT:${destination}`);
@@ -75,6 +75,14 @@ describe("authenticated app layout", () => {
 
     await expect(AppLayout({ children: "protected" })).resolves.toBeDefined();
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("redirects a user with an expired paid plan to billing", async () => {
+    mocks.currentUser.mockResolvedValue(makeUser());
+    mocks.summaryForUser.mockResolvedValue({ availableCredits: 10, requiresRenewal: true });
+
+    await expect(AppLayout({ children: "protected" })).rejects.toThrow("REDIRECT:/billing");
+    expect(redirect).toHaveBeenCalledWith("/billing");
   });
 
   it("keeps the app available when the header credit summary is unavailable", async () => {

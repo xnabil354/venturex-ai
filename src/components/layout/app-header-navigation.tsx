@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { useBillingState } from "@/components/billing/billing-state";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { PageContainer } from "@/components/ui";
 import {
@@ -35,6 +36,9 @@ type AppHeaderNavigationProps = {
 };
 
 export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNavigationProps) {
+  const billing = useBillingState();
+  const currentCredits = billing ? billing.stale ? undefined : billing.snapshot?.availableCredits : availableCredits;
+  const aiLocked = !billing?.stale && billing?.snapshot?.canUseAi === false;
   const pathname = usePathname();
   const mounted = useSyncExternalStore(
     subscribeToHydration,
@@ -108,7 +112,7 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
           <div className="flex min-h-64 items-center justify-between gap-8 sm:gap-16">
             <Link
               aria-label="VENTUREX home"
-              className="flex shrink-0 items-center font-w540 text-[24px] sm:text-heading-sm tracking-tight text-paper-white transition-opacity hover:opacity-90"
+              className="flex shrink-0 items-center font-w540 text-[20px] sm:text-heading-sm tracking-tight text-paper-white transition-opacity hover:opacity-90"
               href="/dashboard"
             >
               <span>VENTUREX</span>
@@ -140,7 +144,20 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
               </nav>
             </div>
 
-            <div className="flex items-center gap-8 sm:gap-12">
+            <div className="flex items-center gap-4 sm:gap-12">
+              {userEmail ? (
+                <Link
+                  aria-label={currentCredits === undefined ? "Saldo kredit belum tersedia. Buka paket dan kredit" : `${currentCredits} kredit tersisa${aiLocked ? ", AI terkunci" : ""}. Buka paket dan kredit`}
+                  className="inline-flex min-h-44 shrink-0 items-center gap-4 rounded-pills border border-white/15 bg-white/10 px-8 text-caption font-w540 tabular-nums text-paper-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lilac-mist sm:px-12"
+                  href="/billing"
+                  title={aiLocked ? "Kredit tersimpan · AI terkunci" : "Kredit tersisa"}
+                >
+                  <span aria-hidden="true" className="text-lilac-mist">✦</span>
+                  <span>{currentCredits === undefined ? "—" : new Intl.NumberFormat("id-ID").format(currentCredits)}</span>
+                  <span className="hidden sm:inline">kredit</span>
+                  {aiLocked ? <svg aria-hidden="true" className="size-12 text-lilac-mist" fill="none" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.4" /><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.4" /></svg> : null}
+                </Link>
+              ) : null}
               {userEmail ? <NotificationBell /> : null}
               {userEmail ? (
                 <div className="relative hidden lg:ml-8 lg:block lg:border-l lg:border-white/15 lg:pl-12" ref={profileMenuRef}>
@@ -166,13 +183,13 @@ export function AppHeaderNavigation({ userEmail, availableCredits }: AppHeaderNa
                     <div className="absolute right-0 top-full z-50 mt-8 w-[min(18rem,calc(100vw-2rem))] rounded-cards border border-white/15 bg-[#14080e] p-16 text-paper-white shadow-xl" id="profile-account-menu">
                       <p className="break-words border-b border-white/10 pb-12 text-caption text-paper-white/70">{userEmail}</p>
                       <Link
-                        aria-label={availableCredits === undefined ? "Buka paket dan kredit" : `${availableCredits} kredit tersedia. Buka paket dan kredit`}
+                        aria-label={currentCredits === undefined ? "Buka paket dan kredit" : `${currentCredits} kredit tersedia. Buka paket dan kredit`}
                         className="mt-8 flex min-h-button items-center justify-between gap-12 rounded-small-buttons px-12 text-body-sm font-w540 text-paper-white transition-colors hover:bg-white/10 hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-lilac-mist"
                         href="/billing"
                         onClick={() => setIsProfileMenuOpen(false)}
                       >
                         <span>Paket & kredit</span>
-                        {availableCredits === undefined ? null : <span className="text-caption text-lilac-mist">{availableCredits} kredit</span>}
+                        {currentCredits === undefined ? null : <span className="text-caption text-lilac-mist">{currentCredits} kredit</span>}
                       </Link>
                       <Link
                         className="mt-8 flex min-h-button items-center rounded-small-buttons px-12 text-body-sm font-w540 text-paper-white transition-colors hover:bg-white/10 hover:text-lilac-mist focus-visible:outline-2 focus-visible:outline-lilac-mist"

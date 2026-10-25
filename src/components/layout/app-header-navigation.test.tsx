@@ -18,6 +18,13 @@ import { AppHeaderNavigation } from "./app-header-navigation";
 afterEach(() => cleanup());
 
 describe("AppHeaderNavigation profile control", () => {
+  it("keeps the credit balance visible before any account or mobile menu opens", () => {
+    render(<AppHeaderNavigation availableCredits={7} userEmail="owner@example.com" />);
+    const balance = screen.getByRole("link", { name: "7 kredit tersisa. Buka paket dan kredit" });
+    expect(balance.getAttribute("href")).toBe("/billing");
+    expect(balance.className).not.toContain("hidden");
+  });
+
   it("uses an icon trigger and opens profile editing and logout actions", () => {
     render(<AppHeaderNavigation userEmail="owner@example.com" />);
 
