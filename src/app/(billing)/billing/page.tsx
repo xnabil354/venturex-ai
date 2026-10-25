@@ -22,6 +22,7 @@ export default async function BillingPage({ searchParams }: { readonly searchPar
   const topups = offers?.filter((product) => product.kind === "TOPUP") ?? [];
   const hasCatalog = plans.length > 0 || topups.length > 0;
   const formatDate = (value: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(value));
+  const accessEndsAt = summary?.plan === "FREE" ? summary.trialEndsAt : summary?.planEndsAt;
 
   return (
     <BillingSurface>
@@ -33,6 +34,9 @@ export default async function BillingPage({ searchParams }: { readonly searchPar
               <p className="text-caption font-w540 uppercase tracking-[0.14em] text-lilac-mist">Paket & kredit</p>
               <h1 className="mt-8 text-heading-lg font-w460 tracking-heading-lg">Kendalikan akses AI Anda.</h1>
               <p className="mt-12 max-w-[58ch] text-body leading-relaxed text-paper-white/75">Pilih paket untuk mengaktifkan AI selama 30 hari, lalu tambah kredit kapan pun dibutuhkan.</p>
+              {summary && accessEndsAt ? <p className="mt-12 max-w-[58ch] text-body-sm leading-relaxed text-paper-white">
+                {summary.plan === "FREE" ? "Free trial" : `Paket ${summary.plan}`}: {summary.accessDaysRemaining > 0 ? `${summary.accessDaysRemaining} hari tersisa` : "masa berlaku habis"} · berakhir {formatDate(accessEndsAt)}.
+              </p> : null}
               {summary?.requiresRenewal ? <p className="mt-12 max-w-[58ch] text-body-sm leading-relaxed text-paper-white">Masa paket Anda telah berakhir. Aktifkan paket baru untuk kembali menggunakan aplikasi.</p> : null}
             </div>
             {summary ? (
@@ -100,7 +104,7 @@ export default async function BillingPage({ searchParams }: { readonly searchPar
                 <div className="max-w-[54rem]">
                   <p className="text-caption font-w540 uppercase tracking-[0.14em] text-royal-violet">Kredit tambahan</p>
                   <h2 id="topup-title" className="mt-6 text-heading-sm font-w460 tracking-heading-sm text-ink-charcoal">Top up saat jatah Anda perlu ditambah.</h2>
-                  <p className="mt-8 text-body-sm leading-relaxed text-stone-gray">Kredit top up tidak kedaluwarsa, tetapi penggunaan AI tetap membutuhkan paket aktif atau sisa trial.</p>
+                  <p className="mt-8 text-body-sm leading-relaxed text-stone-gray">Kredit top up tidak kedaluwarsa, tetapi penggunaan AI tetap membutuhkan paket aktif atau masa Free trial yang masih berlaku.</p>
                 </div>
                 <div className="mt-16 grid gap-12 sm:grid-cols-2 xl:grid-cols-3">
                   {topups.map((product) => (

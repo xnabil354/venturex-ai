@@ -19,6 +19,8 @@ export function BillingPaymentStatus({ initialSummary, showNotice }: { readonly 
     if (!current || !initialSummary) return;
     if (current.plan !== initialSummary.plan
       || current.planEndsAt !== initialSummary.planEndsAt
+      || current.trialEndsAt !== initialSummary.trialEndsAt
+      || current.accessDaysRemaining !== initialSummary.accessDaysRemaining
       || current.scheduledPlan !== initialSummary.scheduledPlan
       || current.scheduledStartsAt !== initialSummary.scheduledStartsAt
       || current.canUseAi !== initialSummary.canUseAi

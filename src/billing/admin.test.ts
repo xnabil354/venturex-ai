@@ -52,7 +52,7 @@ describe("getAdminDashboardSummary", () => {
     });
     expect(mocks.query).toHaveBeenCalledTimes(3);
     expect(mocks.query.mock.calls[1]?.[0]).toContain("u.login_disabled_at IS NULL");
-    expect(mocks.query.mock.calls[1]?.[0]).toContain("cl.remaining_credits > 0");
+    expect(mocks.query.mock.calls[1]?.[0]).toContain("ba.trial_granted_at + interval '30 days' > $1");
     expect(mocks.query.mock.calls[1]?.[0]).toContain("ba.plan_ends_at > $1");
   });
 });

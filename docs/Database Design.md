@@ -2058,6 +2058,8 @@ Normalize administrative locality prefixes (including Kota/Kabupaten Administras
 
 Migration `023-create-billing.ts` adds `billing_accounts`, `billing_payments`, `credit_lots`, immutable `credit_ledger_entries`, and idempotency-oriented `billing_webhook_events`. Financial audit data is separated from general product records; no callback payload containing unnecessary payer data is persisted.
 
+`billing_accounts.trial_granted_at` is the immutable start of the one-time 30-day Free trial. Trial access ends 30 days after this timestamp, regardless of the remaining trial credit lot. Top-up credits may fund AI use within that window. Expired trial credits are excluded from the spendable balance; top-up credits remain available for a later paid plan.
+
 Migration `024-create-admin-billing-controls.ts` separates operators into `admins`, disables the migrated legacy customer's login without deleting user-owned records, and adds versioned product/usage settings plus append-only operator audit logs. `billing_payments.granted_credits` is a payment-time entitlement snapshot used during settlement and scheduled-plan activation.
 
 Saldo kredit untuk header tetap dibaca dari `credit_lots`. Transaksi yang mengubah saldo atau entitlement memanggil PostgreSQL `pg_notify('venturex_billing_changed', user_id)` di dalam transaksi; notifikasi hanya terkirim setelah commit. Kanal ini hanya sinyal invalidasi untuk SSE, bukan sumber angka saldo atau pengganti ledger.

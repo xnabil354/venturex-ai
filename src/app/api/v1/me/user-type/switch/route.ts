@@ -24,11 +24,20 @@ function headersFor(requestId: string): Record<string, string> {
 
 function isSameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return false;
+  const host = request.headers.get("host");
+  if (!origin || !host) return false;
   try {
     const originUrl = new URL(origin);
-    const targetUrl = new URL(request.url);
-    return originUrl.origin === targetUrl.origin && !originUrl.username && !originUrl.password;
+    const forwardedProto = request.headers.get("x-forwarded-proto");
+    const protocol = forwardedProto ?? new URL(request.url).protocol.slice(0, -1);
+    // ASVS 3.5.1: compare the browser origin to the public request host and
+    // proxy protocol. Next.js may expose an internal request.url behind ngrok.
+    return (protocol === "http" || protocol === "https")
+      && originUrl.protocol === `${protocol}:`
+      && originUrl.host === host
+      && originUrl.pathname === "/"
+      && !originUrl.username && !originUrl.password
+      && !originUrl.search && !originUrl.hash;
   } catch {
     return false;
   }

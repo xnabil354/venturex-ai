@@ -19,6 +19,8 @@ class MockEventSource extends EventTarget {
 const initial = {
   plan: "PREMIUM" as const,
   planEndsAt: null,
+  trialEndsAt: "2026-11-24T00:00:00Z",
+  accessDaysRemaining: 30,
   scheduledPlan: null,
   scheduledStartsAt: null,
   canUseAi: true,

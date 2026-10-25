@@ -12,6 +12,7 @@ import { BILLING_EVENT_CHANNEL } from "./events";
 
 type AccountRow = {
   readonly active_plan: PlanTier;
+  readonly trial_granted_at: Date;
   readonly plan_ends_at: Date | null;
   readonly scheduled_plan: PlanTier | null;
   readonly scheduled_starts_at: Date | null;
@@ -30,6 +31,8 @@ type PaymentRow = {
 export type BillingSummary = {
   readonly plan: PlanTier;
   readonly planEndsAt: string | null;
+  readonly trialEndsAt: string;
+  readonly accessDaysRemaining: number;
   readonly scheduledPlan: PlanTier | null;
   readonly scheduledStartsAt: string | null;
   readonly canUseAi: boolean;
@@ -54,6 +57,16 @@ function planIsActive(account: AccountRow, now: Date): boolean {
   return account.active_plan !== "FREE" && account.plan_ends_at !== null && account.plan_ends_at > now;
 }
 
+const TRIAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
+
+function trialEndsAt(account: AccountRow): Date {
+  return new Date(account.trial_granted_at.getTime() + TRIAL_DURATION_MS);
+}
+
+function trialIsActive(account: AccountRow, now: Date): boolean {
+  return account.active_plan === "FREE" && trialEndsAt(account) > now;
+}
+
 export class BillingService {
   private databaseInstance: Sequelize | undefined;
 
@@ -70,7 +83,7 @@ export class BillingService {
     await this.ensureAccount(userId);
     await this.activateScheduledPlan(userId);
     const [account] = await this.sequelize.query<AccountRow>(
-      "SELECT active_plan, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1",
+      "SELECT active_plan, trial_granted_at, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1",
       { bind: [userId], type: QueryTypes.SELECT },
     );
     const credits = await this.sequelize.query<{ total: string; expiring: string; topup: string; trial: string }>(`
@@ -79,15 +92,20 @@ export class BillingService {
         COALESCE(SUM(remaining_credits) FILTER (WHERE source = 'TOPUP'), 0)::text AS topup,
         COALESCE(SUM(remaining_credits) FILTER (WHERE source = 'TRIAL'), 0)::text AS trial
       FROM credit_lots WHERE user_id = $1 AND state = 'ACTIVE' AND (expires_at IS NULL OR expires_at > now())
-    `, { bind: [userId], type: QueryTypes.SELECT });
-    const safeAccount = account ?? { active_plan: "FREE" as const, plan_ends_at: null, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null };
+        AND (source <> 'TRIAL' OR $2::timestamptz > now())
+    `, { bind: [userId, account ? trialEndsAt(account) : new Date(0)], type: QueryTypes.SELECT });
+    if (!account) throw new BillingError("BILLING_NOT_CONFIGURED", "Akun billing belum tersedia.");
+    const safeAccount = account;
     const values = credits[0] ?? { total: "0", expiring: "0", topup: "0", trial: "0" };
     const now = new Date();
-    // Free is a one-time trial: it remains usable only while its trial credits remain.
-    const hasFreeTrial = safeAccount.active_plan === "FREE" && Number(values.trial) > 0;
+    // ASVS 2.3.2: trial eligibility is bounded by its original grant date, not by the initial credit lot.
+    const hasFreeTrial = trialIsActive(safeAccount, now);
+    const accessEndsAt = planIsActive(safeAccount, now) ? safeAccount.plan_ends_at! : trialEndsAt(safeAccount);
     return {
       plan: planIsActive(safeAccount, now) ? safeAccount.active_plan : "FREE",
       planEndsAt: planIsActive(safeAccount, now) ? safeAccount.plan_ends_at?.toISOString() ?? null : null,
+      trialEndsAt: trialEndsAt(safeAccount).toISOString(),
+      accessDaysRemaining: Math.max(0, Math.ceil((accessEndsAt.getTime() - now.getTime()) / 86_400_000)),
       scheduledPlan: safeAccount.scheduled_plan,
       scheduledStartsAt: safeAccount.scheduled_starts_at?.toISOString() ?? null,
       canUseAi: planIsActive(safeAccount, now) || hasFreeTrial,
@@ -267,16 +285,16 @@ export class BillingService {
       );
       if (!usageSetting) throw new BillingError("BILLING_NOT_CONFIGURED", "Tarif penggunaan AI belum dikonfigurasi.");
       const cost = usageSetting.credit_cost;
-      const [account] = await this.sequelize.query<AccountRow>("SELECT active_plan, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1 FOR UPDATE", { bind: [userId], type: QueryTypes.SELECT, transaction });
+      const [account] = await this.sequelize.query<AccountRow>("SELECT active_plan, trial_granted_at, plan_ends_at, scheduled_plan, scheduled_starts_at, scheduled_payment_id FROM billing_accounts WHERE user_id = $1 FOR UPDATE", { bind: [userId], type: QueryTypes.SELECT, transaction });
       // ASVS V2.3.3/V2.3.4: lock every spendable lot and calculate eligibility
       // from those locked rows, so concurrent AI requests cannot overspend credits.
       const lots = await this.sequelize.query<CreditLotRow>(`
         SELECT id, source, remaining_credits FROM credit_lots
         WHERE user_id = $1 AND state = 'ACTIVE' AND remaining_credits > 0 AND (expires_at IS NULL OR expires_at > now())
+          AND (source <> 'TRIAL' OR $2::timestamptz > now())
         ORDER BY (expires_at IS NULL) ASC, expires_at ASC NULLS LAST, created_at ASC FOR UPDATE
-      `, { bind: [userId], type: QueryTypes.SELECT, transaction });
-      const trialCredits = lots.reduce((total, lot) => total + (lot.source === "TRIAL" ? lot.remaining_credits : 0), 0);
-      if (!account || (!planIsActive(account, new Date()) && trialCredits <= 0)) throw new BillingError("AI_ACCESS_LOCKED", "Paket aktif diperlukan untuk menggunakan AI.");
+      `, { bind: [userId, account ? trialEndsAt(account) : new Date(0)], type: QueryTypes.SELECT, transaction });
+      if (!account || (!planIsActive(account, new Date()) && !trialIsActive(account, new Date()))) throw new BillingError("AI_ACCESS_LOCKED", "Paket aktif atau masa trial diperlukan untuk menggunakan AI.");
       let remaining = cost;
       const allocations: Array<{ lotId: string; credits: number }> = [];
       for (const lot of lots) {

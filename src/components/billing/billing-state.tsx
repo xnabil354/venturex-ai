@@ -81,7 +81,7 @@ export function BillingProvider({ children, initialSummary, redirectOnExpiredPla
   }, [refresh]);
 
   useEffect(() => {
-    const dates = [snapshot?.planEndsAt, snapshot?.scheduledStartsAt]
+    const dates = [snapshot?.planEndsAt, snapshot?.trialEndsAt, snapshot?.scheduledStartsAt]
       .filter((date): date is string => Boolean(date))
       .map((date) => new Date(date).getTime())
       .filter((time) => time > Date.now());
@@ -97,7 +97,7 @@ export function BillingProvider({ children, initialSummary, redirectOnExpiredPla
     };
     schedule();
     return () => clearTimeout(timer);
-  }, [snapshot?.planEndsAt, snapshot?.scheduledStartsAt, refresh]);
+  }, [snapshot?.planEndsAt, snapshot?.trialEndsAt, snapshot?.scheduledStartsAt, refresh]);
 
   return <BillingContext.Provider value={{ snapshot, stale: dataStale || streamDisconnected, refresh }}>{children}</BillingContext.Provider>;
 }

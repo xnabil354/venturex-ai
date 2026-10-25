@@ -6,7 +6,7 @@ Amendemen produk ini menggantikan pengecualian payment gateway dan admin dashboa
 
 | Produk | Harga | Kredit | Masa berlaku |
 | --- | ---: | ---: | --- |
-| Free trial | Rp0 | 5 | Sekali setelah onboarding; AI aktif sampai kredit trial habis |
+| Free trial | Rp0 | 5 | Sekali setelah onboarding; akses AI aktif selama 30 hari sejak trial diberikan |
 | Premium | Rp84.000 | 25 | 30 hari |
 | Pro | Rp146.000 | 50 | 30 hari |
 | Top up 10 | Rp20.000 | 10 | Tidak kedaluwarsa |
@@ -15,7 +15,7 @@ Amendemen produk ini menggantikan pengecualian payment gateway dan admin dashboa
 
 Premium dan Pro hanya berbeda pada jatah kredit. Tarif aksi AI adalah Buat hipotesis 2 kredit dan Analisis mendalam 3 kredit. Trend Insight, local synthetic demo, serta roadmap deterministik tidak dipotong kredit.
 
-Aksi AI berbayar membutuhkan paket Premium/Pro aktif atau kredit Free trial yang tersisa. Ketika paket berakhir, akun kembali ke Free dan aksi berbayar terkunci, meski kredit top up masih tersisa. Sistem memakai lot yang akan kedaluwarsa paling awal terlebih dahulu.
+Aksi AI berbayar membutuhkan paket Premium/Pro aktif atau masa Free trial 30 hari yang masih berjalan, serta kredit yang cukup. Kredit top up dapat dipakai selama masa trial meski 5 kredit awal sudah habis. Sisa kredit trial tidak dapat dipakai setelah 30 hari; kredit top up tetap tersimpan. Ketika paket berakhir, akun kembali ke Free dan aksi berbayar terkunci, meski kredit top up masih tersisa. Sistem memakai lot yang akan kedaluwarsa paling awal terlebih dahulu.
 
 Setelah paket berbayar yang pernah aktif berakhir tanpa paket pengganti yang sudah aktif, setiap halaman aplikasi terproteksi mengarahkan pengguna ke `/billing`. `/billing` dan `/billing/return` tetap dapat dibuka untuk perpanjangan dan verifikasi pembayaran. Pengguna Free yang belum pernah memiliki paket berbayar tidak terkena pengalihan ini. Tab yang sedang terbuka mengalihkan ke billing setelah pembaruan status saat batas masa paket, event billing, atau fokus ulang. Akses halaman dipulihkan setelah callback pembayaran mengaktifkan paket baru; kredit top up yang tersisa tetap tersimpan.
 
@@ -40,7 +40,7 @@ Harga dan jatah kredit dikonfigurasi di database. Checkout menyimpan snapshot ha
 
 ## Kontrak API
 
-- `GET /api/v1/billing` — status paket dan saldo untuk pemilik sesi.
+- `GET /api/v1/billing` — status paket, saldo, `trialEndsAt`, dan `accessDaysRemaining` untuk pemilik sesi.
 - `GET /api/v1/billing/events` — stream SSE privat untuk memberi tahu sesi pemilik ketika saldo atau entitlement berubah; browser mengambil ulang saldo dari `GET /api/v1/billing`.
 - `POST /api/v1/billing/checkout` — `{ "productCode": "PREMIUM_30" | "PRO_30" | "CREDITS_10" | "CREDITS_30" | "CREDITS_100" }`; respons membawa URL POP. Same-origin dan rate limited. Paket yang sama dengan paket aktif ditolak dengan `409 PLAN_ALREADY_ACTIVE` tanpa invoice baru.
 - `POST /api/v1/billing/duitku/callback` — endpoint provider, bukan endpoint browser.

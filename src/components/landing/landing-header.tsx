@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 
@@ -9,9 +10,16 @@ type LandingHeaderProps = Readonly<{
   userEmail?: string;
 }>;
 
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 export function LandingHeader({ userEmail }: LandingHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const firstMobileLinkRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,9 +33,11 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    firstMobileLinkRef.current?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setMobileMenuOpen(false);
+        mobileMenuButtonRef.current?.focus();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -35,7 +45,7 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
   }, [mobileMenuOpen]);
 
   return (
-    <header
+    <><header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
         isScrolled || mobileMenuOpen
           ? "border-b border-white/10 bg-[#14080e]/85 backdrop-blur-[16px] shadow-lg"
@@ -82,7 +92,7 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
 
         {/* Right: Auth CTA Controls */}
         {userEmail ? (
-          <LandingProfileMenu userEmail={userEmail} />
+          <div className="hidden md:block"><LandingProfileMenu userEmail={userEmail} /></div>
         ) : (
           <div className="hidden shrink-0 items-center gap-16 md:flex">
             <Link
@@ -108,6 +118,7 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
           aria-label="Menu navigasi mobile"
           className="inline-flex h-44 w-44 min-h-[44px] min-w-[44px] items-center justify-center text-paper-white transition-colors hover:text-lilac-mist focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist focus-visible:ring-offset-2 focus-visible:ring-offset-[#14080e] md:hidden"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
+          ref={mobileMenuButtonRef}
         >
           {mobileMenuOpen ? (
             <svg
@@ -133,35 +144,39 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
         </button>
       </div>
 
-      {/* Mobile Menu Drawer */}
-      {mobileMenuOpen ? (
-        <div
-          id="mobile-nav-menu"
-          className="border-b border-white/10 bg-[#160a10]/95 backdrop-blur-2xl px-16 py-20 md:hidden sm:px-24"
-        >
-          <nav className="flex flex-col gap-16" aria-label="Navigasi Mobile">
+    </header>
+      {mounted && mobileMenuOpen ? createPortal(<div className="fixed inset-x-0 bottom-0 top-64 z-40 md:hidden">
+        <button aria-label="Tutup menu navigasi" className="absolute inset-0 bg-black/35 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} type="button" />
+        <div className="relative max-h-full overflow-y-auto border-b border-white/10 bg-[#14080e] px-16 py-16 shadow-xl sm:px-24" id="mobile-nav-menu">
+          <nav className="grid gap-4" aria-label="Navigasi Mobile">
             <a
               href="#fitur-utama"
-              className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
+              className="flex min-h-button items-center border-l-2 border-transparent px-12 text-body-sm font-w540 text-paper-white/70 hover:bg-white/5 hover:text-paper-white focus-visible:outline-2 focus-visible:outline-lilac-mist"
               onClick={() => setMobileMenuOpen(false)}
+              ref={firstMobileLinkRef}
             >
               Fitur Utama
             </a>
             <a
               href="#alur-solusi"
-              className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
+              className="flex min-h-button items-center border-l-2 border-transparent px-12 text-body-sm font-w540 text-paper-white/70 hover:bg-white/5 hover:text-paper-white focus-visible:outline-2 focus-visible:outline-lilac-mist"
               onClick={() => setMobileMenuOpen(false)}
             >
               Alur Solusi
             </a>
             <a
               href="#pricing"
-              className="text-body font-w460 text-paper-white/85 hover:text-lilac-mist py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist rounded-sm"
+              className="flex min-h-button items-center border-l-2 border-transparent px-12 text-body-sm font-w540 text-paper-white/70 hover:bg-white/5 hover:text-paper-white focus-visible:outline-2 focus-visible:outline-lilac-mist"
               onClick={() => setMobileMenuOpen(false)}
             >
               Harga
             </a>
-            {userEmail ? null : <div className="mt-8 flex flex-col gap-12 border-t border-white/10 pt-16">
+            {userEmail ? <div className="mt-16 border-t border-white/10 pt-16">
+              <p className="break-words px-12 pb-8 text-caption text-paper-white/70">{userEmail}</p>
+              <Link className="flex min-h-button items-center border-l-2 border-transparent px-12 text-body-sm font-w540 text-paper-white/70 hover:bg-white/5 hover:text-paper-white focus-visible:outline-2 focus-visible:outline-lilac-mist" href="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+              <Link className="flex min-h-button items-center border-l-2 border-transparent px-12 text-body-sm font-w540 text-paper-white/70 hover:bg-white/5 hover:text-paper-white focus-visible:outline-2 focus-visible:outline-lilac-mist" href="/profile" onClick={() => setMobileMenuOpen(false)}>Edit profil</Link>
+              <div className="mt-12 border-t border-white/10 pt-12" onClick={() => setMobileMenuOpen(false)}><LogoutButton className="w-full" variant="inverse" /></div>
+            </div> : <div className="mt-8 flex flex-col gap-12 border-t border-white/10 pt-16">
               <Link
                 href="/login"
                 className="text-center text-body font-w460 text-paper-white/85 py-10 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lilac-mist"
@@ -179,8 +194,8 @@ export function LandingHeader({ userEmail }: LandingHeaderProps) {
             </div>}
           </nav>
         </div>
-      ) : null}
-    </header>
+      </div>, document.body) : null}
+    </>
   );
 }
 

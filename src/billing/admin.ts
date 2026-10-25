@@ -93,14 +93,7 @@ export async function getAdminDashboardSummary(now: Date = new Date()): Promise<
         COUNT(*) FILTER (
           WHERE u.login_disabled_at IS NULL
             AND ba.active_plan = 'FREE'
-            AND EXISTS (
-              SELECT 1 FROM credit_lots cl
-              WHERE cl.user_id = u.id
-                AND cl.source = 'TRIAL'
-                AND cl.state = 'ACTIVE'
-                AND cl.remaining_credits > 0
-                AND (cl.expires_at IS NULL OR cl.expires_at > $1)
-            )
+            AND ba.trial_granted_at + interval '30 days' > $1
         )::text AS active_trial_users,
         COUNT(*) FILTER (
           WHERE u.login_disabled_at IS NULL

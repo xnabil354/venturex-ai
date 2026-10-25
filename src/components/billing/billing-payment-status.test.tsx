@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  snapshot: { plan: "FREE" as const, planEndsAt: null, scheduledPlan: null, scheduledStartsAt: null, canUseAi: false, availableCredits: 0, expiringCredits: 0, topupCredits: 0, requiresRenewal: false },
+  snapshot: { plan: "FREE" as const, planEndsAt: null, trialEndsAt: "2026-11-24T00:00:00Z", accessDaysRemaining: 30, scheduledPlan: null, scheduledStartsAt: null, canUseAi: false, availableCredits: 0, expiringCredits: 0, topupCredits: 0, requiresRenewal: false },
   refreshBilling: vi.fn(async () => ({})),
   refreshRoute: vi.fn(),
 }));

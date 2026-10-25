@@ -19,6 +19,27 @@ import { BillingService } from "./service";
 
 describe("BillingService credit reservation", () => {
   it.each([
+    { now: "2026-10-25T10:00:00Z", granted: "2026-10-01T10:00:00Z", expected: true },
+    { now: "2026-10-31T10:00:00Z", granted: "2026-10-01T10:00:00Z", expected: false },
+  ])("uses the 30-day trial period when initial credits are spent: $expected", async ({ now, granted, expected }) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(now));
+    try {
+      mocks.query.mockImplementation(async (statement: string) => {
+        if (statement.includes("SELECT user_id FROM billing_accounts")) return [{ user_id: "70000000-0000-4000-8000-000000000001" }];
+        if (statement.includes("SELECT active_plan")) return [{ active_plan: "FREE", trial_granted_at: new Date(granted), plan_ends_at: null, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null }];
+        if (statement.includes("COALESCE(SUM(remaining_credits)")) return [{ total: "10", expiring: "0", topup: "10", trial: "0" }];
+        return [];
+      });
+      const summary = await new BillingService().summaryForUser(userIdSchema.parse("70000000-0000-4000-8000-000000000001"));
+      expect(summary.canUseAi).toBe(expected);
+      expect(summary.trialEndsAt).toBe("2026-10-31T10:00:00.000Z");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
     ["PREMIUM", "PREMIUM_30"],
     ["PRO", "PRO_30"],
   ] as const)("rejects a second %s checkout while the plan is active", async (activePlan, productCode) => {
@@ -57,7 +78,7 @@ describe("BillingService credit reservation", () => {
   ] as const)("marks renewal required only for an expired paid $plan plan", async ({ plan, endsAt, expected }) => {
     mocks.query.mockImplementation(async (statement: string) => {
       if (statement.includes("SELECT user_id FROM billing_accounts")) return [{ user_id: "70000000-0000-4000-8000-000000000001" }];
-      if (statement.includes("SELECT active_plan")) return [{ active_plan: plan, plan_ends_at: endsAt, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null }];
+      if (statement.includes("SELECT active_plan")) return [{ active_plan: plan, trial_granted_at: new Date("2020-01-01T00:00:00Z"), plan_ends_at: endsAt, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null }];
       if (statement.includes("COALESCE(SUM(remaining_credits)")) return [{ total: "10", expiring: "0", topup: "10", trial: "0" }];
       return [];
     });
@@ -71,7 +92,7 @@ describe("BillingService credit reservation", () => {
     mocks.query.mockImplementation(async (statement: string) => {
       if (statement.includes("SELECT user_id FROM billing_accounts")) return [{ user_id: "70000000-0000-4000-8000-000000000001" }];
       if (statement.includes("SELECT credit_cost")) return [{ credit_cost: 2 }];
-      if (statement.includes("SELECT active_plan")) return [{ active_plan: "FREE", plan_ends_at: null, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null }];
+      if (statement.includes("SELECT active_plan")) return [{ active_plan: "FREE", trial_granted_at: new Date(), plan_ends_at: null, scheduled_plan: null, scheduled_starts_at: null, scheduled_payment_id: null }];
       if (statement.includes("SUM(remaining_credits)")) return [{ remaining: "5" }];
       if (statement.includes("SELECT id,")) return [{ id: "lot-1", source: "TRIAL", remaining_credits: 5 }];
       return undefined;
@@ -92,5 +113,31 @@ describe("BillingService credit reservation", () => {
     expect(queries).toContainEqual(expect.stringContaining("SELECT id, source, remaining_credits FROM credit_lots"));
     expect(queries).toContainEqual(expect.stringContaining("FOR UPDATE"));
     expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining("pg_notify('venturex_billing_changed'"), expect.objectContaining({ bind: ["70000000-0000-4000-8000-000000000001"], transaction }));
+  });
+
+  it.each([
+    { granted: "2026-10-01T10:00:00Z", allowed: true },
+    { granted: "2026-09-01T10:00:00Z", allowed: false },
+  ])("enforces trial expiry when spending top-up credits: $allowed", async ({ granted, allowed }) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-25T10:00:00Z"));
+    try {
+      const transaction = { id: "trial-transaction" };
+      mocks.transaction.mockImplementation(async (callback: (value: typeof transaction) => Promise<unknown>) => callback(transaction));
+      mocks.query.mockImplementation(async (statement: string) => {
+        if (statement.includes("SELECT user_id FROM billing_accounts")) return [{ user_id: "70000000-0000-4000-8000-000000000001" }];
+        if (statement.includes("SELECT credit_cost")) return [{ credit_cost: 2 }];
+        if (statement.includes("SELECT active_plan")) return [{ active_plan: "FREE", trial_granted_at: new Date(granted), plan_ends_at: null }];
+        if (statement.includes("SELECT id, source, remaining_credits")) return [{ id: "topup-lot", source: "TOPUP", remaining_credits: 10 }];
+        return [];
+      });
+      const service = new BillingService();
+      const reserve = Reflect.get(service, "reserveCredits") as (userId: string, usage: string, reference: string) => Promise<unknown>;
+      const run = reserve.call(service, "70000000-0000-4000-8000-000000000001", "OPPORTUNITY_HYPOTHESIS", "trial-test");
+      if (allowed) await expect(run).resolves.toBeDefined();
+      else await expect(run).rejects.toMatchObject({ code: "AI_ACCESS_LOCKED" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

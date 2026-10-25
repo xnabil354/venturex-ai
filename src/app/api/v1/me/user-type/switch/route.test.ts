@@ -21,10 +21,10 @@ const currentUser: SafeUser = {
 };
 const switchedUser: SafeUser = { ...currentUser, userType: "UMKM_EXISTING", onboardingStatus: "USER_TYPE_SELECTED" };
 
-function request(body: string, origin = "http://localhost:3000"): Request {
+function request(body: string, origin = "http://localhost:3000", headers: Record<string, string> = {}): Request {
   return new Request("http://localhost:3000/api/v1/me/user-type/switch", {
     method: "POST",
-    headers: { origin, "content-type": "application/json" },
+    headers: { origin, host: "localhost:3000", "content-type": "application/json", ...headers },
     body,
   });
 }
@@ -34,6 +34,24 @@ describe("POST /api/v1/me/user-type/switch", () => {
     const response = await POST(request('{"userType":"UMKM_EXISTING"}', "https://attacker.example"));
     expect(response.status).toBe(403);
     expect(mocks.getCurrentUser).not.toHaveBeenCalled();
+  });
+
+  it("accepts the public HTTPS origin forwarded by ngrok when the internal URL is HTTP", async () => {
+    mocks.getCurrentUser.mockResolvedValue(currentUser);
+    mocks.switchUserType.mockResolvedValue(switchedUser);
+    const response = await POST(request('{"userType":"UMKM_EXISTING"}', "https://riverboat-eternity-ramp.ngrok-free.dev", {
+      host: "riverboat-eternity-ramp.ngrok-free.dev", "x-forwarded-proto": "https",
+    }));
+    expect(response.status).toBe(200);
+  });
+
+  it("rejects a different public host or protocol behind the proxy", async () => {
+    for (const origin of ["https://attacker.example", "http://riverboat-eternity-ramp.ngrok-free.dev"]) {
+      const response = await POST(request('{"userType":"UMKM_EXISTING"}', origin, {
+        host: "riverboat-eternity-ramp.ngrok-free.dev", "x-forwarded-proto": "https",
+      }));
+      expect(response.status).toBe(403);
+    }
   });
 
   it("requires authentication", async () => {

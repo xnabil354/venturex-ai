@@ -47,6 +47,30 @@ describe("LandingPage Component", () => {
         expect(within(header).queryByRole("link", { name: "Daftar" })).toBeNull();
     });
 
+    it("uses one mobile menu for landing links and account actions", () => {
+        render(<LandingPage isAuthenticated userEmail="owner@example.com" />);
+        const toggle = screen.getByRole("button", { name: "Menu navigasi mobile" });
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
+        const profileButton = screen.getByRole("button", { name: "Menu profil" });
+        expect(profileButton.parentElement?.parentElement?.className).toContain("hidden md:block");
+
+        fireEvent.click(toggle);
+        const menu = screen.getByRole("navigation", { name: "Navigasi Mobile" });
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
+        expect(within(menu).getByRole("link", { name: "Dashboard" }).getAttribute("href")).toBe("/dashboard");
+        expect(within(menu).queryByRole("link", { name: "Trend Radar" })).toBeNull();
+        expect(within(menu).queryByRole("link", { name: "Opportunity Finder" })).toBeNull();
+        expect(within(menu).queryByRole("link", { name: "Saved Opportunities" })).toBeNull();
+        expect(within(menu).queryByRole("link", { name: "Roadmaps" })).toBeNull();
+        expect(within(menu).queryByRole("link", { name: "Paket & Kredit" })).toBeNull();
+        expect(within(menu).getByRole("link", { name: "Edit profil" }).getAttribute("href")).toBe("/profile");
+        expect(within(menu).getByRole("button", { name: "Keluar" })).toBeTruthy();
+
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(screen.queryByRole("navigation", { name: "Navigasi Mobile" })).toBeNull();
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    });
+
     it("renders evidence-oriented trust metrics", () => {
         render(<LandingPage />);
 
