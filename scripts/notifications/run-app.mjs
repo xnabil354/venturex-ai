@@ -33,16 +33,21 @@ function stop() {
 }
 process.on("SIGINT", stop);
 process.on("SIGTERM", stop);
-web.on("exit", (code) => {
+web.on("exit", (code, signal) => {
   if (!stopping) {
+    console.error("Next.js server stopped; restarting both services.", {
+      code,
+      signal,
+    });
     process.exitCode = code ?? 1;
     stop();
   }
 });
-worker.on("exit", (code) => {
+worker.on("exit", (code, signal) => {
   if (!stopping) {
     console.error(
-      "Notification worker stopped; shutting down so the process supervisor can restart both services.",
+      "Notification worker stopped; restarting both services.",
+      { code, signal },
     );
     process.exitCode = code || 1;
     stop();
